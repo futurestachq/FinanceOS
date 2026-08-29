@@ -1452,7 +1452,7 @@
   .auth-form { display:flex; flex-direction:column; gap:12px; }
   .auth-user-card { display:flex; align-items:center; gap:10px; padding:8px 8px 0; }
   .auth-user-avatar { width:36px; height:36px; border-radius:50%; background:var(--light-green); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:14px; color:var(--accent); overflow:hidden; }
-  .auth-user-avatar img { width:100%; height:100%; object-fit:cover; }
+  .auth-user-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; display:block; }
   .auth-user-name { font-size:13px; font-weight:600; }
   .auth-user-email { font-size:12px; color:var(--text-secondary); }
   .auth-logout { font-size:12px; color:var(--danger); cursor:pointer; margin-top:4px; padding:4px 0; background:none; border:none; }
@@ -3899,19 +3899,29 @@ function updateUserProfileUI() {
   const mobileAvatar = document.getElementById('mobileProfileAvatar');
   const mobileName = document.getElementById('mobileProfileName');
 
+  function setAvatar(el, photoUrl, fallbackText) {
+    if (!el) return;
+    if (photoUrl) {
+      const img = document.createElement('img');
+      img.src = photoUrl;
+      img.style.cssText = 'width:100%;height:100%;object-fit:cover;border-radius:50%;';
+      img.onerror = function() { el.textContent = fallbackText; };
+      el.innerHTML = '';
+      el.appendChild(img);
+    } else {
+      el.textContent = fallbackText;
+    }
+  }
+
   if (currentUser && !isGuest) {
     const displayName = currentUser.displayName || currentUser.email?.split('@')[0] || 'User';
     const email = currentUser.email || '';
     const photo = currentUser.photoURL;
+    const initial = displayName.charAt(0).toUpperCase();
     nameEl.textContent = displayName;
     emailEl.textContent = email;
-    if (photo) {
-      avatar.innerHTML = '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
-      if (mobileAvatar) mobileAvatar.innerHTML = '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
-    } else {
-      avatar.textContent = displayName.charAt(0).toUpperCase();
-      if (mobileAvatar) mobileAvatar.textContent = displayName.charAt(0).toUpperCase();
-    }
+    setAvatar(avatar, photo, initial);
+    setAvatar(mobileAvatar, photo, initial);
     logoutBtn.style.display = 'inline';
     if (mobileName) mobileName.textContent = displayName.split(' ')[0];
     if (mobileChip) mobileChip.style.display = 'flex';
