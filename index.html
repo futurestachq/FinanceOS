@@ -3145,25 +3145,28 @@
         <!-- Data Management -->
         <div class="settings-card" style="margin-bottom:20px;">
           <div class="settings-title">Data management</div>
-          <div class="settings-desc" style="margin-bottom:16px;">Your data is stored locally in your browser. Export regularly to keep it safe.</div>
+          <div class="settings-desc" style="margin-bottom:16px;">
+            <span id="dataStorageDesc">Your data is stored in your browser and synced to the cloud when signed in.</span>
+            <span id="lastBackupDesc" style="display:none;margin-left:4px;">Last backup: <strong id="lastBackupTime">never</strong></span>
+          </div>
           <div class="settings-row">
             <div>
-              <div class="settings-label">Export to CSV</div>
-              <div class="settings-desc">Download all transactions as a CSV file</div>
+              <div class="settings-label">Export transactions (CSV)</div>
+              <div class="settings-desc">Download all transactions as a spreadsheet</div>
             </div>
             <button class="btn btn-sm" onclick="exportData()">Export CSV</button>
           </div>
           <div class="settings-row">
             <div>
-              <div class="settings-label">Export full backup</div>
-              <div class="settings-desc">Download all data (transactions, budgets, goals, settings) as JSON</div>
+              <div class="settings-label">Export full backup (JSON)</div>
+              <div class="settings-desc">Complete backup — transactions, budgets, goals, subscriptions, settings</div>
             </div>
             <button class="btn btn-sm" onclick="exportJSON()">Export JSON</button>
           </div>
           <div class="settings-row">
             <div>
               <div class="settings-label">Import backup</div>
-              <div class="settings-desc">Restore from a previously exported JSON backup</div>
+              <div class="settings-desc">Restore from a previously exported JSON backup. <strong style="color:var(--danger);">This will replace all current data.</strong></div>
             </div>
             <button class="btn btn-sm" onclick="document.getElementById('importFile').click()">Import JSON</button>
             <input type="file" id="importFile" accept=".json" style="display:none;" onchange="importJSON(event)">
@@ -3171,7 +3174,7 @@
           <div class="settings-row">
             <div>
               <div class="settings-label" style="color:var(--danger);">Clear all data</div>
-              <div class="settings-desc">Permanently delete all transactions, budgets, goals, and settings. This cannot be undone.</div>
+              <div class="settings-desc">Permanently delete everything. This cannot be undone.</div>
             </div>
             <button class="btn btn-sm btn-danger" onclick="confirmClearData()">Clear all</button>
           </div>
@@ -6374,7 +6377,7 @@ function toggleContribHistory(listId, el) {
 function exportData() {
   const headers = ['Date','Type','Category','Description','Amount','Payment Method','Tags','Notes'];
   const rows = state.transactions.map(t => [
-    t.date, t.type, t.category, `"${t.description}"`, t.amount, t.payment, `"${(t.tags||[]).join(';')}"`, `"${t.notes||''}"`
+    t.date, t.type, t.category, `"${(t.description||'').replace(/"/g,'""')}"`, t.amount, t.payment || '', `"${(t.tags||[]).join(';')}"`, `"${(t.notes||'').replace(/"/g,'""')}"`
   ]);
   const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
   const blob = new Blob([csv], { type: 'text/csv' });
@@ -6384,7 +6387,32 @@ function exportData() {
   a.download = `finance-export-${new Date().toISOString().split('T')[0]}.csv`;
   a.click();
   URL.revokeObjectURL(url);
-  showToast('Data exported');
+  showToast('Transactions exported to CSV');
+}
+window.exportData = exportData;
+
+function recordBackup() {
+  const now = new Date().toISOString();
+  localStorage.setItem('finance_os_last_backup', now);
+  updateLastBackupUI();
+}
+
+function updateLastBackupUI() {
+  const el = document.getElementById('lastBackupTime');
+  const wrap = document.getElementById('lastBackupDesc');
+  if (!el || !wrap) return;
+  const raw = localStorage.getItem('finance_os_last_backup');
+  if (raw) {
+    const d = new Date(raw);
+    const diff = Date.now() - d.getTime();
+    let text;
+    if (diff < 60000) text = 'just now';
+    else if (diff < 3600000) text = Math.floor(diff/60000) + ' min ago';
+    else if (diff < 86400000) text = Math.floor(diff/3600000) + ' hr ago';
+    else text = Math.floor(diff/86400000) + ' days ago';
+    el.textContent = text;
+    wrap.style.display = 'inline';
+  }
 }
 
 // Toast
@@ -6910,6 +6938,13 @@ function renderSettings() {
   document.getElementById('defaultReminder').value = state.settings.defaultReminder;
   document.getElementById('notifWindow').value = state.settings.notifWindow;
   renderIncomeEventList();
+  updateLastBackupUI();
+  const storageDesc = document.getElementById('dataStorageDesc');
+  if (storageDesc) {
+    storageDesc.textContent = currentUser && !isGuest
+      ? 'Your data is synced to the cloud and also cached locally in your browser.'
+      : 'Your data is stored locally in your browser. Sign in to enable cloud sync.';
+  }
 }
 
 function setToggleState(id, value) { const el = document.getElementById(id); if (el) el.classList.toggle('on', !!value); }
@@ -6947,8 +6982,10 @@ function exportJSON() {
   a.download = 'finance-os-backup-' + new Date().toISOString().split('T')[0] + '.json';
   a.click();
   URL.revokeObjectURL(url);
-  showToast('Backup exported');
+  recordBackup();
+  showToast('Full backup exported to JSON');
 }
+window.exportJSON = exportJSON;
 
 function importJSON(event) {
   const file = event.target.files[0];
@@ -6957,20 +6994,70 @@ function importJSON(event) {
   reader.onload = function(e) {
     try {
       const data = JSON.parse(e.target.result);
-      if (!data.transactions || !data.settings) { showToast('Invalid backup file'); return; }
-      state = data;
-      if (!state.profile) state.profile = { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' };
-      if (!state.incomeEvents) state.incomeEvents = [];
-      if (!state.financialEvents) state.financialEvents = [];
-      saveData();
-      showToast('Data imported successfully');
-      navigate('dashboard');
+      // Validate structure
+      if (!data || typeof data !== 'object') { showToast('Invalid backup file'); return; }
+      if (!Array.isArray(data.transactions)) { showToast('Invalid backup: missing transactions'); return; }
+      if (!data.settings || typeof data.settings !== 'object') { showToast('Invalid backup: missing settings'); return; }
+
+      // Confirm before overwriting
+      confirmImport(data);
     } catch(err) {
+      console.error('Import error:', err);
       showToast('Could not read backup file');
     }
   };
+  reader.onerror = function() { showToast('Failed to read file'); };
   reader.readAsText(file);
+  // Reset file input so same file can be selected again
+  event.target.value = '';
 }
+window.importJSON = importJSON;
+
+function confirmImport(data) {
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-overlay active';
+  overlay.style.zIndex = '300';
+  overlay.innerHTML = `<div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--danger);">Restore backup?</div>
+      <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:12px;">This will <strong style="color:var(--danger);">replace all current data</strong> with the imported backup.</p>
+      <div style="background:var(--card-bg);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;">
+        <div style="font-size:13px;color:var(--text);margin-bottom:4px;"><strong>Backup contents:</strong></div>
+        <div style="font-size:12px;color:var(--text-secondary);line-height:1.6;">
+          ${data.transactions?.length || 0} transactions · ${data.subscriptions?.length || 0} subscriptions · ${Object.keys(data.budgets||{}).length} budgets · ${data.goals?.length || 0} goals · ${data.incomeEvents?.length || 0} income events
+        </div>
+      </div>
+      <p style="font-size:13px;color:var(--text-tertiary);">Your current data will be overwritten. Consider exporting a backup first if you're unsure.</p>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" onclick="this.closest('.modal-overlay').remove()">Cancel</button>
+      <button class="btn btn-danger" id="confirmImportBtn">Restore backup</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('confirmImportBtn').onclick = function() {
+    overlay.remove();
+    applyImport(data);
+  };
+}
+window.confirmImport = confirmImport;
+
+function applyImport(data) {
+  state = data;
+  if (!state.profile) state.profile = { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' };
+  if (!state.incomeEvents) state.incomeEvents = [];
+  if (!state.financialEvents) state.financialEvents = [];
+  if (!state.accounts) state.accounts = [];
+  if (!state.budgetIcons) state.budgetIcons = {};
+  ensureStateDefaults();
+  saveData();
+  showToast('Backup restored successfully');
+  navigate('dashboard');
+}
+window.applyImport = applyImport;
 
 function confirmClearData() {
   const overlay = document.createElement('div');
@@ -6996,6 +7083,7 @@ function confirmClearData() {
   const btn = document.getElementById('clearConfirmBtn');
   input.addEventListener('input', () => { btn.disabled = input.value !== 'DELETE'; });
 }
+window.confirmClearData = confirmClearData;
 
 function clearAllData() {
   state = {
@@ -7013,6 +7101,7 @@ function clearAllData() {
   showToast('All data cleared');
   navigate('dashboard');
 }
+window.clearAllData = clearAllData;
 
 function renderIncomeEventList() {
   const c = document.getElementById('incomeEventList');
