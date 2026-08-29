@@ -7218,24 +7218,14 @@ async function syncAllToGcal() {
       if (item.type === 'subscription') {
         body = {
           summary: item.data.name+' renewal — '+fmt(item.data.cost),
-          description: item.data.name+' subscription
-Amount: '+fmt(item.data.cost)+'
-Category: '+item.data.category+'
-Recurrence: '+item.data.cycle+'
-
-Scheduled via FinanceOS',
+          description: item.data.name+' subscription\nAmount: '+fmt(item.data.cost)+'\nCategory: '+item.data.category+'\nRecurrence: '+item.data.cycle+'\n\nScheduled via FinanceOS',
           start: { date: item.data.renewal }, end: { date: item.data.renewal },
           reminders: state.settings.defaultReminder > 0 ? { useDefault: false, overrides: [{ method: 'popup', minutes: state.settings.defaultReminder * 24 * 60 }] } : { useDefault: false }
         };
       } else if (item.type === 'income') {
         body = {
           summary: item.data.name+' — +'+fmt(item.data.amount),
-          description: item.data.name+'
-Amount: '+fmt(item.data.amount)+'
-Category: '+item.data.category+'
-Recurrence: '+item.data.frequency+'
-
-Scheduled via FinanceOS',
+          description: item.data.name+'\nAmount: '+fmt(item.data.amount)+'\nCategory: '+item.data.category+'\nRecurrence: '+item.data.frequency+'\n\nScheduled via FinanceOS',
           start: { date: item.data.nextDate }, end: { date: item.data.nextDate },
           reminders: state.settings.defaultReminder > 0 ? { useDefault: false, overrides: [{ method: 'popup', minutes: state.settings.defaultReminder * 24 * 60 }] } : { useDefault: false }
         };
