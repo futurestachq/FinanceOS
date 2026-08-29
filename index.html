@@ -7102,6 +7102,7 @@ function connectGoogleCalendar() {
   });
   gcalTokenClient.requestAccessToken();
 }
+window.connectGoogleCalendar = connectGoogleCalendar;
 
 function disconnectGoogleCalendar() {
   state.settings.googleCalendar.connected = false;
@@ -7114,6 +7115,7 @@ function disconnectGoogleCalendar() {
   state.incomeEvents.forEach(i => { i.gcalEventId = null; });
   saveData(); showToast('Google Calendar disconnected'); renderSettings();
 }
+window.disconnectGoogleCalendar = disconnectGoogleCalendar;
 
 function getGcalAccessToken() {
   const g = state.settings.googleCalendar;
@@ -7258,6 +7260,7 @@ async function syncAllToGcal() {
     showToast('Calendar sync failed. Please reconnect Google Calendar in Settings.');
   }
 }
+window.syncAllToGcal = syncAllToGcal;
 
 async function syncIncomeEventToGcal(inc) {
   const token = getGcalAccessToken(); if (!token) return;
