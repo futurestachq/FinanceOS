@@ -7056,6 +7056,7 @@ function deleteIncomeEvent(id) {
 // ============ GOOGLE CALENDAR OAUTH & API ============
 
 const GCALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar';
+const GCAL_CLIENT_ID = '109256546553-s672aeg8ubkuba2dn7ifrd4g8hkt0kbm.apps.googleusercontent.com';
 let gcalTokenClient = null;
 
 function isGoogleSignedIn() {
@@ -7071,28 +7072,35 @@ function connectGoogleCalendar() {
   }
   document.getElementById('gcalSignInNote').style.display = 'none';
 
-  const provider = new firebase.auth.GoogleAuthProvider();
-  provider.addScope('https://www.googleapis.com/auth/calendar');
-  provider.addScope('https://www.googleapis.com/auth/calendar.events');
+  if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+    showToast('Google Identity Services still loading. Please try again in a moment.');
+    return;
+  }
 
-  auth.signInWithPopup(provider).then(result => {
-    const credential = firebase.auth.GoogleAuthProvider.credentialFromResult(result);
-    if (credential && credential.accessToken) {
-      state.settings.googleCalendar.connected = true;
-      state.settings.googleCalendar.accessToken = credential.accessToken;
-      state.settings.googleCalendar.tokenExpiry = Date.now() + 3600 * 1000;
-      state.settings.googleCalendar.accountEmail = currentUser.email || '';
-      saveData();
-      showToast('Google Calendar connected successfully');
-      fetchGcalCalendars();
-      renderSettings();
-    } else {
-      showToast('Could not get Calendar access. Please try again.');
+  gcalTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GCAL_CLIENT_ID,
+    scope: GCALENDAR_SCOPE,
+    callback: (response) => {
+      if (response.access_token) {
+        state.settings.googleCalendar.connected = true;
+        state.settings.googleCalendar.accessToken = response.access_token;
+        state.settings.googleCalendar.tokenExpiry = Date.now() + (response.expires_in || 3600) * 1000;
+        state.settings.googleCalendar.accountEmail = currentUser.email || '';
+        saveData();
+        showToast('Google Calendar connected successfully');
+        fetchGcalCalendars();
+        renderSettings();
+      } else {
+        console.error('GIS response', response);
+        showToast('Could not get Calendar access. Please try again.');
+      }
+    },
+    error_callback: (err) => {
+      console.error('GIS error', err);
+      showToast('Calendar permission denied or error: ' + (err.message || 'Unknown'));
     }
-  }).catch(err => {
-    console.error('Calendar connect error', err);
-    showToast('Could not connect Google Calendar: ' + (err.message || 'Unknown error'));
   });
+  gcalTokenClient.requestAccessToken();
 }
 
 function disconnectGoogleCalendar() {
