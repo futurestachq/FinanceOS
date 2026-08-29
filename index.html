@@ -965,6 +965,7 @@
     #page-dashboard .card { overflow-x: hidden !important; }
     #page-dashboard .card > div { max-width: 100%; }
     .sub-item > div:last-child { flex-shrink: 0; }
+    .mobile-profile-chip { display: flex; }
 
     .mobile-nav {
       display: flex;
@@ -1110,6 +1111,7 @@
 
   @media (min-width: 769px) {
     .mobile-tx-tabs { display: none; }
+    .mobile-profile-chip { display: none !important; }
   }
 
   .toast {
@@ -1455,6 +1457,10 @@
   .auth-user-email { font-size:12px; color:var(--text-secondary); }
   .auth-logout { font-size:12px; color:var(--danger); cursor:pointer; margin-top:4px; padding:4px 0; background:none; border:none; }
   .auth-logout:hover { text-decoration:underline; }
+  .mobile-profile-chip { display:none; align-items:center; gap:8px; cursor:pointer; padding:4px 8px 4px 4px; border-radius:20px; background:var(--card); border:1px solid var(--border); }
+  .mobile-profile-avatar { width:28px; height:28px; border-radius:50%; background:var(--light-green); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; color:var(--accent); overflow:hidden; flex-shrink:0; }
+  .mobile-profile-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
+  .mobile-profile-name { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100px; }
 
   /* Onboarding */
   .onboarding-overlay {
@@ -2222,16 +2228,12 @@
     </div>
 
     <div style="margin-top: auto; padding: 16px 12px; border-top: 1px solid var(--border);">
-      <div class="nav-item" data-page="settings" style="margin-bottom: 8px;">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 010 2.83 2 2 0 01-2.83 0l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 01-4 0v-.09A1.65 1.65 0 009 19.4a1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 01-2.83 0 2 2 0 010-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 010-4h.09A1.65 1.65 0 004.6 9a1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 010-2.83 2 2 0 012.83 0l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 014 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 012.83 0 2 2 0 010 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 010 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
-        Settings
-      </div>
-      <div id="sidebarUserProfile" class="auth-user-card">
+      <div id="sidebarUserProfile" class="auth-user-card" onclick="navigate('settings')" style="cursor:pointer;" title="Open settings">
         <div class="auth-user-avatar" id="sidebarUserAvatar">U</div>
         <div>
           <div class="auth-user-name" id="sidebarUserName">My Account</div>
           <div class="auth-user-email" id="sidebarUserEmail">Local · Encrypted</div>
-          <button class="auth-logout" id="sidebarLogoutBtn" onclick="signOutUser()" style="display:none;">Sign out</button>
+          <button class="auth-logout" id="sidebarLogoutBtn" onclick="event.stopPropagation();signOutUser()" style="display:none;">Sign out</button>
         </div>
       </div>
     </div>
@@ -2244,6 +2246,10 @@
         <div class="topbar-sub" id="pageSubtitle"></div>
       </div>
       <div class="topbar-right">
+        <div class="mobile-profile-chip" id="mobileProfileChip" onclick="navigate('settings')" style="display:none;">
+          <div class="mobile-profile-avatar" id="mobileProfileAvatar">U</div>
+          <span class="mobile-profile-name" id="mobileProfileName"></span>
+        </div>
         <button class="btn btn-sm" id="themeToggle" onclick="toggleTheme()" style="width:36px;height:36px;padding:0;display:flex;align-items:center;justify-content:center;" title="Toggle dark mode">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="themeIcon"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
         </button>
@@ -3889,6 +3895,10 @@ function updateUserProfileUI() {
   const logoutBtn = document.getElementById('sidebarLogoutBtn');
   if (!avatar || !nameEl || !emailEl) return;
 
+  const mobileChip = document.getElementById('mobileProfileChip');
+  const mobileAvatar = document.getElementById('mobileProfileAvatar');
+  const mobileName = document.getElementById('mobileProfileName');
+
   if (currentUser && !isGuest) {
     const displayName = currentUser.displayName || currentUser.email?.split('@')[0] || 'User';
     const email = currentUser.email || '';
@@ -3897,15 +3907,22 @@ function updateUserProfileUI() {
     emailEl.textContent = email;
     if (photo) {
       avatar.innerHTML = '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
+      if (mobileAvatar) mobileAvatar.innerHTML = '<img src="' + photo + '" style="width:100%;height:100%;object-fit:cover;border-radius:50%;">';
     } else {
       avatar.textContent = displayName.charAt(0).toUpperCase();
+      if (mobileAvatar) mobileAvatar.textContent = displayName.charAt(0).toUpperCase();
     }
     logoutBtn.style.display = 'inline';
+    if (mobileName) mobileName.textContent = displayName.split(' ')[0];
+    if (mobileChip) mobileChip.style.display = 'flex';
   } else {
     nameEl.textContent = 'My Account';
     emailEl.textContent = 'Local · Encrypted';
     avatar.textContent = 'U';
     logoutBtn.style.display = 'none';
+    if (mobileAvatar) mobileAvatar.textContent = 'U';
+    if (mobileName) mobileName.textContent = '';
+    if (mobileChip) mobileChip.style.display = 'none';
   }
 }
 
