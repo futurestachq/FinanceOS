@@ -3786,21 +3786,39 @@ async function loadData() {
       if (doc.exists) {
         const data = doc.data();
         delete data.updatedAt;
-        // Merge with defaults to ensure all keys exist
         state = { ...state, ...data };
         ensureStateDefaults();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
         return;
       }
+      // Signed in but no cloud data yet — start fresh (no seed data)
+      resetState();
+      ensureStateDefaults();
+      saveData();
+      return;
     } catch(e) { console.error('Firestore load error', e); }
   }
+  // Guest: use localStorage, seed only if truly empty
   const saved = localStorage.getItem(STORAGE_KEY);
   if (saved) {
-    try { state = JSON.parse(saved); } catch(e) { seedData(); }
+    try { state = JSON.parse(saved); } catch(e) { resetState(); }
   } else {
-    seedData();
+    seedData(); // only seed for first-time guests
   }
   ensureStateDefaults();
+}
+
+function resetState() {
+  state = {
+    transactions: [], subscriptions: [], budgets: {}, budgetIcons: {}, goals: [],
+    accounts: [], balance: 0, incomeEvents: [], financialEvents: [], hasOnboarded: false,
+    profile: { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' },
+    settings: {
+      googleCalendar: { connected: false, accessToken: null, tokenExpiry: null, calendarId: null, calendars: [], clientId: '', accountEmail: '' },
+      syncSubscriptions: true, syncBills: true, syncSalary: true, syncGoals: false,
+      defaultReminder: 1, notifications: true, notifWindow: 7
+    }
+  };
 }
 
 function saveData() {
