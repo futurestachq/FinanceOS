@@ -712,8 +712,8 @@
   .sub-icon svg { width: 18px; height: 18px; }
 
   .sub-info { flex: 1; min-width: 0; }
-  .sub-name { font-weight: 500; font-size: 14px; }
-  .sub-meta { font-size: 12px; color: var(--text-secondary); }
+  .sub-name { font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sub-meta { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .sub-cost { font-weight: 600; font-size: 14px; }
 
   .goal-item {
@@ -895,6 +895,22 @@
     .budget-spent { font-size: 11px; }
     .budget-pct { font-size: 11px; }
     .budget-remain { font-size: 11px; }
+
+    /* Dashboard card fixes for mobile */
+    .dash-budget-icon { display: none; }
+    .upcoming-item { gap: 8px; padding: 10px 0; }
+    .upcoming-date { width: 36px; }
+    .upcoming-date-day { font-size: 15px; }
+    .sub-item { padding: 10px 0; gap: 10px; }
+    .sub-icon { width: 32px; height: 32px; }
+    .sub-icon svg { width: 16px; height: 16px; }
+    .sub-cost { font-size: 14px; }
+    .tx-row { gap: 10px; padding: 10px 0; }
+    .tx-icon { width: 32px; height: 32px; }
+    .tx-icon svg { width: 16px; height: 16px; }
+    .event-dot { width: 8px; height: 8px; }
+    /* Sub item right column should not shrink */
+    .sub-item > div:last-child { flex-shrink: 0; }
 
     .mobile-nav {
       display: flex;
@@ -1254,7 +1270,7 @@
   .event-dot.neutral { background: var(--text-tertiary); }
 
   .event-info { flex: 1; min-width: 0; }
-  .event-title { font-size: 14px; font-weight: 500; color: var(--text); }
+  .event-title { font-size: 14px; font-weight: 500; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .event-meta { font-size: 12px; color: var(--text-secondary); }
   .event-amount { font-weight: 600; font-size: 14px; white-space: nowrap; }
   .event-amount.income { color: var(--success); }
