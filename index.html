@@ -3669,15 +3669,33 @@
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" crossorigin="anonymous"></script>
 <script>
+// Aggressive cross-origin script error suppression for iOS Safari share sheet / PWA install flow
+function isHarmlessScriptError(msg, line) {
+  var m = String(msg || '').toLowerCase();
+  return (m.indexOf('script error') !== -1) && (line == 0 || line === '0' || line === '');
+}
 window.onerror = function(msg, url, line, col, err) {
-  // Cross-origin script errors at line 0 are usually harmless browser artifacts
-  // (e.g., external CDN scripts hiccupping during pagehide/page visibility changes on iOS)
-  if (msg === 'Script error.' && line === 0) {
-    console.warn('Cross-origin script error ignored:', url);
+  if (isHarmlessScriptError(msg, line)) {
+    console.warn('Cross-origin script error ignored:', url, msg);
     return true; // suppress default browser handling
   }
   document.body.innerHTML = '<div style="padding:40px;font-family:sans-serif;background:#fff;color:#333;"><h2 style="color:#c00">Runtime Error</h2><p><b>' + (err && err.message ? err.message : msg) + '</b></p><pre style="background:#f5f5f5;padding:12px;border-radius:8px;overflow:auto;font-size:12px;">' + (err && err.stack ? err.stack : 'Line ' + line + ': ' + msg) + '</pre><p style="margin-top:20px;color:#666">Please screenshot this and share it so I can fix it.</p></div>';
 };
+// Backup catcher: some Safari builds fire 'error' events instead of onerror for cross-origin scripts
+window.addEventListener('error', function(e) {
+  if (e && e.error == null && isHarmlessScriptError(e.message, e.lineno)) {
+    e.preventDefault();
+    console.warn('Cross-origin script error event suppressed');
+  }
+});
+// Catch unhandled promise rejections from async scripts without crashing the page
+window.addEventListener('unhandledrejection', function(e) {
+  var reason = e.reason;
+  if (reason && typeof reason.message === 'string' && isHarmlessScriptError(reason.message, 0)) {
+    e.preventDefault();
+    console.warn('Unhandled promise rejection from script error suppressed');
+  }
+});
 try {
 // ============ DATA LAYER ============
 const STORAGE_KEY = 'finance_os_data_v1';
