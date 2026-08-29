@@ -3663,13 +3663,21 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" crossorigin="anonymous"></script>
+<script src="https://accounts.google.com/gsi/client" async defer crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" crossorigin="anonymous"></script>
 <script>
-window.onerror = function(msg, url, line, col, err) { document.body.innerHTML = '<div style="padding:40px;font-family:sans-serif;background:#fff;color:#333;"><h2 style="color:#c00">Runtime Error</h2><p><b>' + (err && err.message ? err.message : msg) + '</b></p><pre style="background:#f5f5f5;padding:12px;border-radius:8px;overflow:auto;font-size:12px;">' + (err && err.stack ? err.stack : 'Line ' + line + ': ' + msg) + '</pre><p style="margin-top:20px;color:#666">Please screenshot this and share it so I can fix it.</p></div>'; };
+window.onerror = function(msg, url, line, col, err) {
+  // Cross-origin script errors at line 0 are usually harmless browser artifacts
+  // (e.g., external CDN scripts hiccupping during pagehide/page visibility changes on iOS)
+  if (msg === 'Script error.' && line === 0) {
+    console.warn('Cross-origin script error ignored:', url);
+    return true; // suppress default browser handling
+  }
+  document.body.innerHTML = '<div style="padding:40px;font-family:sans-serif;background:#fff;color:#333;"><h2 style="color:#c00">Runtime Error</h2><p><b>' + (err && err.message ? err.message : msg) + '</b></p><pre style="background:#f5f5f5;padding:12px;border-radius:8px;overflow:auto;font-size:12px;">' + (err && err.stack ? err.stack : 'Line ' + line + ': ' + msg) + '</pre><p style="margin-top:20px;color:#666">Please screenshot this and share it so I can fix it.</p></div>';
+};
 try {
 // ============ DATA LAYER ============
 const STORAGE_KEY = 'finance_os_data_v1';
