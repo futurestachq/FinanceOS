@@ -863,6 +863,39 @@
     .goal-history-toggle { display: none; }
     .goal-item-menu { display: flex; }
 
+    /* Hide icons on mobile to prevent text cutoff */
+    .summary-card .summary-icon { display: none; }
+    .goal-card .goal-icon-wrap { display: none; }
+    .budget-item-card .budget-item-icon { display: none; }
+    .sub-item .sub-icon { display: flex; } /* keep sub list icons */
+    #page-subscriptions .summary-card .summary-icon { display: none; }
+    #page-budgets .summary-card .summary-icon { display: none; }
+    #page-goals .summary-card .summary-icon { display: none; }
+    #page-giving .summary-card .summary-icon { display: none; }
+    #page-income .summary-card .summary-icon { display: none; }
+    #page-expenses .summary-card .summary-icon { display: none; }
+    #page-transactions .summary-card .summary-icon { display: none; }
+
+    /* Tighter summary cards */
+    .summary-card { padding: 8px 10px; gap: 6px; }
+    .summary-value { font-size: 13px; }
+    .summary-label { font-size: 10px; }
+    .summary-sub { font-size: 9px; }
+
+    /* Tighter goal cards */
+    .goal-right-box { min-width: 70px; padding: 6px 10px; }
+    .goal-right-amount { font-size: 13px; }
+    .goal-saved-big { font-size: 16px; }
+    .goal-saved-big span { font-size: 11px; }
+    .goal-progress-row { flex-wrap: wrap; }
+    .goal-percent { min-width: 30px; font-size: 13px; }
+
+    /* Tighter budget cards */
+    .budget-item-bottom { font-size: 11px; }
+    .budget-spent { font-size: 11px; }
+    .budget-pct { font-size: 11px; }
+    .budget-remain { font-size: 11px; }
+
     .mobile-nav {
       display: flex;
       position: fixed;
