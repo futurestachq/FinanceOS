@@ -2966,11 +2966,11 @@
           <div class="form-row">
             <div class="form-group">
               <label class="form-label">Name</label>
-              <input type="text" class="form-input" id="profileName" placeholder="Your name" onblur="saveProfile()">
+              <input type="text" class="form-input" id="profileName" placeholder="Your name">
             </div>
             <div class="form-group">
-              <label class="form-label">Email (optional)</label>
-              <input type="email" class="form-input" id="profileEmail" placeholder="you@example.com" onblur="saveProfile()">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" id="profileEmail" placeholder="you@example.com" readonly style="background:var(--bg);color:var(--text-secondary);cursor:not-allowed;">
             </div>
           </div>
           <div class="form-row">
@@ -2988,12 +2988,15 @@
             </div>
             <div class="form-group">
               <label class="form-label">Financial month starts on</label>
-              <select class="form-input" id="profileMonthStart" onchange="saveProfile()">
+              <select class="form-input" id="profileMonthStart">
                 <option value="1">1st of the month</option>
                 <option value="5">5th of the month</option>
                 <option value="25">25th of the month</option>
               </select>
             </div>
+          </div>
+          <div style="margin-top:16px;">
+            <button class="btn btn-primary" onclick="saveProfile()">Save profile</button>
           </div>
         </div>
 
@@ -3943,6 +3946,11 @@ auth.onAuthStateChanged(user => {
     hideAuthModal();
     updateUserProfileUI();
     loadData().then(() => {
+      // Auto-populate profile from Google if empty
+      if (!state.profile) state.profile = {};
+      if (!state.profile.name && user.displayName) state.profile.name = user.displayName;
+      if (!state.profile.email && user.email) state.profile.email = user.email;
+      ensureStateDefaults();
       if (!state.hasOnboarded) {
         startOnboardingIfNeeded();
       } else {
