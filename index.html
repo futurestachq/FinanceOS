@@ -7146,7 +7146,12 @@ function changeGcalCalendar() { state.settings.googleCalendar.calendarId = docum
 
 function buildGcalEvent(event) {
   const sign = event.type==='income'?'+':'\u2212';
-  const dateStr = new Date(event.date).toISOString().split('T')[0];
+  let dateStr;
+  try {
+    dateStr = new Date(event.date).toISOString().split('T')[0];
+  } catch(e) {
+    dateStr = new Date().toISOString().split('T')[0];
+  }
   const reminderDays = event.reminderDays !== null ? event.reminderDays : state.settings.defaultReminder;
   return {
     summary: event.title+' \u2014 '+sign+fmt(event.amount),
@@ -7181,18 +7186,87 @@ async function updateGcalEvent(event) {
 }
 
 async function syncAllToGcal() {
-  const token = getGcalAccessToken(); if (!token) { showToast('Google Calendar not connected'); return; }
-  const toSync = state.financialEvents.filter(e => e.syncToGcal && !e.gcalEventId && e.status !== 'cancelled');
-  if (toSync.length === 0) { showToast('All events are already synced'); return; }
-  let success = 0, failed = 0;
+  const token = getGcalAccessToken();
+  if (!token) { showToast('Google Calendar not connected'); return; }
+
   const calId = state.settings.googleCalendar.calendarId || 'primary';
-  for (const event of toSync) {
+  let success = 0, failed = 0;
+
+  // Build list of everything to sync
+  const items = [];
+
+  // Financial events
+  state.financialEvents.forEach(e => {
+    if (e.syncToGcal && !e.gcalEventId && e.status !== 'cancelled') items.push({ type: 'event', data: e });
+  });
+
+  // Subscriptions
+  state.subscriptions.forEach(s => {
+    if (s.syncToGcal && !s.gcalEventId) items.push({ type: 'subscription', data: s });
+  });
+
+  // Income events
+  state.incomeEvents.forEach(i => {
+    if (i.syncToGcal && !i.gcalEventId) items.push({ type: 'income', data: i });
+  });
+
+  if (items.length === 0) { showToast('All events are already synced'); return; }
+
+  for (const item of items) {
     try {
-      const resp = await fetch('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(calId)+'/events', { method: 'POST', headers: { 'Authorization': 'Bearer '+token, 'Content-Type': 'application/json' }, body: JSON.stringify(buildGcalEvent(event)) });
-      if (resp.ok) { const data = await resp.json(); event.gcalEventId = data.id; success++; } else { failed++; }
-    } catch(e) { failed++; }
+      let body;
+      if (item.type === 'subscription') {
+        body = {
+          summary: item.data.name+' renewal — '+fmt(item.data.cost),
+          description: item.data.name+' subscription
+Amount: '+fmt(item.data.cost)+'
+Category: '+item.data.category+'
+Recurrence: '+item.data.cycle+'
+
+Scheduled via FinanceOS',
+          start: { date: item.data.renewal }, end: { date: item.data.renewal },
+          reminders: state.settings.defaultReminder > 0 ? { useDefault: false, overrides: [{ method: 'popup', minutes: state.settings.defaultReminder * 24 * 60 }] } : { useDefault: false }
+        };
+      } else if (item.type === 'income') {
+        body = {
+          summary: item.data.name+' — +'+fmt(item.data.amount),
+          description: item.data.name+'
+Amount: '+fmt(item.data.amount)+'
+Category: '+item.data.category+'
+Recurrence: '+item.data.frequency+'
+
+Scheduled via FinanceOS',
+          start: { date: item.data.nextDate }, end: { date: item.data.nextDate },
+          reminders: state.settings.defaultReminder > 0 ? { useDefault: false, overrides: [{ method: 'popup', minutes: state.settings.defaultReminder * 24 * 60 }] } : { useDefault: false }
+        };
+      } else {
+        body = buildGcalEvent(item.data);
+      }
+
+      const resp = await fetch('https://www.googleapis.com/calendar/v3/calendars/'+encodeURIComponent(calId)+'/events', { method: 'POST', headers: { 'Authorization': 'Bearer '+token, 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      if (resp.ok) {
+        const data = await resp.json();
+        item.data.gcalEventId = data.id;
+        success++;
+      } else {
+        const errData = await resp.json().catch(() => ({}));
+        console.error('Calendar sync failed:', resp.status, errData);
+        failed++;
+      }
+    } catch(e) {
+      console.error('Calendar sync error for item:', e);
+      failed++;
+    }
   }
-  saveData(); showToast(success+' events synced'+(failed>0?', '+failed+' failed':''));
+
+  saveData();
+  if (success > 0 && failed === 0) {
+    showToast(success + ' events synced to Google Calendar successfully');
+  } else if (success > 0 && failed > 0) {
+    showToast(success + ' synced, ' + failed + ' failed. Check console for details.');
+  } else {
+    showToast('Calendar sync failed. Please reconnect Google Calendar in Settings.');
+  }
 }
 
 async function syncIncomeEventToGcal(inc) {
