@@ -2,7 +2,15 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#397968">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="FinanceOS">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="application-name" content="FinanceOS">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.svg">
 <title>FinanceOS</title>
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
@@ -7680,6 +7688,20 @@ document.getElementById('createEventModalOverlay').addEventListener('click', (e)
 
 // ============ INIT ============
 initTheme();
+
+// Register Service Worker for PWA offline support
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function() {
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(registration) {
+        console.log('ServiceWorker registered with scope:', registration.scope);
+      })
+      .catch(function(err) {
+        console.log('ServiceWorker registration failed:', err);
+      });
+  });
+}
+
 // Auth listener handles loadData, navigate, and onboarding flow
 } catch(e) {
   document.body.innerHTML = '<div style="padding:40px;font-family:sans-serif;background:#fff;color:#333;"><h2 style="color:#c00">Startup Error</h2><p><b>' + e.message + '</b></p><pre style="background:#f5f5f5;padding:12px;border-radius:8px;overflow:auto;font-size:12px;">' + (e.stack || 'No stack') + '</pre><p style="margin-top:20px;color:#666">Please screenshot this and share it so I can fix it.</p></div>';
