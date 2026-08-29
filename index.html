@@ -1918,7 +1918,7 @@
       <button class="onboarding-btn" onclick="signInWithEmail()">Sign in</button>
       <button class="onboarding-btn-secondary" onclick="signUpWithEmail()">Create account</button>
     </div>
-    <button class="onboarding-btn-secondary" onclick="continueAsGuest()" style="margin-top:16px;">Continue as guest</button>
+    <div style="font-size:12px;color:var(--text-secondary);margin-top:16px;">Sign in to keep your data safe and sync across devices.</div>
   </div>
 </div>
 
@@ -3923,11 +3923,7 @@ auth.onAuthStateChanged(user => {
       }
     });
   } else {
-    if (localStorage.getItem(STORAGE_KEY)) {
-      continueAsGuest();
-    } else {
-      showAuthModal();
-    }
+    showAuthModal();
   }
 });
 
