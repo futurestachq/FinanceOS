@@ -786,9 +786,23 @@
     #dashHealthScore [style*="font-size:32px"] { font-size: 22px !important; }
     #dashHealthScore [style*="font-size:15px"] { font-size: 13px !important; margin-bottom: 8px !important; }
     #dashHealthScore [style*="font-size:13px"] { font-size: 11px !important; }
-    #dashBudgets [style*="padding:14px 0"] { padding: 10px 0 !important; }
-    #dashBudgets [style*="width:36px"] { width: 28px !important; height: 28px !important; }
-    #dashBudgets [style*="font-size:14px"] { font-size: 13px !important; }
+    /* DASHBOARD BUDGET - aggressive compact */
+    #dashBudgets .dash-budget-icon { display: none !important; }
+    #dashBudgets [style*="padding:14px 0"] { padding: 6px 0 !important; }
+    #dashBudgets [style*="gap:10px"] { gap: 4px !important; }
+    #dashBudgets [style*="margin-bottom:10px"] { margin-bottom: 3px !important; }
+    #dashBudgets [style*="margin-top:8px"] { margin-top: 3px !important; flex-direction: column !important; align-items: flex-start !important; gap: 1px !important; }
+    #dashBudgets [style*="font-size:14px"] { font-size: 11px !important; }
+    #dashBudgets [style*="font-size:13px"] { font-size: 10px !important; }
+    #dashBudgets .badge { font-size: 9px !important; padding: 1px 5px !important; }
+    #dashBudgets .progress-bar-lg { height: 6px !important; }
+    /* DASHBOARD RENEWALS - hide icons, compact */
+    #dashRenewals .sub-icon { display: none !important; }
+    #dashRenewals .sub-item { gap: 4px !important; padding: 5px 0 !important; }
+    #dashRenewals .sub-name { font-size: 12px !important; }
+    #dashRenewals .sub-meta { font-size: 10px !important; }
+    #dashRenewals .sub-cost { font-size: 12px !important; }
+    #dashRenewals .badge { font-size: 9px !important; padding: 1px 5px !important; }
     .sub-item { padding: 10px 0 !important; }
     .sub-icon { width: 32px !important; height: 32px !important; }
     .sub-icon svg { width: 16px !important; height: 16px !important; }
@@ -801,6 +815,13 @@
     .event-title { font-size: 12px !important; }
     .event-meta { font-size: 10px !important; }
     .event-amount { font-size: 12px !important; }
+    /* DASHBOARD RECENT TX - hide icons & actions, compact */
+    #dashRecent .tx-icon { display: none !important; }
+    #dashRecent .tx-actions { display: none !important; }
+    #dashRecent .tx-row { gap: 4px !important; padding: 5px 0 !important; }
+    #dashRecent .tx-desc { font-size: 12px !important; }
+    #dashRecent .tx-meta { font-size: 10px !important; }
+    #dashRecent .tx-amount { font-size: 12px !important; }
     .tx-row { padding: 8px 0 !important; gap: 8px !important; }
     .tx-icon { width: 30px !important; height: 30px !important; }
     .tx-icon svg { width: 14px !important; height: 14px !important; }
@@ -931,20 +952,18 @@
     .budget-pct { font-size: 11px; }
     .budget-remain { font-size: 11px; }
 
-    /* Dashboard card fixes for mobile */
-    .dash-budget-icon { display: none; }
-    .upcoming-item { gap: 8px; padding: 10px 0; }
-    .upcoming-date { width: 36px; }
-    .upcoming-date-day { font-size: 15px; }
-    .sub-item { padding: 10px 0; gap: 10px; }
-    .sub-icon { width: 32px; height: 32px; }
-    .sub-icon svg { width: 16px; height: 16px; }
-    .sub-cost { font-size: 14px; }
-    .tx-row { gap: 10px; padding: 10px 0; }
-    .tx-icon { width: 32px; height: 32px; }
-    .tx-icon svg { width: 16px; height: 16px; }
-    .event-dot { width: 8px; height: 8px; }
-    /* Sub item right column should not shrink */
+    /* Dashboard upcoming events compact */
+    #dashUpcoming .upcoming-item { gap: 6px !important; padding: 5px 0 !important; }
+    #dashUpcoming .upcoming-date { width: 32px !important; }
+    #dashUpcoming .upcoming-date-day { font-size: 14px !important; }
+    #dashUpcoming .event-title { font-size: 11px !important; }
+    #dashUpcoming .event-meta { font-size: 9px !important; }
+    #dashUpcoming .event-amount { font-size: 11px !important; }
+    #dashUpcoming .event-dot { width: 7px !important; height: 7px !important; }
+
+    /* Force dashboard cards to never scroll horizontally */
+    #page-dashboard .card { overflow-x: hidden !important; }
+    #page-dashboard .card > div { max-width: 100%; }
     .sub-item > div:last-child { flex-shrink: 0; }
 
     .mobile-nav {
