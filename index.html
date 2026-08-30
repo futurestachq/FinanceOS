@@ -3137,10 +3137,25 @@
           <div class="settings-title">Notifications</div>
           <div class="toggle-row">
             <div>
-              <div class="toggle-label">Enable financial notifications</div>
-              <div class="toggle-desc">Show alerts about upcoming payments and income</div>
+              <div class="toggle-label">In-app notification banners</div>
+              <div class="toggle-desc">Show upcoming payment alerts on the dashboard</div>
             </div>
             <div class="toggle" id="toggleNotifs" onclick="toggleSetting('notifications', this)"></div>
+          </div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Browser push notifications</div>
+              <div class="toggle-desc">Get alerts even when FinanceOS is closed <span id="browserNotifStatus" style="color:var(--text-secondary);font-size:12px;"></span></div>
+            </div>
+            <div class="toggle" id="toggleBrowserNotifs" onclick="toggleBrowserNotifs(this)"></div>
+          </div>
+          <div id="browserNotifPermissionRow" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+              <div style="font-size:13px;color:var(--text-secondary);">
+                Permission required to send push notifications.
+              </div>
+              <button class="btn btn-sm" onclick="requestBrowserNotifPermission()" id="notifPermissionBtn">Allow notifications</button>
+            </div>
           </div>
           <div class="toggle-row">
             <div>
@@ -3840,8 +3855,11 @@ function ensureStateDefaults() {
   if (!state.settings) state.settings = {
     googleCalendar: { connected: false, accessToken: null, tokenExpiry: null, calendarId: null, calendars: [], clientId: '', accountEmail: '' },
     syncSubscriptions: true, syncBills: true, syncSalary: true, syncGoals: false,
-    defaultReminder: 1, notifications: true, notifWindow: 7
+    defaultReminder: 1, notifications: true, notifWindow: 7,
+    browserNotifs: false
   };
+  if (typeof state.settings.browserNotifs !== 'boolean') state.settings.browserNotifs = false;
+  if (!state.shownNotifIds) state.shownNotifIds = [];
   // Ensure postedDates arrays exist for auto-posting recurring items
   state.subscriptions.forEach(s => { if (!s.postedDates) s.postedDates = []; });
   state.incomeEvents.forEach(i => { if (!i.postedDates) i.postedDates = []; });
@@ -3961,6 +3979,7 @@ function continueAsGuest() {
   loadData().then(() => {
     ensureStateDefaults();
     autoPostRecurring();
+    checkAndShowBrowserNotifications();
     if (!state.hasOnboarded) {
       startOnboardingIfNeeded();
     } else {
@@ -4038,6 +4057,7 @@ auth.onAuthStateChanged(user => {
       if (!state.profile.email && user.email) state.profile.email = user.email;
       ensureStateDefaults();
       autoPostRecurring();
+      checkAndShowBrowserNotifications();
       if (!state.hasOnboarded) {
         startOnboardingIfNeeded();
       } else {
@@ -7125,6 +7145,8 @@ function renderSettings() {
   setToggleState('toggleSyncSalary', state.settings.syncSalary);
   setToggleState('toggleSyncGoals', state.settings.syncGoals);
   setToggleState('toggleNotifs', state.settings.notifications);
+  setToggleState('toggleBrowserNotifs', state.settings.browserNotifs);
+  renderBrowserNotifUI();
   document.getElementById('defaultReminder').value = state.settings.defaultReminder;
   document.getElementById('notifWindow').value = state.settings.notifWindow;
   renderIncomeEventList();
@@ -7141,6 +7163,170 @@ function setToggleState(id, value) { const el = document.getElementById(id); if 
 function toggleSetting(key, el) { state.settings[key] = !state.settings[key]; el.classList.toggle('on', state.settings[key]); saveData(); }
 function changeDefaultReminder() { state.settings.defaultReminder = parseInt(document.getElementById('defaultReminder').value); saveData(); }
 function changeNotifWindow() { state.settings.notifWindow = parseInt(document.getElementById('notifWindow').value); saveData(); }
+
+// ============ BROWSER PUSH NOTIFICATIONS ============
+
+function getBrowserNotifPermissionText() {
+  if (!('Notification' in window)) return 'Not supported on this device';
+  if (Notification.permission === 'granted') return 'Permission granted';
+  if (Notification.permission === 'denied') return 'Permission denied';
+  return 'Permission not requested';
+}
+
+function toggleBrowserNotifs(el) {
+  const enabled = !state.settings.browserNotifs;
+  state.settings.browserNotifs = enabled;
+  el.classList.toggle('on', enabled);
+  saveData();
+  renderBrowserNotifUI();
+  if (enabled) {
+    requestBrowserNotifPermission();
+  }
+}
+window.toggleBrowserNotifs = toggleBrowserNotifs;
+
+function requestBrowserNotifPermission() {
+  if (!('Notification' in window)) { showToast('Notifications not supported on this browser'); return; }
+  if (Notification.permission === 'granted') {
+    renderBrowserNotifUI();
+    checkAndShowBrowserNotifications();
+    return;
+  }
+  if (Notification.permission === 'denied') {
+    showToast('Notifications blocked. Please enable them in your browser settings.');
+    renderBrowserNotifUI();
+    return;
+  }
+  Notification.requestPermission().then((permission) => {
+    renderBrowserNotifUI();
+    if (permission === 'granted') {
+      showToast('Notifications enabled');
+      checkAndShowBrowserNotifications();
+    } else if (permission === 'denied') {
+      showToast('Notifications blocked');
+    }
+  });
+}
+window.requestBrowserNotifPermission = requestBrowserNotifPermission;
+
+function renderBrowserNotifUI() {
+  const statusEl = document.getElementById('browserNotifStatus');
+  const permRow = document.getElementById('browserNotifPermissionRow');
+  const permBtn = document.getElementById('notifPermissionBtn');
+  if (statusEl) statusEl.textContent = '(' + getBrowserNotifPermissionText() + ')';
+  if (permRow) {
+    const needsRequest = ('Notification' in window) && Notification.permission !== 'granted' && state.settings.browserNotifs;
+    permRow.style.display = needsRequest ? 'block' : 'none';
+  }
+  if (permBtn) {
+    permBtn.textContent = Notification.permission === 'denied' ? 'Blocked — open browser settings' : 'Allow notifications';
+    permBtn.disabled = Notification.permission === 'denied';
+    permBtn.style.opacity = Notification.permission === 'denied' ? '0.5' : '1';
+  }
+}
+
+function canShowBrowserNotif() {
+  return ('Notification' in window) && Notification.permission === 'granted' && state.settings.browserNotifs;
+}
+
+function getNotifId(event, dateStr) {
+  return event.id + '_' + dateStr;
+}
+
+function checkAndShowBrowserNotifications() {
+  if (!canShowBrowserNotif()) return;
+  if (!state.financialEvents || state.financialEvents.length === 0) return;
+
+  const today = new Date(); today.setHours(0,0,0,0);
+  const win = state.settings.notifWindow || 7;
+  const cutoff = new Date(today); cutoff.setDate(cutoff.getDate() + win);
+
+  if (!state.shownNotifIds) state.shownNotifIds = [];
+  const newShownIds = [];
+
+  const eventsToNotify = state.financialEvents.filter(e => {
+    if (e.status === 'completed' || e.status === 'cancelled') return false;
+    const ed = new Date(e.date); ed.setHours(0,0,0,0);
+    return ed >= today && ed <= cutoff;
+  }).sort((a,b) => new Date(a.date) - new Date(b.date));
+
+  if (eventsToNotify.length === 0) return;
+
+  // Group by date for nicer messages
+  const byDate = {};
+  eventsToNotify.forEach(e => {
+    const key = e.date;
+    if (!byDate[key]) byDate[key] = [];
+    byDate[key].push(e);
+  });
+
+  Object.entries(byDate).forEach(([dateStr, events]) => {
+    events.forEach(event => {
+      const notifId = getNotifId(event, dateStr);
+      if (state.shownNotifIds.includes(notifId)) return;
+
+      const ed = new Date(dateStr); ed.setHours(0,0,0,0);
+      const diffDays = Math.round((ed - today) / 86400000);
+
+      let title, body;
+      const sign = event.type === 'income' ? '+' : '';
+      const amountText = fmt(event.amount);
+
+      if (diffDays === 0) {
+        title = event.title + ' due today';
+        body = sign + amountText;
+      } else if (diffDays === 1) {
+        title = event.title + ' due tomorrow';
+        body = sign + amountText;
+      } else {
+        title = event.title + ' in ' + diffDays + ' days';
+        body = sign + amountText;
+      }
+
+      // Show via service worker if available, otherwise direct Notification
+      showBrowserNotification(title, body, notifId);
+      newShownIds.push(notifId);
+    });
+  });
+
+  if (newShownIds.length > 0) {
+    state.shownNotifIds = [...state.shownNotifIds, ...newShownIds];
+    // Keep array from growing too large — keep last 200
+    if (state.shownNotifIds.length > 200) {
+      state.shownNotifIds = state.shownNotifIds.slice(-200);
+    }
+    saveData();
+  }
+}
+window.checkAndShowBrowserNotifications = checkAndShowBrowserNotifications;
+
+function showBrowserNotification(title, body, tag) {
+  // Try to send to service worker for background-capable notifications
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    navigator.serviceWorker.controller.postMessage({
+      type: 'SHOW_NOTIFICATION',
+      title: title,
+      body: body,
+      tag: tag,
+      icon: './icon-192.svg'
+    });
+  } else if ('Notification' in window) {
+    // Fallback to direct Notification API
+    try { new Notification(title, { body: body, tag: tag, icon: './icon-192.svg' }); } catch(e) {}
+  }
+}
+window.showBrowserNotification = showBrowserNotification;
+
+function clearOldNotificationIds() {
+  // Clean up shownNotifIds that reference dates in the past (older than 30 days)
+  if (!state.shownNotifIds) return;
+  const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
+  const cutoffStr = cutoff.toISOString().split('T')[0];
+  state.shownNotifIds = state.shownNotifIds.filter(id => {
+    const datePart = id.split('_').pop();
+    return datePart >= cutoffStr;
+  });
+}
 
 function saveProfile() {
   if (!state.profile) state.profile = { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' };
@@ -7731,6 +7917,7 @@ function finishOnboarding() {
   state.hasOnboarded = true;
   ensureStateDefaults();
   autoPostRecurring();
+  checkAndShowBrowserNotifications();
   saveData();
   document.getElementById('onboardingOverlay').classList.remove('active');
   navigate('dashboard');
@@ -7886,11 +8073,12 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-// Auto-post recurring items when user returns to the app (PWA background resume)
+// Auto-post recurring items and check notifications when user returns to the app (PWA background resume)
 if (typeof document !== 'undefined') {
   document.addEventListener('visibilitychange', function() {
     if (!document.hidden && state && state.hasOnboarded) {
       autoPostRecurring();
+      checkAndShowBrowserNotifications();
     }
   });
 }
