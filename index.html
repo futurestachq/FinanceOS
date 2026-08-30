@@ -7219,9 +7219,16 @@ function renderBrowserNotifUI() {
     permRow.style.display = needsRequest ? 'block' : 'none';
   }
   if (permBtn) {
-    permBtn.textContent = Notification.permission === 'denied' ? 'Blocked — open browser settings' : 'Allow notifications';
-    permBtn.disabled = Notification.permission === 'denied';
-    permBtn.style.opacity = Notification.permission === 'denied' ? '0.5' : '1';
+    const notifSupported = 'Notification' in window;
+    if (notifSupported) {
+      permBtn.textContent = Notification.permission === 'denied' ? 'Blocked — open browser settings' : 'Allow notifications';
+      permBtn.disabled = Notification.permission === 'denied';
+      permBtn.style.opacity = Notification.permission === 'denied' ? '0.5' : '1';
+    } else {
+      permBtn.textContent = 'Not supported';
+      permBtn.disabled = true;
+      permBtn.style.opacity = '0.5';
+    }
   }
 }
 
