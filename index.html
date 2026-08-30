@@ -3841,6 +3841,11 @@ let state = {
   }
 };
 
+function syncBalanceFromAccounts() {
+  const computed = state.accounts.reduce((s, a) => s + (a.balance || 0), 0);
+  state.balance = computed;
+}
+
 function ensureStateDefaults() {
   if (!state.transactions) state.transactions = [];
   if (!state.subscriptions) state.subscriptions = [];
@@ -3863,6 +3868,8 @@ function ensureStateDefaults() {
   // Ensure postedDates arrays exist for auto-posting recurring items
   state.subscriptions.forEach(s => { if (!s.postedDates) s.postedDates = []; });
   state.incomeEvents.forEach(i => { if (!i.postedDates) i.postedDates = []; });
+  // Ensure balance is consistent with accounts
+  syncBalanceFromAccounts();
 }
 
 async function loadData() {
@@ -4186,7 +4193,8 @@ function seedData() {
     {id: uid(), name: 'Investment Capital', target: 2000000, current: 750000, date: addDays(now, 200), priority: 'low', icon: 'Investment', contributions: [{date: d(1), time: '07:15 AM', timestamp: new Date(y, m, 1, 7, 15).toISOString(), amount: 200000},{date: d(12), time: '05:45 PM', timestamp: new Date(y, m, 12, 17, 45).toISOString(), amount: 300000},{date: d(22), time: '09:00 AM', timestamp: new Date(y, m, 22, 9, 0).toISOString(), amount: 250000}]},
   ];
 
-  state.balance = 1250000;
+  // Compute total balance from accounts so everything stays consistent
+  state.balance = state.accounts.reduce((s, a) => s + (a.balance || 0), 0);
 
   // Recurring income events
   const now0 = new Date();
@@ -4656,10 +4664,16 @@ function saveAccount() {
   if (!name) { showToast('Enter an account name'); return; }
   if (editingAccountId) {
     const idx = state.accounts.findIndex(a => a.id === editingAccountId);
-    if (idx >= 0) state.accounts[idx] = { ...state.accounts[idx], name, balance };
+    if (idx >= 0) {
+      const oldAcct = state.accounts[idx];
+      const diff = balance - (oldAcct.balance || 0);
+      state.accounts[idx] = { ...oldAcct, name, balance };
+      state.balance = (state.balance || 0) + diff;
+    }
     showToast('Account updated');
   } else {
     state.accounts.push({ id: uid(), name, balance });
+    state.balance = (state.balance || 0) + balance;
     showToast('Account added');
   }
   saveData();
@@ -4675,6 +4689,8 @@ function deleteAccount(id) {
     ? 'Delete account "' + acct.name + '"? Transactions linked to this account will keep their records, but the account itself will be removed.'
     : 'Delete account "' + acct.name + '"?';
   confirmDelete('Delete account?', msg, () => {
+    const removed = state.accounts.find(a => a.id === id);
+    if (removed) state.balance = (state.balance || 0) - (removed.balance || 0);
     state.accounts = state.accounts.filter(a => a.id !== id);
     saveData();
     showToast('Account deleted');
@@ -4689,7 +4705,7 @@ function renderDashboard() {
   const expenses = getExpenseTotal(mk);
   const savings = income - expenses;
   const savingsRate = income > 0 ? Math.round((savings / income) * 100) : 0;
-  const balance = state.balance;
+  const balance = state.accounts.reduce((s, a) => s + (a.balance || 0), 0);
 
   document.getElementById('dashIncome').textContent = fmt(income);
   document.getElementById('dashExpenses').textContent = fmt(expenses);
@@ -6070,7 +6086,7 @@ function updateCategoryOptions(type) {
   document.getElementById('txCategory').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
-document.querySelectorAll('.type-btn').forEach(btn => {
+document.querySelectorAll('#typeSelector .type-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     currentTxType = btn.dataset.type;
     updateTypeSelector(currentTxType);
@@ -6102,11 +6118,13 @@ function saveTransaction() {
       // Reverse old balance effects
       if (oldTx.type === 'income') state.balance -= oldTx.amount;
       else if (oldTx.type === 'expense' || oldTx.type === 'giving') state.balance += oldTx.amount;
+      else if (oldTx.type === 'transfer') { /* transfer has no net effect on total balance */ }
       if (oldTx.accountId) {
         const oldAcct = state.accounts.find(a => a.id === oldTx.accountId);
         if (oldAcct) {
           if (oldTx.type === 'income') oldAcct.balance -= oldTx.amount;
           else if (oldTx.type === 'expense' || oldTx.type === 'giving') oldAcct.balance += oldTx.amount;
+          else if (oldTx.type === 'transfer') oldAcct.balance += oldTx.amount;
         }
       }
       state.transactions[idx] = txData;
@@ -6119,11 +6137,13 @@ function saveTransaction() {
   // Apply new balance effects
   if (currentTxType === 'income') state.balance += amount;
   else if (currentTxType === 'expense' || currentTxType === 'giving') state.balance -= amount;
+  else if (currentTxType === 'transfer') { /* transfer has no net effect on total balance */ }
   if (accountId) {
     const acct = state.accounts.find(a => a.id === accountId);
     if (acct) {
       if (currentTxType === 'income') acct.balance += amount;
       else if (currentTxType === 'expense' || currentTxType === 'giving') acct.balance -= amount;
+      else if (currentTxType === 'transfer') acct.balance -= amount;
     }
   }
 
@@ -6171,6 +6191,7 @@ function deleteTransaction(id) {
       if (acct) {
         if (tx.type === 'income') acct.balance -= tx.amount;
         else if (tx.type === 'expense' || tx.type === 'giving') acct.balance += tx.amount;
+        else if (tx.type === 'transfer') acct.balance += tx.amount;
       }
     }
     state.transactions = state.transactions.filter(t => t.id !== id);
@@ -6184,6 +6205,7 @@ function deleteTransaction(id) {
         if (acct) {
           if (tx.type === 'income') acct.balance += tx.amount;
           else if (tx.type === 'expense' || tx.type === 'giving') acct.balance -= tx.amount;
+          else if (tx.type === 'transfer') acct.balance -= tx.amount;
         }
       }
       saveData();
@@ -7035,6 +7057,13 @@ function markEventCompleted(eventId) {
     const tx = { id: uid(), date: event.date, amount: event.amount, type: txType, category: event.category, description: event.title, payment: 'Bank Transfer', tags: ['scheduled'], notes: 'Auto-created from scheduled event', accountId: event.accountId || null };
     state.transactions.push(tx); event.linkedTxId = tx.id;
     if (txType === 'income') state.balance += event.amount; else state.balance -= event.amount;
+    if (event.accountId) {
+      const acct = state.accounts.find(a => a.id === event.accountId);
+      if (acct) {
+        if (txType === 'income') acct.balance += event.amount;
+        else acct.balance -= event.amount;
+      }
+    }
     saveData(); showToast('Event marked as paid and transaction recorded');
     closeEventDetailModal();
     const ap = document.querySelector('.page.active').id.replace('page-',''); navigate(ap);
