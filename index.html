@@ -3842,6 +3842,9 @@ function ensureStateDefaults() {
     syncSubscriptions: true, syncBills: true, syncSalary: true, syncGoals: false,
     defaultReminder: 1, notifications: true, notifWindow: 7
   };
+  // Ensure postedDates arrays exist for auto-posting recurring items
+  state.subscriptions.forEach(s => { if (!s.postedDates) s.postedDates = []; });
+  state.incomeEvents.forEach(i => { if (!i.postedDates) i.postedDates = []; });
 }
 
 async function loadData() {
@@ -3956,6 +3959,8 @@ function continueAsGuest() {
   currentUser = null;
   hideAuthModal();
   loadData().then(() => {
+    ensureStateDefaults();
+    autoPostRecurring();
     if (!state.hasOnboarded) {
       startOnboardingIfNeeded();
     } else {
@@ -4032,6 +4037,7 @@ auth.onAuthStateChanged(user => {
       if (!state.profile.name && user.displayName) state.profile.name = user.displayName;
       if (!state.profile.email && user.email) state.profile.email = user.email;
       ensureStateDefaults();
+      autoPostRecurring();
       if (!state.hasOnboarded) {
         startOnboardingIfNeeded();
       } else {
@@ -6613,6 +6619,113 @@ function advanceDate(date, frequency) {
   return d;
 }
 
+function autoPostRecurring() {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  let postedCount = 0;
+  const postedNames = [];
+
+  // Post subscriptions (expenses)
+  state.subscriptions.forEach(sub => {
+    if (sub.status === 'paused') return;
+    if (!sub.postedDates) sub.postedDates = [];
+
+    let safety = 0;
+    while (safety < 50) {
+      safety++;
+      const currentDate = new Date(sub.renewal);
+      currentDate.setHours(0, 0, 0, 0);
+      if (currentDate > today) break;
+
+      const dateStr = sub.renewal;
+      if (!sub.postedDates.includes(dateStr)) {
+        const tx = {
+          id: uid(),
+          date: dateStr,
+          type: 'expense',
+          category: sub.category || 'Subscriptions',
+          description: sub.name + ' subscription',
+          amount: sub.cost,
+          payment: 'Bank Transfer',
+          tags: ['recurring', 'auto-posted'],
+          notes: 'Auto-posted from recurring subscription',
+          accountId: sub.accountId || null
+        };
+        state.transactions.push(tx);
+        state.balance -= sub.cost;
+        if (sub.accountId) {
+          const acct = state.accounts.find(a => a.id === sub.accountId);
+          if (acct) acct.balance -= sub.cost;
+        }
+        sub.postedDates.push(dateStr);
+        postedCount++;
+        postedNames.push(sub.name);
+      }
+      const nextDate = advanceDate(currentDate, sub.cycle);
+      const nextStr = nextDate.toISOString().split('T')[0];
+      if (nextStr === sub.renewal) break; // safeguard: no advancement
+      sub.renewal = nextStr;
+    }
+  });
+
+  // Post income events
+  state.incomeEvents.forEach(inc => {
+    if (!inc.active) return;
+    if (!inc.postedDates) inc.postedDates = [];
+
+    let safety = 0;
+    while (safety < 50) {
+      safety++;
+      const currentDate = new Date(inc.nextDate);
+      currentDate.setHours(0, 0, 0, 0);
+      if (currentDate > today) break;
+
+      const dateStr = inc.nextDate;
+      if (!inc.postedDates.includes(dateStr)) {
+        const tx = {
+          id: uid(),
+          date: dateStr,
+          type: 'income',
+          category: inc.category || 'Income',
+          description: inc.name,
+          amount: inc.amount,
+          payment: 'Bank Transfer',
+          tags: ['recurring', 'auto-posted'],
+          notes: 'Auto-posted from recurring income event',
+          accountId: inc.accountId || null
+        };
+        state.transactions.push(tx);
+        state.balance += inc.amount;
+        if (inc.accountId) {
+          const acct = state.accounts.find(a => a.id === inc.accountId);
+          if (acct) acct.balance += inc.amount;
+        }
+        inc.postedDates.push(dateStr);
+        postedCount++;
+        postedNames.push(inc.name);
+      }
+      const nextDate = advanceDate(currentDate, inc.frequency);
+      const nextStr = nextDate.toISOString().split('T')[0];
+      if (nextStr === inc.nextDate) break; // safeguard: no advancement
+      inc.nextDate = nextStr;
+    }
+  });
+
+  if (postedCount > 0) {
+    state.transactions.sort((a, b) => new Date(a.date) - new Date(b.date));
+    saveData();
+    refreshFinancialEvents();
+    const unique = [...new Set(postedNames)];
+    if (unique.length === 1) {
+      const count = postedNames.filter(n => n === unique[0]).length;
+      showToast(unique[0] + ' posted ' + count + '× today');
+    } else {
+      showToast(postedCount + ' recurring items auto-posted');
+    }
+  }
+}
+window.autoPostRecurring = autoPostRecurring;
+
 function refreshFinancialEvents() {
   state.financialEvents = generateFinancialEvents();
   saveData();
@@ -7616,6 +7729,8 @@ function skipOnboarding() {
 
 function finishOnboarding() {
   state.hasOnboarded = true;
+  ensureStateDefaults();
+  autoPostRecurring();
   saveData();
   document.getElementById('onboardingOverlay').classList.remove('active');
   navigate('dashboard');
@@ -7768,6 +7883,15 @@ if ('serviceWorker' in navigator) {
       .catch(function(err) {
         console.log('ServiceWorker registration failed:', err);
       });
+  });
+}
+
+// Auto-post recurring items when user returns to the app (PWA background resume)
+if (typeof document !== 'undefined') {
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && state && state.hasOnboarded) {
+      autoPostRecurring();
+    }
   });
 }
 
