@@ -2700,7 +2700,7 @@
             <div class="metric-value" id="acctDetailIncome" style="color:var(--success);">₦0</div>
           </div>
           <div class="metric-card">
-            <div class="metric-label">Expenses (this month)</div>
+            <div class="metric-label">Outflow (this month)</div>
             <div class="metric-value" id="acctDetailExpenses" style="color:var(--danger);">₦0</div>
           </div>
           <div class="metric-card">
@@ -4293,6 +4293,10 @@ function getAccountMonthExpenses(accountId, monthK) {
   return getMonthTransactions(monthK).filter(t => t.type === 'expense' && t.accountId === accountId).reduce((s, t) => s + t.amount, 0);
 }
 
+function getAccountMonthGiving(accountId, monthK) {
+  return getMonthTransactions(monthK).filter(t => t.type === 'giving' && t.accountId === accountId).reduce((s, t) => s + t.amount, 0);
+}
+
 function getIncomeTotal(monthK) {
   return getMonthTransactions(monthK).filter(t => t.type === 'income').reduce((s, t) => s + t.amount, 0);
 }
@@ -4587,7 +4591,7 @@ function renderAccounts() {
     const txs = getAccountTransactions(a.id);
     const mk = currentMonthKey();
     const inc = getAccountMonthIncome(a.id, mk);
-    const exp = getAccountMonthExpenses(a.id, mk);
+    const exp = getAccountMonthExpenses(a.id, mk) + getAccountMonthGiving(a.id, mk);
     return `<div class="budget-card" style="cursor:pointer;" onclick="viewAccount('${a.id}')">
       <div class="budget-card-icon" style="background:var(--light-green);color:var(--accent);">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
@@ -4623,12 +4627,12 @@ function renderAccountDetail() {
   const mk = currentMonthKey();
   const txs = getAccountTransactions(acct.id).sort((a,b) => new Date(b.date) - new Date(a.date));
   const inc = txs.filter(t => t.type === 'income' && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0);
-  const exp = txs.filter(t => t.type === 'expense' && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0);
+  const out = txs.filter(t => (t.type === 'expense' || t.type === 'giving') && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0);
 
   document.getElementById('acctDetailTitle').textContent = acct.name + ' — Transactions';
   document.getElementById('acctDetailBalance').textContent = fmt(acct.balance || 0);
   document.getElementById('acctDetailIncome').textContent = fmt(inc);
-  document.getElementById('acctDetailExpenses').textContent = fmt(exp);
+  document.getElementById('acctDetailExpenses').textContent = fmt(out);
   document.getElementById('acctDetailTxCount').textContent = txs.length;
 
   const container = document.getElementById('acctDetailTxList');
