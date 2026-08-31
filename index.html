@@ -1494,10 +1494,10 @@
   }
   .notif-dismiss:hover { color: var(--text-secondary); }
 
-  /* Auth Login */
-  .auth-overlay { position:fixed; inset:0; background:var(--bg); z-index:200; display:none; align-items:center; justify-content:center; padding:24px; overflow-y:auto; }
-  .auth-overlay.active { display:flex; }
-  .auth-container { max-width:420px; width:100%; text-align:center; }
+  /* Auth Login / Landing Page */
+  .auth-overlay { position:fixed; inset:0; background:var(--bg); z-index:200; display:none; padding:0; overflow-y:auto; }
+  .auth-overlay.active { display:block; }
+  .auth-container { max-width:420px; width:100%; text-align:center; margin:0 auto; padding:80px 24px 40px; }
   .auth-btn-google { width:100%; padding:14px 16px; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--card); color:var(--text); font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:10px; transition:var(--transition); margin-bottom:16px; }
   .auth-btn-google:hover { background:var(--bg); }
   .auth-btn-google svg { width:20px; height:20px; }
@@ -1515,6 +1515,51 @@
   .mobile-profile-avatar { width:28px; height:28px; border-radius:50%; background:var(--light-green); display:flex; align-items:center; justify-content:center; font-weight:600; font-size:12px; color:var(--accent); overflow:hidden; flex-shrink:0; }
   .mobile-profile-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
   .mobile-profile-name { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100px; }
+
+
+  /* Landing Page */
+  .landing-page { width:100%; max-width:1100px; margin:0 auto; padding:0 24px; text-align:center; }
+  .landing-hero { padding:80px 0 60px; }
+  .landing-hero-logo { width:80px; height:80px; margin:0 auto 24px; }
+  .landing-hero-title { font-size:42px; font-weight:700; letter-spacing:-1px; margin-bottom:12px; color:var(--text); }
+  .landing-hero-tagline { font-size:18px; color:var(--text-secondary); max-width:500px; margin:0 auto 32px; line-height:1.6; }
+  .landing-hero-cta { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; margin-bottom:40px; }
+  .landing-btn-primary { padding:14px 28px; background:var(--accent); color:white; border:none; border-radius:var(--radius-sm); font-size:16px; font-weight:600; cursor:pointer; transition:var(--transition); }
+  .landing-btn-primary:hover { background:var(--accent-hover); transform:translateY(-1px); }
+  .landing-btn-secondary { padding:14px 28px; background:var(--card); color:var(--text); border:1px solid var(--border); border-radius:var(--radius-sm); font-size:16px; font-weight:600; cursor:pointer; transition:var(--transition); }
+  .landing-btn-secondary:hover { background:var(--bg); }
+  .landing-trust { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; font-size:13px; color:var(--text-secondary); }
+  .landing-trust span { display:flex; align-items:center; gap:6px; }
+  .landing-section { padding:60px 0; border-top:1px solid var(--border); }
+  .landing-section-title { font-size:28px; font-weight:700; margin-bottom:8px; color:var(--text); }
+  .landing-section-subtitle { font-size:15px; color:var(--text-secondary); margin-bottom:40px; max-width:500px; margin-left:auto; margin-right:auto; }
+  .landing-features { display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:20px; text-align:left; }
+  .landing-feature-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px; transition:var(--transition); }
+  .landing-feature-card:hover { transform:translateY(-2px); box-shadow:0 4px 12px rgba(0,0,0,0.05); }
+  .landing-feature-icon { width:40px; height:40px; border-radius:10px; background:var(--light-green); display:flex; align-items:center; justify-content:center; margin-bottom:14px; color:var(--accent); }
+  .landing-feature-title { font-size:16px; font-weight:600; margin-bottom:6px; color:var(--text); }
+  .landing-feature-desc { font-size:13px; color:var(--text-secondary); line-height:1.5; }
+  .landing-steps { display:flex; gap:20px; justify-content:center; flex-wrap:wrap; }
+  .landing-step { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:24px; width:100%; max-width:280px; text-align:center; }
+  .landing-step-num { width:36px; height:36px; border-radius:50%; background:var(--accent); color:white; font-weight:700; font-size:16px; display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+  .landing-step-title { font-size:16px; font-weight:600; margin-bottom:6px; color:var(--text); }
+  .landing-step-desc { font-size:13px; color:var(--text-secondary); line-height:1.5; }
+  .landing-security { background:var(--light-green); border-radius:var(--radius); padding:32px; margin:0 auto; max-width:600px; }
+  .landing-security-title { font-size:18px; font-weight:600; margin-bottom:12px; color:var(--text); }
+  .landing-security-desc { font-size:14px; color:var(--text-secondary); line-height:1.6; }
+  .landing-footer { padding:40px 0; border-top:1px solid var(--border); margin-top:20px; }
+  .landing-footer-text { font-size:13px; color:var(--text-secondary); }
+  .landing-footer a { color:var(--accent); text-decoration:none; font-weight:500; }
+  .auth-back-link { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--text-secondary); cursor:pointer; margin-bottom:20px; transition:var(--transition); }
+  .auth-back-link:hover { color:var(--text); }
+  @media (max-width:768px) {
+    .landing-hero { padding:40px 0 30px; }
+    .landing-hero-title { font-size:28px; }
+    .landing-hero-tagline { font-size:15px; }
+    .landing-section { padding:40px 0; }
+    .landing-section-title { font-size:22px; }
+    .landing-step { max-width:100%; }
+  }
 
   /* Onboarding */
   .onboarding-overlay {
@@ -2049,9 +2094,138 @@
 </head>
 <body>
 
-<!-- Auth Login Modal -->
+<!-- Auth Login Modal / Landing Page -->
 <div class="auth-overlay" id="authOverlay">
-  <div class="auth-container">
+  <!-- Landing Page -->
+  <div class="landing-page" id="landingPage">
+    <section class="landing-hero">
+      <img src="icon-192.svg" class="landing-hero-logo" alt="FinanceOS" style="border-radius:16px;">
+      <h1 class="landing-hero-title">FinanceOS</h1>
+      <p class="landing-hero-tagline">Your Personal Operating System for Money</p>
+      <div class="landing-hero-cta">
+        <button class="landing-btn-primary" onclick="showAuthForm()">Get Started Free</button>
+        <button class="landing-btn-secondary" onclick="showAuthForm()">Sign In</button>
+      </div>
+      <div class="landing-trust">
+        <span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          Cloud Sync
+        </span>
+        <span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+          PIN Protected
+        </span>
+        <span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+          Private &amp; Secure
+        </span>
+      </div>
+    </section>
+
+    <section class="landing-section">
+      <h2 class="landing-section-title">Everything you need</h2>
+      <p class="landing-section-subtitle">One app to track, budget, plan, and grow your money.</p>
+      <div class="landing-features">
+        <div class="landing-feature-card">
+          <div class="landing-feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H3a2 2 0 00-2 2v12a2 2 0 002 2h18a2 2 0 002-2V6a2 2 0 00-2-2z"/><path d="M1 10h22"/></svg>
+          </div>
+          <div class="landing-feature-title">Smart Budgets</div>
+          <div class="landing-feature-desc">Set monthly limits for every spending category and get alerts before you overspend.</div>
+        </div>
+        <div class="landing-feature-card">
+          <div class="landing-feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          </div>
+          <div class="landing-feature-title">Savings Goals</div>
+          <div class="landing-feature-desc">Create goals, track contributions, and watch your progress with visual milestones.</div>
+        </div>
+        <div class="landing-feature-card">
+          <div class="landing-feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          </div>
+          <div class="landing-feature-title">Calendar &amp; Reminders</div>
+          <div class="landing-feature-desc">See all your bills, income, and subscriptions on a calendar. Never miss a due date.</div>
+        </div>
+        <div class="landing-feature-card">
+          <div class="landing-feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
+          </div>
+          <div class="landing-feature-title">Multi-Account</div>
+          <div class="landing-feature-desc">Track multiple bank accounts, cash, and mobile wallets in one place.</div>
+        </div>
+        <div class="landing-feature-card">
+          <div class="landing-feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          </div>
+          <div class="landing-feature-title">Auto-Reports</div>
+          <div class="landing-feature-desc">Monthly breakdowns, spending trends, and AI-powered insights on your finances.</div>
+        </div>
+        <div class="landing-feature-card">
+          <div class="landing-feature-icon">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+          </div>
+          <div class="landing-feature-title">Bank-Grade Security</div>
+          <div class="landing-feature-desc">PIN lock, encrypted cloud sync via Firebase, and your data stays yours.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section">
+      <h2 class="landing-section-title">How it works</h2>
+      <p class="landing-section-subtitle">Get started in under 60 seconds.</p>
+      <div class="landing-steps">
+        <div class="landing-step">
+          <div class="landing-step-num">1</div>
+          <div class="landing-step-title">Create your account</div>
+          <div class="landing-step-desc">Sign up with Google or email. Your data syncs securely to the cloud.</div>
+        </div>
+        <div class="landing-step">
+          <div class="landing-step-num">2</div>
+          <div class="landing-step-title">Add your accounts</div>
+          <div class="landing-step-desc">Set up your bank accounts, cash, and mobile money wallets.</div>
+        </div>
+        <div class="landing-step">
+          <div class="landing-step-num">3</div>
+          <div class="landing-step-title">Track everything</div>
+          <div class="landing-step-desc">Log transactions, set budgets, create goals, and watch your wealth grow.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section">
+      <div class="landing-security">
+        <div class="landing-security-title">Your data is yours. Always.</div>
+        <div class="landing-security-desc">
+          FinanceOS stores your data in the cloud with Firebase Authentication and Firestore.
+          No third-party trackers. No data selling. Optional PIN lock for extra protection.
+        </div>
+      </div>
+    </section>
+
+    <section class="landing-section" style="border-top:none; padding-top:20px;">
+      <h2 class="landing-section-title">Ready to take control?</h2>
+      <p class="landing-section-subtitle">Join thousands tracking their money smarter.</p>
+      <div class="landing-hero-cta">
+        <button class="landing-btn-primary" onclick="showAuthForm()">Get Started Free</button>
+        <button class="landing-btn-secondary" onclick="showAuthForm()">Sign In</button>
+      </div>
+    </section>
+
+    <footer class="landing-footer">
+      <div class="landing-footer-text">
+        Built by <a href="https://github.com/futurestachq" target="_blank">FutureStack</a>.
+        Open source on <a href="https://github.com/futurestachq/FinanceOS" target="_blank">GitHub</a>.
+      </div>
+    </footer>
+  </div>
+
+  <!-- Auth Form Container (hidden by default, shown when user clicks Sign In) -->
+  <div class="auth-container" id="authFormContainer" style="display:none;">
+    <div class="auth-back-link" onclick="showLandingPage()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Back
+    </div>
     <img src="icon-192.svg" class="onboarding-logo" alt="FinanceOS" style="border-radius:16px;">
     <div class="onboarding-title">Welcome to FinanceOS</div>
     <div class="onboarding-subtitle" id="authSubtitle">Track your money. Build your future.</div>
@@ -4374,8 +4548,19 @@ function continueAsGuest() {
   });
 }
 
+function showLandingPage() {
+  document.getElementById('landingPage').style.display = 'block';
+  document.getElementById('authFormContainer').style.display = 'none';
+}
+
+function showAuthForm() {
+  document.getElementById('landingPage').style.display = 'none';
+  document.getElementById('authFormContainer').style.display = 'block';
+}
+
 function showAuthModal() {
   document.getElementById('authOverlay').classList.add('active');
+  showLandingPage();
 }
 
 function hideAuthModal() {
