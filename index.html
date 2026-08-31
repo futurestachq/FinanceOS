@@ -7965,10 +7965,27 @@ function backspacePin() {
   for (let i = 0; i < 4; i++) document.getElementById('pd-' + i).classList.remove('error');
 }
 
+function hashPinLegacy(pin) {
+  // Original simple hash for backward compatibility with existing PINs
+  let hash = 0;
+  for (let i = 0; i < pin.length; i++) {
+    const chr = pin.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0;
+  }
+  return hash.toString();
+}
+
 function checkPin() {
   const pinLock = state.settings.pinLock || {};
-  const hash = hashPin(currentPinEntry);
-  if (hash === pinLock.pinHash) {
+  const hashNew = hashPin(currentPinEntry);
+  const hashOld = hashPinLegacy(currentPinEntry);
+  if (hashNew === pinLock.pinHash || hashOld === pinLock.pinHash) {
+    // If matched with old hash, silently upgrade to new hash on unlock
+    if (hashOld === pinLock.pinHash && hashNew !== pinLock.pinHash) {
+      state.settings.pinLock.pinHash = hashNew;
+      saveData();
+    }
     hidePinOverlay();
     lastActivity = Date.now();
     showToast('Unlocked');
