@@ -8366,10 +8366,31 @@ function connectGoogleCalendar() {
   document.getElementById('gcalSignInNote').style.display = 'none';
 
   if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-    showToast('Google Identity Services still loading. Please try again in a moment.');
+    // GIS not loaded yet — retry with polling
+    showToast('Loading Google Identity Services... please wait');
+    let retries = 0;
+    const maxRetries = 30; // 6 seconds total (200ms * 30)
+    const interval = setInterval(() => {
+      retries++;
+      if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+        clearInterval(interval);
+        showToast('Ready! Connecting...');
+        _doConnectGoogleCalendar();
+        return;
+      }
+      if (retries >= maxRetries) {
+        clearInterval(interval);
+        showToast('Google services not loading. Please refresh the page and try again.');
+      }
+    }, 200);
     return;
   }
 
+  _doConnectGoogleCalendar();
+}
+window.connectGoogleCalendar = connectGoogleCalendar;
+
+function _doConnectGoogleCalendar() {
   gcalTokenClient = google.accounts.oauth2.initTokenClient({
     client_id: GCAL_CLIENT_ID,
     scope: GCALENDAR_SCOPE,
@@ -8390,12 +8411,20 @@ function connectGoogleCalendar() {
     },
     error_callback: (err) => {
       console.error('GIS error', err);
-      showToast('Calendar permission denied or error: ' + (err.message || 'Unknown'));
+      // Check for common GIS errors after disconnect/reconnect
+      const msg = err.message || '';
+      if (msg.includes('popup') || msg.includes('closed') || msg.includes('dismissed')) {
+        showToast('Connection cancelled. Click Connect to try again.');
+      } else if (msg.includes('network') || msg.includes('timeout')) {
+        showToast('Network error. Please check your connection and try again.');
+      } else {
+        showToast('Calendar permission denied or error: ' + (err.message || 'Unknown'));
+      }
     }
   });
   gcalTokenClient.requestAccessToken();
 }
-window.connectGoogleCalendar = connectGoogleCalendar;
+window._doConnectGoogleCalendar = _doConnectGoogleCalendar;
 
 function disconnectGoogleCalendar() {
   state.settings.googleCalendar.connected = false;
