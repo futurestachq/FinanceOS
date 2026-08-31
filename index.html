@@ -1933,6 +1933,90 @@
   .goal-icon-chip svg { width:20px; height:20px; color:var(--accent); }
   .goal-icon-label { font-size:11px; color:var(--text-secondary); text-align:center; margin-top:4px; }
 
+
+  /* PIN lock */
+  .pin-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.3s;
+  }
+  .pin-overlay.hidden { opacity: 0; pointer-events: none; }
+  .pin-title { font-size: 20px; font-weight: 600; color: var(--text); margin-bottom: 8px; }
+  .pin-subtitle { font-size: 14px; color: var(--text-secondary); margin-bottom: 28px; }
+  .pin-dots {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+  .pin-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--border-strong);
+    transition: var(--transition);
+  }
+  .pin-dot.filled {
+    background: var(--accent);
+    border-color: var(--accent);
+  }
+  .pin-dot.error {
+    border-color: var(--danger);
+    background: var(--danger-bg);
+    animation: pinShake 0.4s;
+  }
+  .pin-keypad {
+    display: grid;
+    grid-template-columns: repeat(3, 72px);
+    gap: 12px;
+  }
+  .pin-key {
+    width: 72px;
+    height: 56px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 20px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    user-select: none;
+  }
+  .pin-key:hover { background: var(--bg-secondary); }
+  .pin-key:active { transform: scale(0.96); background: var(--light-green); }
+  .pin-key.empty { border: none; background: transparent; cursor: default; pointer-events: none; }
+  .pin-key.empty:hover { background: transparent; }
+  .pin-key.backspace svg { width: 22px; height: 22px; }
+  .pin-error { color: var(--danger); font-size: 13px; margin-top: 16px; min-height: 20px; }
+  .pin-forgot {
+    margin-top: 24px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    text-decoration: underline;
+  }
+  .pin-forgot:hover { color: var(--danger); }
+  @keyframes pinShake {
+    0%, 100% { transform: translateX(0); }
+    20% { transform: translateX(-8px); }
+    40% { transform: translateX(8px); }
+    60% { transform: translateX(-6px); }
+    80% { transform: translateX(6px); }
+  }
+  @media (max-width: 768px) {
+    .pin-keypad { grid-template-columns: repeat(3, 64px); gap: 10px; }
+    .pin-key { width: 64px; height: 52px; font-size: 18px; }
+  }
+
 </style>
 </head>
 <body>
@@ -3230,6 +3314,24 @@
           <div id="incomeEventList"></div>
         </div>
 
+        <!-- Security -->
+        <div class="settings-card" style="margin-bottom:20px;">
+          <div class="settings-title">Security</div>
+          <div class="toggle-row">
+            <div>
+              <div class="toggle-label">Lock app with PIN</div>
+              <div class="toggle-desc">Require a 4-digit PIN to open the app</div>
+            </div>
+            <div class="toggle" id="togglePinLock" onclick="togglePinLock()"></div>
+          </div>
+          <div id="pinLockActions" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-secondary);">
+            <div style="display:flex;gap:10px;flex-wrap:wrap;">
+              <button class="btn btn-sm" onclick="openPinSetupModal('change')">Change PIN</button>
+              <button class="btn btn-sm btn-danger" onclick="resetPin()">Remove PIN</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Auto-Categorization Rules -->
         <div class="settings-card" style="margin-bottom:20px;">
           <div class="settings-title">Auto-categorization rules</div>
@@ -3724,6 +3826,77 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- PIN Entry Overlay -->
+<div class="pin-overlay" id="pinOverlay" style="display:none;">
+  <div style="text-align:center;max-width:320px;padding:20px;">
+    <div style="width:64px;height:64px;border-radius:16px;background:var(--light-green);display:flex;align-items:center;justify-content:center;margin:0 auto 20px;color:var(--accent);">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
+    </div>
+    <div class="pin-title" id="pinTitle">Enter PIN</div>
+    <div class="pin-subtitle" id="pinSubtitle">Unlock FinanceOS</div>
+    <div class="pin-dots" id="pinDots">
+      <div class="pin-dot" id="pd-0"></div>
+      <div class="pin-dot" id="pd-1"></div>
+      <div class="pin-dot" id="pd-2"></div>
+      <div class="pin-dot" id="pd-3"></div>
+    </div>
+    <div class="pin-keypad">
+      <button class="pin-key" onclick="enterPinDigit('1')">1</button>
+      <button class="pin-key" onclick="enterPinDigit('2')">2</button>
+      <button class="pin-key" onclick="enterPinDigit('3')">3</button>
+      <button class="pin-key" onclick="enterPinDigit('4')">4</button>
+      <button class="pin-key" onclick="enterPinDigit('5')">5</button>
+      <button class="pin-key" onclick="enterPinDigit('6')">6</button>
+      <button class="pin-key" onclick="enterPinDigit('7')">7</button>
+      <button class="pin-key" onclick="enterPinDigit('8')">8</button>
+      <button class="pin-key" onclick="enterPinDigit('9')">9</button>
+      <div class="pin-key empty"></div>
+      <button class="pin-key" onclick="enterPinDigit('0')">0</button>
+      <button class="pin-key backspace" onclick="backspacePin()">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+      </button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+    <div class="pin-forgot" id="pinForgot" onclick="resetPin()">Forgot PIN? Reset data</div>
+  </div>
+</div>
+
+<!-- PIN Setup Modal -->
+<div class="modal-overlay" id="pinSetupOverlay">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-header">
+      <div class="modal-title" id="pinSetupTitle">Set up PIN</div>
+      <button class="modal-close" onclick="closePinSetup()">&times;</button>
+    </div>
+    <div class="modal-body" style="text-align:center;">
+      <div class="pin-subtitle" id="pinSetupSubtitle">Create a 4-digit PIN to lock your app</div>
+      <div class="pin-dots" id="pinSetupDots">
+        <div class="pin-dot" id="psd-0"></div>
+        <div class="pin-dot" id="psd-1"></div>
+        <div class="pin-dot" id="psd-2"></div>
+        <div class="pin-dot" id="psd-3"></div>
+      </div>
+      <div class="pin-keypad" style="margin:0 auto;">
+        <button class="pin-key" onclick="enterSetupPinDigit('1')">1</button>
+        <button class="pin-key" onclick="enterSetupPinDigit('2')">2</button>
+        <button class="pin-key" onclick="enterSetupPinDigit('3')">3</button>
+        <button class="pin-key" onclick="enterSetupPinDigit('4')">4</button>
+        <button class="pin-key" onclick="enterSetupPinDigit('5')">5</button>
+        <button class="pin-key" onclick="enterSetupPinDigit('6')">6</button>
+        <button class="pin-key" onclick="enterSetupPinDigit('7')">7</button>
+        <button class="pin-key" onclick="enterSetupPinDigit('8')">8</button>
+        <button class="pin-key" onclick="enterSetupPinDigit('9')">9</button>
+        <div class="pin-key empty"></div>
+        <button class="pin-key" onclick="enterSetupPinDigit('0')">0</button>
+        <button class="pin-key backspace" onclick="backspaceSetupPin()">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"/><line x1="18" y1="9" x2="12" y2="15"/><line x1="12" y1="9" x2="18" y2="15"/></svg>
+        </button>
+      </div>
+      <div class="pin-error" id="pinSetupError"></div>
+    </div>
+  </div>
+</div>
+
 <!-- Income Event Modal -->
 <div class="modal-overlay" id="incomeEventModalOverlay">
   <div class="modal">
@@ -3966,9 +4139,11 @@ function ensureStateDefaults() {
     googleCalendar: { connected: false, accessToken: null, tokenExpiry: null, calendarId: null, calendars: [], clientId: '', accountEmail: '' },
     syncSubscriptions: true, syncBills: true, syncSalary: true, syncGoals: false,
     defaultReminder: 1, notifications: true, notifWindow: 7,
-    browserNotifs: false
+    browserNotifs: false,
+    pinLock: { enabled: false, pinHash: null }
   };
   if (typeof state.settings.browserNotifs !== 'boolean') state.settings.browserNotifs = false;
+  if (!state.settings.pinLock) state.settings.pinLock = { enabled: false, pinHash: null };
   if (!state.shownNotifIds) state.shownNotifIds = [];
   // Ensure postedDates arrays exist for auto-posting recurring items
   state.subscriptions.forEach(s => { if (!s.postedDates) s.postedDates = []; });
@@ -4167,6 +4342,11 @@ auth.onAuthStateChanged(user => {
       if (!state.profile) state.profile = {};
       if (!state.profile.name && user.displayName) state.profile.name = user.displayName;
       if (!state.profile.email && user.email) state.profile.email = user.email;
+      // Check if PIN lock is enabled
+      const pinLock = state.settings.pinLock || {};
+      if (pinLock.enabled && pinLock.pinHash) {
+        showPinOverlay();
+      }
       ensureStateDefaults();
       autoPostRecurring();
       checkAndShowBrowserNotifications();
@@ -7494,6 +7674,9 @@ function renderSettings() {
   setToggleState('toggleNotifs', state.settings.notifications);
   setToggleState('toggleBrowserNotifs', state.settings.browserNotifs);
   renderBrowserNotifUI();
+  const pinLock = state.settings.pinLock || { enabled: false };
+  setToggleState('togglePinLock', pinLock.enabled);
+  document.getElementById('pinLockActions').style.display = pinLock.enabled ? '' : 'none';
   document.getElementById('defaultReminder').value = state.settings.defaultReminder;
   document.getElementById('notifWindow').value = state.settings.notifWindow;
   renderIncomeEventList();
@@ -7617,6 +7800,197 @@ function getBrowserNotifPermissionText() {
   if (Notification.permission === 'denied') return 'Permission denied';
   return 'Permission not requested';
 }
+
+// ============ PIN LOCK ============
+
+let currentPinEntry = '';
+let setupPinEntry = '';
+let setupPinConfirm = '';
+let setupPinMode = 'setup'; // 'setup' or 'change'
+let lastActivity = Date.now();
+
+function hashPin(pin) {
+  // Simple client-side hash for PIN storage
+  let hash = 0;
+  for (let i = 0; i < pin.length; i++) {
+    const chr = pin.charCodeAt(i);
+    hash = ((hash << 5) - hash) + chr;
+    hash |= 0;
+  }
+  return hash.toString();
+}
+
+function showPinOverlay() {
+  currentPinEntry = '';
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+  document.getElementById('pinForgot').style.display = '';
+  const overlay = document.getElementById('pinOverlay');
+  overlay.style.display = 'flex';
+  overlay.classList.remove('hidden');
+}
+
+function hidePinOverlay() {
+  const overlay = document.getElementById('pinOverlay');
+  overlay.classList.add('hidden');
+  setTimeout(() => { overlay.style.display = 'none'; }, 300);
+  currentPinEntry = '';
+}
+
+function updatePinDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('pd-' + i);
+    if (dot) dot.classList.toggle('filled', i < currentPinEntry.length);
+  }
+}
+
+function updateSetupPinDots() {
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById('psd-' + i);
+    if (dot) dot.classList.toggle('filled', i < setupPinEntry.length);
+  }
+}
+
+function enterPinDigit(d) {
+  if (currentPinEntry.length >= 4) return;
+  currentPinEntry += d;
+  updatePinDots();
+  if (currentPinEntry.length === 4) {
+    setTimeout(checkPin, 150);
+  }
+}
+
+function backspacePin() {
+  currentPinEntry = currentPinEntry.slice(0, -1);
+  updatePinDots();
+  document.getElementById('pinError').textContent = '';
+  // remove error styling
+  for (let i = 0; i < 4; i++) document.getElementById('pd-' + i).classList.remove('error');
+}
+
+function checkPin() {
+  const pinLock = state.settings.pinLock || {};
+  const hash = hashPin(currentPinEntry);
+  if (hash === pinLock.pinHash) {
+    hidePinOverlay();
+    lastActivity = Date.now();
+    showToast('Unlocked');
+  } else {
+    currentPinEntry = '';
+    updatePinDots();
+    document.getElementById('pinError').textContent = 'Incorrect PIN. Try again.';
+    for (let i = 0; i < 4; i++) {
+      const dot = document.getElementById('pd-' + i);
+      dot.classList.add('error');
+      setTimeout(() => dot.classList.remove('error'), 500);
+    }
+  }
+}
+
+function openPinSetupModal(mode) {
+  setupPinMode = mode;
+  setupPinEntry = '';
+  setupPinConfirm = '';
+  updateSetupPinDots();
+  document.getElementById('pinSetupError').textContent = '';
+  document.getElementById('pinSetupTitle').textContent = mode === 'change' ? 'Change PIN' : 'Set up PIN';
+  document.getElementById('pinSetupSubtitle').textContent = 'Create a 4-digit PIN';
+  document.getElementById('pinSetupOverlay').classList.add('active');
+}
+
+function closePinSetup() {
+  document.getElementById('pinSetupOverlay').classList.remove('active');
+  setupPinEntry = '';
+  setupPinConfirm = '';
+}
+
+function enterSetupPinDigit(d) {
+  if (setupPinEntry.length >= 4) return;
+  setupPinEntry += d;
+  updateSetupPinDots();
+  if (setupPinEntry.length === 4) {
+    if (setupPinConfirm === '') {
+      // First entry done, ask to confirm
+      setupPinConfirm = setupPinEntry;
+      setupPinEntry = '';
+      updateSetupPinDots();
+      document.getElementById('pinSetupSubtitle').textContent = 'Confirm your PIN';
+      document.getElementById('pinSetupError').textContent = '';
+    } else {
+      // Confirming
+      if (setupPinEntry === setupPinConfirm) {
+        state.settings.pinLock = { enabled: true, pinHash: hashPin(setupPinEntry) };
+        saveData();
+        closePinSetup();
+        renderSettings();
+        showToast(setupPinMode === 'change' ? 'PIN changed' : 'PIN set');
+      } else {
+        setupPinEntry = '';
+        setupPinConfirm = '';
+        updateSetupPinDots();
+        document.getElementById('pinSetupSubtitle').textContent = 'Create a 4-digit PIN';
+        document.getElementById('pinSetupError').textContent = 'PINs did not match. Try again.';
+      }
+    }
+  }
+}
+
+function backspaceSetupPin() {
+  setupPinEntry = setupPinEntry.slice(0, -1);
+  updateSetupPinDots();
+  document.getElementById('pinSetupError').textContent = '';
+}
+
+function togglePinLock() {
+  const pinLock = state.settings.pinLock || { enabled: false };
+  if (pinLock.enabled) {
+    // Turning off — ask for current PIN first
+    confirmDelete('Remove PIN lock?', 'Your app will no longer require a PIN to open.', () => {
+      state.settings.pinLock = { enabled: false, pinHash: null };
+      saveData();
+      renderSettings();
+      showToast('PIN lock removed');
+    });
+  } else {
+    // Turning on — open setup modal
+    openPinSetupModal('setup');
+  }
+}
+
+function resetPin() {
+  confirmDelete('Forgot PIN?', 'This will sign you out and delete all local data. You can sign back in to restore your cloud data.', () => {
+    signOutUser();
+    localStorage.clear();
+    location.reload();
+  });
+}
+
+function checkPinAutoLock() {
+  const pinLock = state.settings.pinLock || {};
+  if (!pinLock.enabled) return;
+  const inactive = Date.now() - lastActivity;
+  const lockAfter = 5 * 60 * 1000; // 5 minutes
+  if (inactive > lockAfter && document.getElementById('pinOverlay').style.display !== 'flex') {
+    showPinOverlay();
+  }
+}
+
+// Track activity for auto-lock
+['click', 'touchstart', 'keydown', 'scroll'].forEach(evt => {
+  document.addEventListener(evt, () => { lastActivity = Date.now(); }, { passive: true });
+});
+setInterval(checkPinAutoLock, 10000);
+
+window.togglePinLock = togglePinLock;
+window.enterPinDigit = enterPinDigit;
+window.backspacePin = backspacePin;
+window.enterSetupPinDigit = enterSetupPinDigit;
+window.backspaceSetupPin = backspaceSetupPin;
+window.closePinSetup = closePinSetup;
+window.openPinSetupModal = openPinSetupModal;
+window.resetPin = resetPin;
+
+// ============ BROWSER PUSH NOTIFICATIONS ============
 
 function toggleBrowserNotifs(el) {
   const enabled = !state.settings.browserNotifs;
