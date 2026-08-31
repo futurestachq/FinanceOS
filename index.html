@@ -4349,6 +4349,8 @@ auth.onAuthStateChanged(user => {
       }
       ensureStateDefaults();
       autoPostRecurring();
+      // Pre-initialize GIS token client so Connect button works immediately
+      if (isGoogleSignedIn()) initGcalTokenClient();
       checkAndShowBrowserNotifications();
       if (!state.hasOnboarded) {
         startOnboardingIfNeeded();
@@ -8355,6 +8357,61 @@ let gcalTokenClient = null;
 function isGoogleSignedIn() {
   return currentUser && currentUser.providerData.some(p => p.providerId === 'google.com');
 }
+window.isGoogleSignedIn = isGoogleSignedIn;
+
+// Pre-initialize GIS token client so it is ready before user clicks Connect.
+// This avoids popup-blocking issues caused by creating the client inside a timer.
+function initGcalTokenClient() {
+  if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+    console.log('GIS not ready yet');
+    return false;
+  }
+  if (gcalTokenClient) return true; // already created
+
+  gcalTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: GCAL_CLIENT_ID,
+    scope: GCALENDAR_SCOPE,
+    hint: currentUser ? currentUser.email : '',
+    callback: (response) => {
+      console.log('GIS callback', response);
+      if (response.access_token) {
+        state.settings.googleCalendar.connected = true;
+        state.settings.googleCalendar.accessToken = response.access_token;
+        state.settings.googleCalendar.tokenExpiry = Date.now() + (response.expires_in || 3600) * 1000;
+        state.settings.googleCalendar.accountEmail = currentUser ? currentUser.email : '';
+        saveData();
+        showToast('Google Calendar connected successfully');
+        fetchGcalCalendars();
+        renderSettings();
+      } else if (response.error) {
+        console.error('GIS error response', response);
+        const msg = response.error_description || response.error;
+        if (msg && (msg.includes('popup') || msg.includes('closed') || msg.includes('dismissed'))) {
+          showToast('Connection cancelled. Click Connect to try again.');
+        } else {
+          showToast('Calendar error: ' + msg);
+        }
+      } else {
+        console.error('GIS unknown response', response);
+        showToast('Could not get Calendar access. Please try again.');
+      }
+    },
+    error_callback: (err) => {
+      console.error('GIS error_callback', err);
+      const msg = (err && err.message) ? err.message : '';
+      if (msg.includes('popup') || msg.includes('closed') || msg.includes('dismissed')) {
+        showToast('Connection cancelled. Click Connect to try again.');
+      } else if (msg.includes('network') || msg.includes('timeout')) {
+        showToast('Network error. Please check your connection and try again.');
+      } else {
+        showToast('Calendar permission denied or error: ' + (msg || 'Unknown'));
+      }
+    }
+  });
+  console.log('GIS token client initialized');
+  return true;
+}
+window.initGcalTokenClient = initGcalTokenClient;
 
 function connectGoogleCalendar() {
   if (!currentUser) { showToast('Please sign in first'); return; }
@@ -8365,66 +8422,18 @@ function connectGoogleCalendar() {
   }
   document.getElementById('gcalSignInNote').style.display = 'none';
 
-  if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-    // GIS not loaded yet — retry with polling
-    showToast('Loading Google Identity Services... please wait');
-    let retries = 0;
-    const maxRetries = 30; // 6 seconds total (200ms * 30)
-    const interval = setInterval(() => {
-      retries++;
-      if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
-        clearInterval(interval);
-        showToast('Ready! Connecting...');
-        _doConnectGoogleCalendar();
-        return;
-      }
-      if (retries >= maxRetries) {
-        clearInterval(interval);
-        showToast('Google services not loading. Please refresh the page and try again.');
-      }
-    }, 200);
+  // Must initialize here if not already done (e.g. if GIS loaded late)
+  if (!initGcalTokenClient()) {
+    showToast('Google services still loading. Please wait a moment and click Connect again.');
     return;
   }
 
-  _doConnectGoogleCalendar();
-}
-window.connectGoogleCalendar = connectGoogleCalendar;
-
-function _doConnectGoogleCalendar() {
-  gcalTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GCAL_CLIENT_ID,
-    scope: GCALENDAR_SCOPE,
-    callback: (response) => {
-      if (response.access_token) {
-        state.settings.googleCalendar.connected = true;
-        state.settings.googleCalendar.accessToken = response.access_token;
-        state.settings.googleCalendar.tokenExpiry = Date.now() + (response.expires_in || 3600) * 1000;
-        state.settings.googleCalendar.accountEmail = currentUser.email || '';
-        saveData();
-        showToast('Google Calendar connected successfully');
-        fetchGcalCalendars();
-        renderSettings();
-      } else {
-        console.error('GIS response', response);
-        showToast('Could not get Calendar access. Please try again.');
-      }
-    },
-    error_callback: (err) => {
-      console.error('GIS error', err);
-      // Check for common GIS errors after disconnect/reconnect
-      const msg = err.message || '';
-      if (msg.includes('popup') || msg.includes('closed') || msg.includes('dismissed')) {
-        showToast('Connection cancelled. Click Connect to try again.');
-      } else if (msg.includes('network') || msg.includes('timeout')) {
-        showToast('Network error. Please check your connection and try again.');
-      } else {
-        showToast('Calendar permission denied or error: ' + (err.message || 'Unknown'));
-      }
-    }
-  });
+  // requestAccessToken MUST be called synchronously from the user gesture (click).
+  // Any async delay (setTimeout, setInterval, promise) will cause the browser to block the popup.
+  console.log('Requesting access token...');
   gcalTokenClient.requestAccessToken();
 }
-window._doConnectGoogleCalendar = _doConnectGoogleCalendar;
+window.connectGoogleCalendar = connectGoogleCalendar;
 
 function disconnectGoogleCalendar() {
   state.settings.googleCalendar.connected = false;
@@ -8929,6 +8938,29 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
+
+// Background attempts to pre-initialize GIS token client once the library loads.
+// We poll gently for 30 seconds so the Connect button is ready immediately.
+(function watchGisLoad() {
+  let attempts = 0;
+  const maxAttempts = 30;
+  const timer = setInterval(() => {
+    attempts++;
+    if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+      clearInterval(timer);
+      console.log('GIS library detected');
+      // Only init if user is already known to be signed in with Google
+      if (currentUser && isGoogleSignedIn()) {
+        initGcalTokenClient();
+      }
+      return;
+    }
+    if (attempts >= maxAttempts) {
+      clearInterval(timer);
+      console.log('GIS library did not load within 30s');
+    }
+  }, 1000);
+})();
 
 // Auto-post recurring items and check notifications when user returns to the app (PWA background resume)
 if (typeof document !== 'undefined') {
