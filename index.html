@@ -4193,28 +4193,72 @@ function ensureStateDefaults() {
 }
 
 async function loadData() {
+  // Always try localStorage first as a safety backup
+  const localSaved = localStorage.getItem(STORAGE_KEY);
+  let localState = null;
+  if (localSaved) {
+    try { localState = JSON.parse(localSaved); } catch(e) { console.error('localStorage parse error', e); }
+  }
+
   if (currentUser && !isGuest) {
     try {
       const doc = await db.collection('users').doc(currentUser.uid).get();
       if (doc.exists) {
         const data = doc.data();
-        delete data.updatedAt;
-        state = { ...state, ...data };
+        const hasRealData = data && data.hasOnboarded === true && (data.transactions && data.transactions.length > 0 || data.accounts && data.accounts.length > 0);
+        if (hasRealData) {
+          // Safe to load from Firestore — it has real user data
+          delete data.updatedAt;
+          state = { ...state, ...data };
+          ensureStateDefaults();
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+          return;
+        }
+        // Firestore doc exists but is empty/minimal — check localStorage for real data
+        if (localState && localState.hasOnboarded === true) {
+          console.log('Firestore empty, recovering from localStorage');
+          state = { ...state, ...localState };
+          ensureStateDefaults();
+          saveData(); // upload recovered data to Firestore
+          return;
+        }
+      }
+      // No Firestore doc — try localStorage before ever resetting
+      if (localState && localState.hasOnboarded === true) {
+        console.log('No Firestore doc, loading from localStorage');
+        state = { ...state, ...localState };
         ensureStateDefaults();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+        saveData(); // upload to Firestore
         return;
       }
-      // Signed in but no cloud data yet — start fresh (no seed data)
+      // Truly new user — no Firestore, no localStorage
       resetState();
       ensureStateDefaults();
       saveData();
       return;
-    } catch(e) { console.error('Firestore load error', e); }
+    } catch(e) {
+      console.error('Firestore load error', e);
+      // Firestore read failed — NEVER reset, always prefer localStorage
+      if (localState && localState.hasOnboarded === true) {
+        console.log('Firestore error, falling back to localStorage');
+        state = { ...state, ...localState };
+        ensureStateDefaults();
+      } else {
+        // Even on error, if we have ANY local data, use it
+        if (localState) {
+          state = { ...state, ...localState };
+          ensureStateDefaults();
+        } else {
+          resetState();
+          ensureStateDefaults();
+        }
+      }
+      return;
+    }
   }
-  // Guest: use localStorage, seed only if truly empty
-  const saved = localStorage.getItem(STORAGE_KEY);
-  if (saved) {
-    try { state = JSON.parse(saved); } catch(e) { resetState(); }
+  // Guest path
+  if (localSaved) {
+    try { state = JSON.parse(localSaved); } catch(e) { resetState(); }
   } else {
     seedData(); // only seed for first-time guests
   }
