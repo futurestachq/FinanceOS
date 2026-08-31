@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#397968">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://accounts.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.google.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://*.googleusercontent.com; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.google.com;">
+<!-- CSP temporarily disabled while debugging auth -->
+<!-- <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://accounts.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.google.com https://cdnjs.cloudflare.com; img-src 'self' data: blob: https://*.googleusercontent.com; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.google.com;"> -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FinanceOS">
@@ -4246,7 +4247,22 @@ function saveData() {
 
 function signInWithGoogle() {
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(e => { showToast('Google sign-in failed: ' + e.message); console.error(e); });
+  auth.signInWithPopup(provider).catch(e => {
+    console.error('Google sign-in error:', e.code, e.message, e);
+    let msg = 'Google sign-in failed';
+    if (e.code === 'auth/internal-error') {
+      msg = 'Auth configuration error. If you recently restricted your Firebase API key, make sure to add https://financeos-12034.firebaseapp.com/* to the allowed referrers in Google Cloud Console.';
+    } else if (e.code === 'auth/popup-blocked') {
+      msg = 'Popup blocked. Please allow popups for this site.';
+    } else if (e.code === 'auth/popup-closed-by-user') {
+      msg = 'Sign-in cancelled.';
+    } else if (e.code === 'auth/unauthorized-domain') {
+      msg = 'This domain is not authorized for sign-in. Add it in Firebase Console > Authentication > Settings > Authorized domains.';
+    } else {
+      msg = 'Google sign-in failed: ' + e.message;
+    }
+    showToast(msg);
+  });
 }
 
 function signInWithEmail() {
