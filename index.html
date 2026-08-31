@@ -484,6 +484,28 @@
   .badge-info { background: var(--info-bg); color: var(--info); }
   .badge-gray { background: var(--border-secondary); color: var(--text-secondary); }
 
+  /* Budget alerts */
+  .budget-alert-bar {
+    padding: 10px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .budget-alert-bar.danger {
+    background: var(--danger-bg);
+    color: var(--danger);
+    border: 1px solid var(--danger);
+  }
+  .budget-alert-bar.warning {
+    background: var(--warning-bg);
+    color: var(--warning);
+    border: 1px solid var(--warning);
+  }
+
   .tx-table { width: 100%; }
   .tx-row {
     display: flex;
@@ -5135,25 +5157,47 @@ function renderDashboardBudgets() {
     container.innerHTML = '<div class="empty-state">No budgets set yet</div>';
     return;
   }
-  container.innerHTML = budgets.map(([cat, limit]) => {
+
+  // Check for at-risk budgets for alert banner
+  let atRisk = [];
+  budgets.forEach(([cat, limit]) => {
+    const spent = getMonthTransactions(mk).filter(t => t.type === 'expense' && t.category === cat).reduce((s, t) => s + t.amount, 0);
+    const pct = limit > 0 ? (spent / limit) * 100 : 0;
+    if (spent > limit) atRisk.push({ cat, status: 'over', pct: Math.round(pct) });
+    else if (pct >= 80) atRisk.push({ cat, status: 'warning', pct: Math.round(pct) });
+  });
+
+  let alertHtml = '';
+  if (atRisk.length > 0) {
+    const overBudgets = atRisk.filter(b => b.status === 'over');
+    const warningBudgets = atRisk.filter(b => b.status === 'warning');
+    if (overBudgets.length > 0) {
+      alertHtml = `<div class="budget-alert-bar danger"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Over budget: ${overBudgets.map(b => b.cat).join(', ')}</div>`;
+    } else if (warningBudgets.length > 0) {
+      alertHtml = `<div class="budget-alert-bar warning"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>Nearing limit: ${warningBudgets.map(b => b.cat + ' (' + b.pct + '%)').join(', ')}</div>`;
+    }
+  }
+
+  container.innerHTML = alertHtml + budgets.map(([cat, limit]) => {
     const spent = getMonthTransactions(mk).filter(t => t.type === 'expense' && t.category === cat).reduce((s, t) => s + t.amount, 0);
     const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
     const over = spent > limit;
     const remaining = limit - spent;
-    const color = over ? chartColors.expense : (pct > 80 ? '#D99A3D' : chartColors.income);
+    const color = over ? chartColors.expense : (pct >= 80 ? '#D99A3D' : chartColors.income);
     const icon = categoryIcons[state.budgetIcons[cat]] || categoryIcons[cat] || categoryIcons['Other'];
+    const badgeText = over ? 'Over budget!' : (pct >= 80 ? Math.round(pct) + '% used' : Math.round(pct) + '%');
     return `<div style="padding:14px 0;border-bottom:1px solid var(--border);">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div style="display:flex;align-items:center;gap:10px;">
           <div style="width:36px;height:36px;border-radius:9px;background:var(--light-green);display:flex;align-items:center;justify-content:center;color:var(--accent);">${icon}</div>
           <span style="font-size:14px;font-weight:600;">${cat}</span>
         </div>
-        <span class="badge ${over ? 'badge-danger' : pct > 80 ? 'badge-warning' : 'badge-success'}" style="font-size:12px;">${Math.round(pct)}%</span>
+        <span class="badge ${over ? 'badge-danger' : pct >= 80 ? 'badge-warning' : 'badge-success'}" style="font-size:12px;">${badgeText}</span>
       </div>
       <div class="progress-bar-lg"><div class="progress-fill-lg" style="width:${pct}%;background:${color};"></div></div>
       <div style="display:flex;justify-content:space-between;margin-top:8px;">
         <span style="font-size:13px;color:var(--text-secondary);"><strong style="color:var(--text);font-weight:600;">${fmt(spent)}</strong> spent</span>
-        <span style="font-size:13px;color:${over ? 'var(--danger)' : 'var(--text-secondary)'};">${over ? fmt(Math.abs(remaining)) + ' over' : fmt(remaining) + ' left'}</span>
+        <span style="font-size:13px;color:${over ? 'var(--danger)' : 'var(--text-secondary)'}">${over ? fmt(Math.abs(remaining)) + ' over' : fmt(remaining) + ' left'}</span>
       </div>
     </div>`;
   }).join('');
@@ -5845,21 +5889,39 @@ function renderBudgets() {
   document.getElementById('budgetRemain').textContent = fmt(totalRemain);
   document.getElementById('budgetUsage').textContent = usagePct + '%';
 
-  // Insight card
+  // Insight card — smarter alerts
+  const overBudgetCount = budgets.filter(([cat, limit]) => {
+    const spent = getMonthTransactions(mk).filter(t => t.type === 'expense' && t.category === cat).reduce((s, t) => s + t.amount, 0);
+    return spent > limit;
+  }).length;
+  const warningBudgetCount = budgets.filter(([cat, limit]) => {
+    const spent = getMonthTransactions(mk).filter(t => t.type === 'expense' && t.category === cat).reduce((s, t) => s + t.amount, 0);
+    return spent >= limit * 0.8 && spent <= limit;
+  }).length;
   const underBudgetCount = budgets.filter(([cat, limit]) => {
     const spent = getMonthTransactions(mk).filter(t => t.type === 'expense' && t.category === cat).reduce((s, t) => s + t.amount, 0);
-    return spent < limit;
+    return spent < limit * 0.8;
   }).length;
   const insightEl = document.getElementById('budgetInsight');
   if (insightEl) {
-    if (underBudgetCount > 0) {
+    if (overBudgetCount > 0) {
       insightEl.style.display = 'flex';
-      document.getElementById('budgetInsightTitle').textContent = 'Great job!';
-      document.getElementById('budgetInsightDesc').textContent = "You're spending less than planned in " + underBudgetCount + " categor" + (underBudgetCount === 1 ? 'y' : 'ies') + " this month.";
+      insightEl.style.background = 'var(--danger-bg)';
+      insightEl.style.borderColor = 'var(--danger)';
+      document.getElementById('budgetInsightTitle').textContent = 'Over budget!';
+      document.getElementById('budgetInsightDesc').textContent = overBudgetCount + " categor" + (overBudgetCount === 1 ? 'y has' : 'ies have') + " exceeded the limit. Cut back to stay on track.";
+    } else if (warningBudgetCount > 0) {
+      insightEl.style.display = 'flex';
+      insightEl.style.background = 'var(--warning-bg)';
+      insightEl.style.borderColor = 'var(--warning)';
+      document.getElementById('budgetInsightTitle').textContent = 'Nearing limit';
+      document.getElementById('budgetInsightDesc').textContent = warningBudgetCount + " categor" + (warningBudgetCount === 1 ? 'y is' : 'ies are') + " at 80% or more of the budget.";
     } else if (budgets.length > 0) {
       insightEl.style.display = 'flex';
-      document.getElementById('budgetInsightTitle').textContent = 'Watch out!';
-      document.getElementById('budgetInsightDesc').textContent = "You've exceeded your budget in all categories.";
+      insightEl.style.background = 'var(--success-bg)';
+      insightEl.style.borderColor = 'var(--success)';
+      document.getElementById('budgetInsightTitle').textContent = 'Great job!';
+      document.getElementById('budgetInsightDesc').textContent = "You're spending less than planned in " + underBudgetCount + " categor" + (underBudgetCount === 1 ? 'y' : 'ies') + " this month.";
     } else {
       insightEl.style.display = 'none';
     }
@@ -5885,7 +5947,16 @@ function renderBudgets() {
     if (['Entertainment', 'Shopping', 'Subscriptions'].includes(cat)) { tagClass = 'lifestyle'; tagText = 'Lifestyle'; }
 
     const detailId = 'bd-' + cat.replace(/\s+/g, '-');
+    // Alert banner for this card
+    let alertBanner = '';
+    if (over) {
+      alertBanner = `<div class="budget-alert-bar danger" style="margin-bottom:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Over budget by ${fmt(spent - limit)}</div>`;
+    } else if (pct >= 80) {
+      alertBanner = `<div class="budget-alert-bar warning" style="margin-bottom:10px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>${Math.round(pct)}% used — only ${fmt(remain)} left</div>`;
+    }
+
     return `<div class="budget-item-card">
+      ${alertBanner}
       <div class="budget-item-top">
         <div class="budget-item-icon">${categoryIcons[state.budgetIcons[cat]] || categoryIcons[cat] || categoryIcons['Miscellaneous']}</div>
         <div class="budget-item-info">
