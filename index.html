@@ -2415,7 +2415,7 @@
           <button class="mobile-tx-tab" data-filter="transfer" onclick="setMobileTxFilter('transfer')">Transfers</button>
         </div>
         <div class="filter-bar">
-          <input type="text" class="filter-input search-input" id="txSearch" placeholder="Search description, tag..." oninput="renderTransactions()">
+          <input type="text" class="filter-input search-input" id="txSearch" placeholder="Search description, tag, or amount..." oninput="renderTransactions()">
           <select class="filter-input" id="txFilterType" onchange="renderTransactions()">
             <option value="">All types</option>
             <option value="income">Income</option>
@@ -2429,10 +2429,31 @@
           <select class="filter-input" id="txFilterAccount" onchange="renderTransactions()">
             <option value="">All accounts</option>
           </select>
-          <select class="filter-input" id="txFilterMonth" onchange="renderTransactions()">
+          <select class="filter-input" id="txFilterDateRange" onchange="onDateRangeChange()">
             <option value="">All time</option>
+            <option value="today">Today</option>
+            <option value="yesterday">Yesterday</option>
+            <option value="last7">Last 7 days</option>
+            <option value="last30">Last 30 days</option>
+            <option value="thisMonth">This month</option>
+            <option value="lastMonth">Last month</option>
+            <option value="custom">Custom range</option>
           </select>
         </div>
+        <div id="txDateCustom" style="display:none;margin-bottom:12px;">
+          <div class="filter-bar" style="margin-bottom:0;">
+            <input type="date" class="filter-input" id="txDateFrom" onchange="renderTransactions()">
+            <span style="color:var(--text-secondary);font-size:13px;">to</span>
+            <input type="date" class="filter-input" id="txDateTo" onchange="renderTransactions()">
+          </div>
+        </div>
+        <div class="filter-bar" style="margin-bottom:12px;">
+          <input type="number" class="filter-input" id="txAmountMin" placeholder="Min amount" oninput="renderTransactions()" style="max-width:120px;">
+          <span style="color:var(--text-secondary);font-size:13px;">to</span>
+          <input type="number" class="filter-input" id="txAmountMax" placeholder="Max amount" oninput="renderTransactions()" style="max-width:120px;">
+        </div>
+        <div class="filter-chips" id="txFilterChips"></div>
+        <div class="tx-results-count" id="txResultsCount"></div>
         <div class="card">
           <div id="txList"></div>
         </div>
@@ -5127,19 +5148,65 @@ function renderAIInsights() {
 function renderTransactions() {
   populateCategoryFilter();
   populateAccountSelect('txFilterAccount', true);
-  populateMonthFilter();
-  const search = document.getElementById('txSearch').value.toLowerCase();
+  
+  const search = document.getElementById('txSearch').value.toLowerCase().trim();
   const typeFilter = document.getElementById('txFilterType').value;
   const catFilter = document.getElementById('txFilterCategory').value;
   const acctFilter = document.getElementById('txFilterAccount').value;
-  const monthFilter = document.getElementById('txFilterMonth').value;
+  const dateRange = document.getElementById('txFilterDateRange').value;
+  const dateFrom = document.getElementById('txDateFrom').value;
+  const dateTo = document.getElementById('txDateTo').value;
+  const amountMin = parseFloat(document.getElementById('txAmountMin').value) || 0;
+  const amountMax = parseFloat(document.getElementById('txAmountMax').value) || Infinity;
 
   let txs = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
-  if (search) txs = txs.filter(t => t.description.toLowerCase().includes(search) || (t.tags && t.tags.some(tag => tag.toLowerCase().includes(search))));
+  
+  // Smart search: description, category, tags, or exact amount match
+  if (search) {
+    const searchNum = parseFloat(search.replace(/[₦,]/g, ''));
+    txs = txs.filter(t => {
+      const inDesc = t.description.toLowerCase().includes(search);
+      const inCat = t.category.toLowerCase().includes(search);
+      const inTags = t.tags && t.tags.some(tag => tag.toLowerCase().includes(search));
+      const inAmount = !isNaN(searchNum) && Math.abs(t.amount - searchNum) < 1;
+      return inDesc || inCat || inTags || inAmount;
+    });
+  }
   if (typeFilter) txs = txs.filter(t => t.type === typeFilter);
   if (catFilter) txs = txs.filter(t => t.category === catFilter);
-  if (acctFilter) txs = txs.filter(t => t.accountId === acctFilter);
-  if (monthFilter) txs = txs.filter(t => monthKey(t.date) === monthFilter);
+  if (acctFilter) txs = txs.filter(t => t.accountId === acctFilter || (t.type === 'transfer' && (t.fromAccountId === acctFilter || t.toAccountId === acctFilter)));
+  
+  // Date range filter
+  if (dateRange) {
+    const today = new Date(); today.setHours(0,0,0,0);
+    const yesterday = new Date(today); yesterday.setDate(yesterday.getDate() - 1);
+    const last7 = new Date(today); last7.setDate(last7.getDate() - 7);
+    const last30 = new Date(today); last30.setDate(last30.getDate() - 30);
+    const [thisYear, thisMonth] = currentMonthKey().split('-').map(Number);
+    const lastMonthDate = new Date(thisYear, thisMonth - 1, 1);
+    const lastMonthKey = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth()).padStart(2,'0')}`;
+    
+    txs = txs.filter(t => {
+      const d = new Date(t.date);
+      if (dateRange === 'today') return d.toDateString() === today.toDateString();
+      if (dateRange === 'yesterday') return d.toDateString() === yesterday.toDateString();
+      if (dateRange === 'last7') return d >= last7;
+      if (dateRange === 'last30') return d >= last30;
+      if (dateRange === 'thisMonth') return monthKey(t.date) === currentMonthKey();
+      if (dateRange === 'lastMonth') return monthKey(t.date) === lastMonthKey;
+      if (dateRange === 'custom') {
+        const fromOk = !dateFrom || new Date(t.date) >= new Date(dateFrom);
+        const toOk = !dateTo || new Date(t.date) <= new Date(dateTo + 'T23:59:59');
+        return fromOk && toOk;
+      }
+      return true;
+    });
+  }
+  
+  // Amount range filter
+  if (amountMin > 0 || amountMax < Infinity) {
+    txs = txs.filter(t => t.amount >= amountMin && t.amount <= amountMax);
+  }
 
   // Summary cards with icons
   const totalIn = txs.filter(t => t.type === 'income').reduce((s,t) => s + t.amount, 0);
@@ -5178,6 +5245,40 @@ function renderTransactions() {
           <div class="summary-sub">${txs.length} total transactions</div>
         </div>
       </div>`;
+  }
+
+  // Build active filter chips
+  const chipsEl = document.getElementById('txFilterChips');
+  if (chipsEl) {
+    let chips = [];
+    if (search) chips.push({ label: 'Search: ' + search, clear: () => { document.getElementById('txSearch').value = ''; renderTransactions(); } });
+    if (typeFilter) chips.push({ label: 'Type: ' + typeFilter, clear: () => { document.getElementById('txFilterType').value = ''; renderTransactions(); } });
+    if (catFilter) chips.push({ label: 'Category: ' + catFilter, clear: () => { document.getElementById('txFilterCategory').value = ''; renderTransactions(); } });
+    if (acctFilter) {
+      const acctName = getAccountName(acctFilter) || acctFilter;
+      chips.push({ label: 'Account: ' + acctName, clear: () => { document.getElementById('txFilterAccount').value = ''; renderTransactions(); } });
+    }
+    if (dateRange && dateRange !== 'custom') {
+      const rangeLabels = { today: 'Today', yesterday: 'Yesterday', last7: 'Last 7 days', last30: 'Last 30 days', thisMonth: 'This month', lastMonth: 'Last month' };
+      chips.push({ label: 'Date: ' + (rangeLabels[dateRange] || dateRange), clear: () => { document.getElementById('txFilterDateRange').value = ''; onDateRangeChange(); renderTransactions(); } });
+    }
+    if (dateRange === 'custom' && (dateFrom || dateTo)) {
+      chips.push({ label: 'Date: ' + (dateFrom || '...') + ' to ' + (dateTo || '...'), clear: () => { document.getElementById('txFilterDateRange').value = ''; document.getElementById('txDateFrom').value = ''; document.getElementById('txDateTo').value = ''; onDateRangeChange(); renderTransactions(); } });
+    }
+    if (amountMin > 0) chips.push({ label: 'Min: ' + fmt(amountMin), clear: () => { document.getElementById('txAmountMin').value = ''; renderTransactions(); } });
+    if (amountMax < Infinity) chips.push({ label: 'Max: ' + fmt(amountMax), clear: () => { document.getElementById('txAmountMax').value = ''; renderTransactions(); } });
+    
+    let chipsHtml = chips.map((c, i) => `<button class="filter-chip" onclick="window._txChipClear_${i}()">${c.label}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`).join('');
+    if (chips.length > 1) chipsHtml += `<button class="filter-chip-clear" onclick="clearAllTxFilters()">Clear all</button>`;
+    chips.forEach((c, i) => { window['_txChipClear_' + i] = c.clear; });
+    chipsEl.innerHTML = chipsHtml;
+  }
+
+  // Results count
+  const countEl = document.getElementById('txResultsCount');
+  if (countEl) {
+    const totalTx = state.transactions.length;
+    countEl.textContent = txs.length === totalTx ? totalTx + ' transactions' : txs.length + ' of ' + totalTx + ' transactions';
   }
 
   const container = document.getElementById('txList');
@@ -5378,6 +5479,26 @@ function setTxPage(page) {
   // Scroll to top of tx list
   const el = document.getElementById('txList');
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+function onDateRangeChange() {
+  const val = document.getElementById('txFilterDateRange').value;
+  const customWrap = document.getElementById('txDateCustom');
+  if (customWrap) customWrap.style.display = (val === 'custom') ? '' : 'none';
+  renderTransactions();
+}
+
+function clearAllTxFilters() {
+  document.getElementById('txSearch').value = '';
+  document.getElementById('txFilterType').value = '';
+  document.getElementById('txFilterCategory').value = '';
+  document.getElementById('txFilterAccount').value = '';
+  document.getElementById('txFilterDateRange').value = '';
+  document.getElementById('txDateFrom').value = '';
+  document.getElementById('txDateTo').value = '';
+  document.getElementById('txAmountMin').value = '';
+  document.getElementById('txAmountMax').value = '';
+  onDateRangeChange();
 }
 function setSubFilter(el) {
   document.querySelectorAll('[data-sfilter]').forEach(c => c.classList.remove('active'));
