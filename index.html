@@ -3974,7 +3974,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js" crossorigin="anonymous"></script>
-<script src="https://accounts.google.com/gsi/client" async defer crossorigin="anonymous"></script>
+<script src="https://accounts.google.com/gsi/client" async defer onload="window.__gisLoaded=true;console.log('GIS script loaded')" onerror="console.error('GIS script failed to load')"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js" crossorigin="anonymous"></script>
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js" crossorigin="anonymous"></script>
@@ -8362,56 +8362,84 @@ window.isGoogleSignedIn = isGoogleSignedIn;
 // Pre-initialize GIS token client so it is ready before user clicks Connect.
 // This avoids popup-blocking issues caused by creating the client inside a timer.
 function initGcalTokenClient() {
-  if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
-    console.log('GIS not ready yet');
+  if (typeof window.google === 'undefined' || !window.google.accounts || !window.google.accounts.oauth2) {
+    console.log('GIS not ready yet. typeof google=' + typeof window.google);
     return false;
   }
   if (gcalTokenClient) return true; // already created
 
-  gcalTokenClient = google.accounts.oauth2.initTokenClient({
-    client_id: GCAL_CLIENT_ID,
-    scope: GCALENDAR_SCOPE,
-    hint: currentUser ? currentUser.email : '',
-    callback: (response) => {
-      console.log('GIS callback', response);
-      if (response.access_token) {
-        state.settings.googleCalendar.connected = true;
-        state.settings.googleCalendar.accessToken = response.access_token;
-        state.settings.googleCalendar.tokenExpiry = Date.now() + (response.expires_in || 3600) * 1000;
-        state.settings.googleCalendar.accountEmail = currentUser ? currentUser.email : '';
-        saveData();
-        showToast('Google Calendar connected successfully');
-        fetchGcalCalendars();
-        renderSettings();
-      } else if (response.error) {
-        console.error('GIS error response', response);
-        const msg = response.error_description || response.error;
-        if (msg && (msg.includes('popup') || msg.includes('closed') || msg.includes('dismissed'))) {
-          showToast('Connection cancelled. Click Connect to try again.');
+  try {
+    gcalTokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: GCAL_CLIENT_ID,
+      scope: GCALENDAR_SCOPE,
+      hint: currentUser ? currentUser.email : '',
+      callback: (response) => {
+        console.log('GIS callback', response);
+        if (response.access_token) {
+          state.settings.googleCalendar.connected = true;
+          state.settings.googleCalendar.accessToken = response.access_token;
+          state.settings.googleCalendar.tokenExpiry = Date.now() + (response.expires_in || 3600) * 1000;
+          state.settings.googleCalendar.accountEmail = currentUser ? currentUser.email : '';
+          saveData();
+          showToast('Google Calendar connected successfully');
+          fetchGcalCalendars();
+          renderSettings();
+        } else if (response.error) {
+          console.error('GIS error response', response);
+          const msg = response.error_description || response.error;
+          if (msg && (msg.includes('popup') || msg.includes('closed') || msg.includes('dismissed'))) {
+            showToast('Connection cancelled. Click Connect to try again.');
+          } else {
+            showToast('Calendar error: ' + msg);
+          }
         } else {
-          showToast('Calendar error: ' + msg);
+          console.error('GIS unknown response', response);
+          showToast('Could not get Calendar access. Please try again.');
         }
-      } else {
-        console.error('GIS unknown response', response);
-        showToast('Could not get Calendar access. Please try again.');
+      },
+      error_callback: (err) => {
+        console.error('GIS error_callback', err);
+        const msg = (err && err.message) ? err.message : '';
+        if (msg.includes('popup') || msg.includes('closed') || msg.includes('dismissed')) {
+          showToast('Connection cancelled. Click Connect to try again.');
+        } else if (msg.includes('network') || msg.includes('timeout')) {
+          showToast('Network error. Please check your connection and try again.');
+        } else {
+          showToast('Calendar permission denied or error: ' + (msg || 'Unknown'));
+        }
       }
-    },
-    error_callback: (err) => {
-      console.error('GIS error_callback', err);
-      const msg = (err && err.message) ? err.message : '';
-      if (msg.includes('popup') || msg.includes('closed') || msg.includes('dismissed')) {
-        showToast('Connection cancelled. Click Connect to try again.');
-      } else if (msg.includes('network') || msg.includes('timeout')) {
-        showToast('Network error. Please check your connection and try again.');
-      } else {
-        showToast('Calendar permission denied or error: ' + (msg || 'Unknown'));
-      }
-    }
-  });
-  console.log('GIS token client initialized');
-  return true;
+    });
+    console.log('GIS token client initialized');
+    return true;
+  } catch (e) {
+    console.error('GIS initTokenClient threw:', e);
+    return false;
+  }
 }
 window.initGcalTokenClient = initGcalTokenClient;
+
+// Fallback: manually inject GIS script if the HTML script tag didn't load
+// (common when ad blockers or privacy extensions block accounts.google.com)
+function injectGisScript() {
+  if (typeof window.google !== 'undefined' && window.google.accounts && window.google.accounts.oauth2) {
+    console.log('GIS already available, no injection needed');
+    return;
+  }
+  console.log('Injecting GIS script dynamically...');
+  const existing = document.querySelector('script[src*="accounts.google.com/gsi/client"]');
+  if (existing) {
+    console.log('GIS script tag exists in DOM, waiting for it to load');
+    return;
+  }
+  const s = document.createElement('script');
+  s.src = 'https://accounts.google.com/gsi/client';
+  s.async = true;
+  s.defer = true;
+  s.onload = () => { window.__gisLoaded = true; console.log('GIS script injected and loaded'); };
+  s.onerror = () => { console.error('GIS script injection failed'); };
+  document.head.appendChild(s);
+}
+window.injectGisScript = injectGisScript;
 
 function connectGoogleCalendar() {
   if (!currentUser) { showToast('Please sign in first'); return; }
@@ -8422,18 +8450,61 @@ function connectGoogleCalendar() {
   }
   document.getElementById('gcalSignInNote').style.display = 'none';
 
-  // Must initialize here if not already done (e.g. if GIS loaded late)
-  if (!initGcalTokenClient()) {
-    showToast('Google services still loading. Please wait a moment and click Connect again.');
+  // Try to init client immediately
+  if (initGcalTokenClient()) {
+    console.log('Requesting access token via GIS...');
+    gcalTokenClient.requestAccessToken();
     return;
   }
 
-  // requestAccessToken MUST be called synchronously from the user gesture (click).
-  // Any async delay (setTimeout, setInterval, promise) will cause the browser to block the popup.
-  console.log('Requesting access token...');
-  gcalTokenClient.requestAccessToken();
+  // GIS not loaded — use Firebase fallback (re-auth with Calendar scope)
+  // This works even when ad blockers or privacy settings block accounts.google.com
+  console.log('GIS unavailable, falling back to Firebase re-authentication');
+  connectCalendarViaFirebase();
 }
 window.connectGoogleCalendar = connectGoogleCalendar;
+
+function connectCalendarViaFirebase() {
+  try {
+    const provider = new firebase.auth.GoogleAuthProvider();
+    provider.addScope('https://www.googleapis.com/auth/calendar');
+    showToast('Opening Google sign-in to authorize Calendar access...');
+    currentUser.reauthenticateWithPopup(provider)
+      .then((result) => {
+        const credential = result.credential;
+        if (credential && credential.accessToken) {
+          state.settings.googleCalendar.connected = true;
+          state.settings.googleCalendar.accessToken = credential.accessToken;
+          // Token from Firebase popup usually expires in 1 hour
+          state.settings.googleCalendar.tokenExpiry = Date.now() + 3600 * 1000;
+          state.settings.googleCalendar.accountEmail = currentUser.email || '';
+          saveData();
+          showToast('Google Calendar connected successfully');
+          fetchGcalCalendars();
+          renderSettings();
+        } else {
+          console.error('Firebase re-auth succeeded but no accessToken in credential', result);
+          showToast('Connected, but could not get Calendar token. Please try again.');
+        }
+      })
+      .catch((err) => {
+        console.error('Firebase re-auth error', err);
+        if (err.code === 'auth/popup-closed-by-user') {
+          showToast('Sign-in cancelled. Click Connect to try again.');
+        } else if (err.code === 'auth/popup-blocked') {
+          showToast('Popup blocked. Please allow popups for this site and try again.');
+        } else if (err.code === 'auth/cancelled-popup-request') {
+          showToast('Only one sign-in popup allowed at a time.');
+        } else {
+          showToast('Could not connect Calendar: ' + (err.message || 'Unknown error'));
+        }
+      });
+  } catch (e) {
+    console.error('connectCalendarViaFirebase threw', e);
+    showToast('Unable to connect Calendar. Please refresh the page and try again.');
+  }
+}
+window.connectCalendarViaFirebase = connectCalendarViaFirebase;
 
 function disconnectGoogleCalendar() {
   state.settings.googleCalendar.connected = false;
@@ -8946,14 +9017,19 @@ if ('serviceWorker' in navigator) {
   const maxAttempts = 30;
   const timer = setInterval(() => {
     attempts++;
-    if (typeof google !== 'undefined' && google.accounts && google.accounts.oauth2) {
+    if (typeof window.google !== 'undefined' && window.google.accounts && window.google.accounts.oauth2) {
       clearInterval(timer);
-      console.log('GIS library detected');
+      console.log('GIS library detected by watcher');
       // Only init if user is already known to be signed in with Google
       if (currentUser && isGoogleSignedIn()) {
         initGcalTokenClient();
       }
       return;
+    }
+    // After 3 seconds, try dynamic injection as fallback (ad blockers often block the static tag)
+    if (attempts === 3) {
+      console.log('GIS not loaded after 3s, trying dynamic injection fallback');
+      injectGisScript();
     }
     if (attempts >= maxAttempts) {
       clearInterval(timer);
