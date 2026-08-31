@@ -3363,7 +3363,7 @@
         <label class="form-label">Description</label>
         <input type="text" class="form-input" id="txDescription" placeholder="What was this for?">
       </div>
-      <div class="form-row">
+      <div class="form-row" id="txNormalAccountRow">
         <div class="form-group">
           <label class="form-label">Account</label>
           <select class="form-input" id="txAccount"></select>
@@ -3377,6 +3377,16 @@
             <option value="Mobile Money">Mobile money</option>
             <option value="USSD">USSD</option>
           </select>
+        </div>
+      </div>
+      <div class="form-row" id="txTransferAccountRow" style="display:none;">
+        <div class="form-group">
+          <label class="form-label">From account</label>
+          <select class="form-input" id="txFromAccount"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">To account</label>
+          <select class="form-input" id="txToAccount"></select>
         </div>
       </div>
       <div class="form-group">
@@ -3617,6 +3627,16 @@
       <div class="form-group">
         <label class="form-label">Amount (₦)</label>
         <input type="number" class="form-input" id="contribAmount" placeholder="0" step="0.01">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Source</label>
+        <select class="form-input" id="contribSource" onchange="onContribSourceChange()">
+          <option value="">Select source...</option>
+        </select>
+      </div>
+      <div class="form-group" id="contribCustomSourceWrap" style="display:none;">
+        <label class="form-label">Custom source</label>
+        <input type="text" class="form-input" id="contribCustomSource" placeholder="e.g. Cash on hand, Gift, Other savings">
       </div>
     </div>
     <div class="modal-footer">
@@ -4167,7 +4187,7 @@ function seedData() {
     else if (t.type === 'expense' && (t.category === 'Utilities' || t.category === 'Education')) t.accountId = gt;
     else if (t.type === 'expense' && t.category === 'Health') t.accountId = ca;
     else if (t.type === 'giving') t.accountId = gt;
-    else if (t.type === 'transfer') t.accountId = gt;
+    else if (t.type === 'transfer') { t.fromAccountId = gt; t.toAccountId = ac; t.accountId = gt; }
   });
 
   // Subscriptions
@@ -4195,10 +4215,10 @@ function seedData() {
 
   // Goals
   state.goals = [
-    {id: uid(), name: 'Emergency Fund', target: 1000000, current: 450000, date: addDays(now, 120), priority: 'high', icon: 'Shield', contributions: [{date: d(1), time: '09:30 AM', timestamp: new Date(y, m, 1, 9, 30).toISOString(), amount: 50000},{date: d(15), time: '02:15 PM', timestamp: new Date(y, m, 15, 14, 15).toISOString(), amount: 100000},{date: d(25), time: '11:00 AM', timestamp: new Date(y, m, 25, 11, 0).toISOString(), amount: 200000}]},
-    {id: uid(), name: 'Vacation Fund', target: 500000, current: 180000, date: addDays(now, 75), priority: 'medium', icon: 'Sun', contributions: [{date: d(5), time: '08:45 AM', timestamp: new Date(y, m, 5, 8, 45).toISOString(), amount: 80000},{date: d(20), time: '03:30 PM', timestamp: new Date(y, m, 20, 15, 30).toISOString(), amount: 100000}]},
-    {id: uid(), name: 'New Laptop', target: 800000, current: 320000, date: addDays(now, 150), priority: 'medium', icon: 'Monitor', contributions: [{date: d(10), time: '10:00 AM', timestamp: new Date(y, m, 10, 10, 0).toISOString(), amount: 120000},{date: d(18), time: '01:20 PM', timestamp: new Date(y, m, 18, 13, 20).toISOString(), amount: 200000}]},
-    {id: uid(), name: 'Investment Capital', target: 2000000, current: 750000, date: addDays(now, 200), priority: 'low', icon: 'Investment', contributions: [{date: d(1), time: '07:15 AM', timestamp: new Date(y, m, 1, 7, 15).toISOString(), amount: 200000},{date: d(12), time: '05:45 PM', timestamp: new Date(y, m, 12, 17, 45).toISOString(), amount: 300000},{date: d(22), time: '09:00 AM', timestamp: new Date(y, m, 22, 9, 0).toISOString(), amount: 250000}]},
+    {id: uid(), name: 'Emergency Fund', target: 1000000, current: 450000, date: addDays(now, 120), priority: 'high', icon: 'Shield', contributions: [{date: d(1), time: '09:30 AM', timestamp: new Date(y, m, 1, 9, 30).toISOString(), amount: 50000, sourceType: 'account', sourceId: gt, sourceName: 'GTBank'},{date: d(15), time: '02:15 PM', timestamp: new Date(y, m, 15, 14, 15).toISOString(), amount: 100000, sourceType: 'account', sourceId: ac, sourceName: 'Access Bank'},{date: d(25), time: '11:00 AM', timestamp: new Date(y, m, 25, 11, 0).toISOString(), amount: 200000, sourceType: 'custom', sourceName: 'Cash savings'}]},
+    {id: uid(), name: 'Vacation Fund', target: 500000, current: 180000, date: addDays(now, 75), priority: 'medium', icon: 'Sun', contributions: [{date: d(5), time: '08:45 AM', timestamp: new Date(y, m, 5, 8, 45).toISOString(), amount: 80000, sourceType: 'account', sourceId: op, sourceName: 'Opay'},{date: d(20), time: '03:30 PM', timestamp: new Date(y, m, 20, 15, 30).toISOString(), amount: 100000, sourceType: 'custom', sourceName: 'Freelance payout'}]},
+    {id: uid(), name: 'New Laptop', target: 800000, current: 320000, date: addDays(now, 150), priority: 'medium', icon: 'Monitor', contributions: [{date: d(10), time: '10:00 AM', timestamp: new Date(y, m, 10, 10, 0).toISOString(), amount: 120000, sourceType: 'account', sourceId: ac, sourceName: 'Access Bank'},{date: d(18), time: '01:20 PM', timestamp: new Date(y, m, 18, 13, 20).toISOString(), amount: 200000, sourceType: 'account', sourceId: gt, sourceName: 'GTBank'}]},
+    {id: uid(), name: 'Investment Capital', target: 2000000, current: 750000, date: addDays(now, 200), priority: 'low', icon: 'Investment', contributions: [{date: d(1), time: '07:15 AM', timestamp: new Date(y, m, 1, 7, 15).toISOString(), amount: 200000, sourceType: 'custom', sourceName: 'Business profit'},{date: d(12), time: '05:45 PM', timestamp: new Date(y, m, 12, 17, 45).toISOString(), amount: 300000, sourceType: 'account', sourceId: gt, sourceName: 'GTBank'},{date: d(22), time: '09:00 AM', timestamp: new Date(y, m, 22, 9, 0).toISOString(), amount: 250000, sourceType: 'custom', sourceName: 'Dividend payment'}]},
   ];
 
   // Compute total balance from accounts so everything stays consistent
@@ -4286,11 +4306,11 @@ function getMonthTransactions(monthK) {
 }
 
 function getAccountTransactions(accountId) {
-  return state.transactions.filter(t => t.accountId === accountId);
+  return state.transactions.filter(t => t.accountId === accountId || (t.type === 'transfer' && (t.fromAccountId === accountId || t.toAccountId === accountId)));
 }
 
 function getAccountMonthIncome(accountId, monthK) {
-  return getMonthTransactions(monthK).filter(t => t.type === 'income' && t.accountId === accountId).reduce((s, t) => s + t.amount, 0);
+  return getMonthTransactions(monthK).filter(t => (t.type === 'income' && t.accountId === accountId) || (t.type === 'transfer' && t.toAccountId === accountId)).reduce((s, t) => s + t.amount, 0);
 }
 
 function getAccountMonthExpenses(accountId, monthK) {
@@ -4299,6 +4319,10 @@ function getAccountMonthExpenses(accountId, monthK) {
 
 function getAccountMonthGiving(accountId, monthK) {
   return getMonthTransactions(monthK).filter(t => t.type === 'giving' && t.accountId === accountId).reduce((s, t) => s + t.amount, 0);
+}
+
+function getAccountMonthTransfersOut(accountId, monthK) {
+  return getMonthTransactions(monthK).filter(t => t.type === 'transfer' && (t.fromAccountId === accountId || (t.accountId === accountId && !t.fromAccountId))).reduce((s, t) => s + t.amount, 0);
 }
 
 function getIncomeTotal(monthK) {
@@ -4595,7 +4619,7 @@ function renderAccounts() {
     const txs = getAccountTransactions(a.id);
     const mk = currentMonthKey();
     const inc = getAccountMonthIncome(a.id, mk);
-    const exp = getAccountMonthExpenses(a.id, mk) + getAccountMonthGiving(a.id, mk);
+    const exp = getAccountMonthExpenses(a.id, mk) + getAccountMonthGiving(a.id, mk) + getAccountMonthTransfersOut(a.id, mk);
     return `<div class="budget-card" style="cursor:pointer;" onclick="viewAccount('${a.id}')">
       <div class="budget-card-icon" style="background:var(--light-green);color:var(--accent);">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
@@ -4630,8 +4654,10 @@ function renderAccountDetail() {
   if (!acct) return;
   const mk = currentMonthKey();
   const txs = getAccountTransactions(acct.id).sort((a,b) => new Date(b.date) - new Date(a.date));
-  const inc = txs.filter(t => t.type === 'income' && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0);
-  const out = txs.filter(t => (t.type === 'expense' || t.type === 'giving') && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0);
+  const inc = txs.filter(t => t.type === 'income' && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0)
+                + txs.filter(t => t.type === 'transfer' && t.toAccountId === acct.id && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0);
+  const out = txs.filter(t => (t.type === 'expense' || t.type === 'giving') && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0)
+                + txs.filter(t => t.type === 'transfer' && (t.fromAccountId === acct.id || (t.accountId === acct.id && !t.fromAccountId)) && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0);
 
   document.getElementById('acctDetailTitle').textContent = acct.name + ' — Transactions';
   document.getElementById('acctDetailBalance').textContent = fmt(acct.balance || 0);
@@ -4806,8 +4832,8 @@ function renderDashboardAccounts() {
   const mk = currentMonthKey();
   container.innerHTML = state.accounts.map(a => {
     const txs = getAccountTransactions(a.id);
-    const inc = txs.filter(t => t.type === 'income' && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0);
-    const exp = txs.filter(t => (t.type === 'expense' || t.type === 'giving') && monthKey(t.date) === mk).reduce((s,t) => s + t.amount, 0);
+    const inc = getAccountMonthIncome(a.id, mk);
+    const exp = getAccountMonthExpenses(a.id, mk) + getAccountMonthGiving(a.id, mk) + getAccountMonthTransfersOut(a.id, mk);
     return `<div class="sub-item" style="cursor:pointer;" onclick="viewAccount('${a.id}')">
       <div class="sub-icon" style="background:var(--light-green);color:var(--accent);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
@@ -4896,9 +4922,17 @@ function renderDashboardRecent() {
 function renderTxRow(t) {
   const icon = categoryIcons[t.category] || categoryIcons['Other'];
   const isInflow = t.type === 'income';
-  const sign = isInflow ? '+' : '−';
+  const isTransfer = t.type === 'transfer';
+  const sign = isInflow ? '+' : (isTransfer ? '' : '−');
   const cls = t.type;
-  const acctName = getAccountName(t.accountId);
+  let acctName = getAccountName(t.accountId);
+  let metaLine = `${t.category} · ${fmtDate(t.date)} · ${t.payment}`;
+  if (isTransfer) {
+    const fromName = getAccountName(t.fromAccountId || t.accountId);
+    const toName = getAccountName(t.toAccountId);
+    metaLine = `${fromName} → ${toName} · ${fmtDate(t.date)}`;
+    acctName = '';
+  }
   const typeBadge = {
     income: '<span class="badge badge-success" style="font-size:10px;padding:2px 6px;">Income</span>',
     expense: '<span class="badge badge-gray" style="font-size:10px;padding:2px 6px;">Expense</span>',
@@ -4909,7 +4943,7 @@ function renderTxRow(t) {
     <div class="tx-icon" style="background:var(--light-green);">${icon}</div>
     <div class="tx-info">
       <div class="tx-desc">${t.description} ${typeBadge[t.type] || ''}</div>
-      <div class="tx-meta">${t.category} · ${fmtDate(t.date)} · ${t.payment} · ${acctName}</div>
+      <div class="tx-meta">${metaLine}${acctName ? ' · ' + acctName : ''}</div>
     </div>
     <div class="tx-amount ${cls}">${sign}${fmt(t.amount).replace('₦','₦')}</div>
     <div class="tx-actions">
@@ -5602,7 +5636,10 @@ function renderGoals() {
     let historyHtml = '';
     if (history.length > 0) {
       historyHtml = '<div id="' + listId + '" style="display:none;margin-top:12px;">' +
-        history.map(c => '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-secondary);font-size:13px;color:var(--text);"><span>' + fmtDate(c.date) + '</span><span style="font-weight:600;color:var(--text);">' + fmt(c.amount) + '</span></div>').join('') +
+        history.map(c => {
+          const sourceLabel = c.sourceType === 'account' ? (c.sourceName || getAccountName(c.sourceId)) : (c.sourceName || 'Custom');
+          return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-secondary);font-size:13px;color:var(--text);"><span>' + fmtDate(c.date) + ' · ' + sourceLabel + '</span><span style="font-weight:600;color:var(--text);">' + fmt(c.amount) + '</span></div>';
+        }).join('') +
         '</div>';
     }
 
@@ -5672,7 +5709,10 @@ function renderGoals() {
                 Delete
               </button>
             </div>
-            ${history.length > 0 ? `<div style="margin-top:8px;"><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Contribution history</div>` + history.map(c => '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:var(--text-secondary);"><span>' + fmtDate(c.date) + '</span><span style="font-weight:600;color:var(--text);">' + fmt(c.amount) + '</span></div>').join('') + '</div>' : ''}
+            ${history.length > 0 ? `<div style="margin-top:8px;"><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Contribution history</div>` + history.map(c => {
+              const sourceLabel = c.sourceType === 'account' ? (c.sourceName || getAccountName(c.sourceId)) : (c.sourceName || 'Custom');
+              return '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:var(--text-secondary);"><span>' + fmtDate(c.date) + ' · ' + sourceLabel + '</span><span style="font-weight:600;color:var(--text);">' + fmt(c.amount) + '</span></div>';
+            }).join('') + '</div>' : ''}
           </div>
         </div>
       </div>
@@ -6063,16 +6103,28 @@ function openModal(txId) {
       currentTxType = tx.type;
       updateTypeSelector(tx.type);
       updateCategoryOptions(tx.type);
-      populateAccountSelect('txAccount', false);
+      updateTransferFields(tx.type);
+      if (tx.type === 'transfer') {
+        populateAccountSelect('txFromAccount', false);
+        populateAccountSelect('txToAccount', false);
+        if (tx.fromAccountId) document.getElementById('txFromAccount').value = tx.fromAccountId;
+        if (tx.toAccountId) document.getElementById('txToAccount').value = tx.toAccountId;
+        // fallback: accountId used to mean fromAccountId for transfers
+        if (!tx.fromAccountId && tx.accountId) document.getElementById('txFromAccount').value = tx.accountId;
+      } else {
+        populateAccountSelect('txAccount', false);
+        if (tx.accountId && document.getElementById('txAccount')) document.getElementById('txAccount').value = tx.accountId;
+      }
       document.getElementById('txAmount').value = tx.amount;
       document.getElementById('txDate').value = tx.date;
       document.getElementById('txCategory').value = tx.category;
       document.getElementById('txDescription').value = tx.description;
       document.getElementById('txPayment').value = tx.payment;
-      if (tx.accountId && document.getElementById('txAccount')) document.getElementById('txAccount').value = tx.accountId;
       document.getElementById('txTags').value = (tx.tags || []).join(', ');
       document.getElementById('txNotes').value = tx.notes || '';
     }
+  } else {
+    updateTransferFields(currentTxType);
   }
 
   document.getElementById('modalOverlay').classList.add('active');
@@ -6098,11 +6150,22 @@ function updateCategoryOptions(type) {
   document.getElementById('txCategory').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
 }
 
+function updateTransferFields(type) {
+  const isTransfer = type === 'transfer';
+  document.getElementById('txNormalAccountRow').style.display = isTransfer ? 'none' : '';
+  document.getElementById('txTransferAccountRow').style.display = isTransfer ? '' : 'none';
+  if (isTransfer) {
+    populateAccountSelect('txFromAccount', false);
+    populateAccountSelect('txToAccount', false);
+  }
+}
+
 document.querySelectorAll('#typeSelector .type-btn').forEach(btn => {
   btn.addEventListener('click', () => {
     currentTxType = btn.dataset.type;
     updateTypeSelector(currentTxType);
     updateCategoryOptions(currentTxType);
+    updateTransferFields(currentTxType);
   });
 });
 
@@ -6118,8 +6181,17 @@ function saveTransaction() {
   const tags = tagsStr ? tagsStr.split(',').map(t => t.trim()).filter(Boolean) : [];
   const notes = document.getElementById('txNotes').value;
 
-  const accountId = document.getElementById('txAccount').value || null;
-  const txData = { id: editingTxId || uid(), date, amount, type: currentTxType, category, description, payment, accountId, tags, notes };
+  let txData;
+  if (currentTxType === 'transfer') {
+    const fromAccountId = document.getElementById('txFromAccount').value || null;
+    const toAccountId = document.getElementById('txToAccount').value || null;
+    if (fromAccountId && toAccountId && fromAccountId === toAccountId) { showToast('From and To accounts must be different'); return; }
+    if (!fromAccountId || !toAccountId) { showToast('Select both From and To accounts'); return; }
+    txData = { id: editingTxId || uid(), date, amount, type: currentTxType, category, description, payment, fromAccountId, toAccountId, accountId: fromAccountId, tags, notes };
+  } else {
+    const accountId = document.getElementById('txAccount').value || null;
+    txData = { id: editingTxId || uid(), date, amount, type: currentTxType, category, description, payment, accountId, tags, notes };
+  }
 
   const isRecurring = document.getElementById('toggleRecurring').classList.contains('on');
 
@@ -6131,12 +6203,17 @@ function saveTransaction() {
       if (oldTx.type === 'income') state.balance -= oldTx.amount;
       else if (oldTx.type === 'expense' || oldTx.type === 'giving') state.balance += oldTx.amount;
       else if (oldTx.type === 'transfer') { /* transfer has no net effect on total balance */ }
-      if (oldTx.accountId) {
+      if (oldTx.type === 'transfer') {
+        // Reverse old transfer: add back to from account, subtract from to account
+        const oldFrom = state.accounts.find(a => a.id === (oldTx.fromAccountId || oldTx.accountId));
+        const oldTo = state.accounts.find(a => a.id === oldTx.toAccountId);
+        if (oldFrom) oldFrom.balance += oldTx.amount;
+        if (oldTo) oldTo.balance -= oldTx.amount;
+      } else if (oldTx.accountId) {
         const oldAcct = state.accounts.find(a => a.id === oldTx.accountId);
         if (oldAcct) {
           if (oldTx.type === 'income') oldAcct.balance -= oldTx.amount;
           else if (oldTx.type === 'expense' || oldTx.type === 'giving') oldAcct.balance += oldTx.amount;
-          else if (oldTx.type === 'transfer') oldAcct.balance += oldTx.amount;
         }
       }
       state.transactions[idx] = txData;
@@ -6150,12 +6227,16 @@ function saveTransaction() {
   if (currentTxType === 'income') state.balance += amount;
   else if (currentTxType === 'expense' || currentTxType === 'giving') state.balance -= amount;
   else if (currentTxType === 'transfer') { /* transfer has no net effect on total balance */ }
-  if (accountId) {
-    const acct = state.accounts.find(a => a.id === accountId);
+  if (currentTxType === 'transfer') {
+    const fromAcct = state.accounts.find(a => a.id === txData.fromAccountId);
+    const toAcct = state.accounts.find(a => a.id === txData.toAccountId);
+    if (fromAcct) fromAcct.balance -= amount;
+    if (toAcct) toAcct.balance += amount;
+  } else if (txData.accountId) {
+    const acct = state.accounts.find(a => a.id === txData.accountId);
     if (acct) {
       if (currentTxType === 'income') acct.balance += amount;
       else if (currentTxType === 'expense' || currentTxType === 'giving') acct.balance -= amount;
-      else if (currentTxType === 'transfer') acct.balance -= amount;
     }
   }
 
@@ -6198,12 +6279,16 @@ function deleteTransaction(id) {
     if (tx.type === 'income') state.balance -= tx.amount;
     else if (tx.type === 'expense' || tx.type === 'giving') state.balance += tx.amount;
     // Also update account balance if accountId exists
-    if (tx.accountId) {
+    if (tx.type === 'transfer') {
+      const fromAcct = state.accounts.find(a => a.id === (tx.fromAccountId || tx.accountId));
+      const toAcct = state.accounts.find(a => a.id === tx.toAccountId);
+      if (fromAcct) fromAcct.balance += tx.amount;
+      if (toAcct) toAcct.balance -= tx.amount;
+    } else if (tx.accountId) {
       const acct = state.accounts.find(a => a.id === tx.accountId);
       if (acct) {
         if (tx.type === 'income') acct.balance -= tx.amount;
         else if (tx.type === 'expense' || tx.type === 'giving') acct.balance += tx.amount;
-        else if (tx.type === 'transfer') acct.balance += tx.amount;
       }
     }
     state.transactions = state.transactions.filter(t => t.id !== id);
@@ -6212,12 +6297,16 @@ function deleteTransaction(id) {
       state.transactions.push(tx);
       if (tx.type === 'income') state.balance += tx.amount;
       else if (tx.type === 'expense' || tx.type === 'giving') state.balance -= tx.amount;
-      if (tx.accountId) {
+      if (tx.type === 'transfer') {
+        const fromAcct = state.accounts.find(a => a.id === (tx.fromAccountId || tx.accountId));
+        const toAcct = state.accounts.find(a => a.id === tx.toAccountId);
+        if (fromAcct) fromAcct.balance -= tx.amount;
+        if (toAcct) toAcct.balance += tx.amount;
+      } else if (tx.accountId) {
         const acct = state.accounts.find(a => a.id === tx.accountId);
         if (acct) {
           if (tx.type === 'income') acct.balance += tx.amount;
           else if (tx.type === 'expense' || tx.type === 'giving') acct.balance -= tx.amount;
-          else if (tx.type === 'transfer') acct.balance -= tx.amount;
         }
       }
       saveData();
@@ -6482,19 +6571,48 @@ function openContribModal(goalId) {
   const goal = state.goals.find(g => g.id === goalId);
   document.getElementById('contribGoalName').value = goal ? goal.name : '';
   document.getElementById('contribAmount').value = '';
+  const sourceSelect = document.getElementById('contribSource');
+  let opts = '<option value="">Select source...</option>';
+  state.accounts.forEach(a => { opts += `<option value="account:${a.id}">${a.name}</option>`; });
+  opts += '<option value="custom">Other (custom)</option>';
+  sourceSelect.innerHTML = opts;
+  document.getElementById('contribCustomSourceWrap').style.display = 'none';
+  document.getElementById('contribCustomSource').value = '';
   document.getElementById('contribModalOverlay').classList.add('active');
 }
 function closeContribModal() { document.getElementById('contribModalOverlay').classList.remove('active'); contribGoalId = null; }
+function onContribSourceChange() {
+  const val = document.getElementById('contribSource').value;
+  document.getElementById('contribCustomSourceWrap').style.display = (val === 'custom') ? '' : 'none';
+}
 
 function saveContribution() {
   const amount = parseFloat(document.getElementById('contribAmount').value);
   if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
+  const sourceVal = document.getElementById('contribSource').value;
+  if (!sourceVal) { showToast('Select a source for this contribution'); return; }
+  let sourceType = 'custom';
+  let sourceId = '';
+  let sourceName = '';
+  if (sourceVal.startsWith('account:')) {
+    sourceType = 'account';
+    sourceId = sourceVal.replace('account:', '');
+    const acct = state.accounts.find(a => a.id === sourceId);
+    if (!acct) { showToast('Account not found'); return; }
+    sourceName = acct.name;
+    if (acct.balance < amount) { showToast('Insufficient balance in ' + acct.name); return; }
+    acct.balance -= amount;
+    // Also deduct from total balance
+    state.balance -= amount;
+  } else {
+    sourceName = document.getElementById('contribCustomSource').value.trim() || 'Custom';
+  }
   const goal = state.goals.find(g => g.id === contribGoalId);
   if (goal) {
     goal.current += amount;
     goal.contributions = goal.contributions || [];
     const now = new Date();
-    goal.contributions.push({ date: now.toISOString().split('T')[0], time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), timestamp: now.toISOString(), amount });
+    goal.contributions.push({ date: now.toISOString().split('T')[0], time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), timestamp: now.toISOString(), amount, sourceType, sourceId, sourceName });
     saveData();
     showToast('Contribution added');
     closeContribModal();
