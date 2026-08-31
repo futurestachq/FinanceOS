@@ -4,6 +4,7 @@
   "description": "Track income, expenses, budgets, goals and subscriptions in one place.",
   "start_url": "./index.html",
   "display": "standalone",
+  "id": "financeos-app",
   "background_color": "#F7F8F6",
   "theme_color": "#397968",
   "orientation": "any",
