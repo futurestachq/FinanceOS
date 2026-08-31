@@ -7198,15 +7198,29 @@ function showToast(msg) {
 }
 
 let undoTimer = null;
+let currentUndoFn = null;
 function showUndoToast(msg, undoFn) {
   const toast = document.getElementById('toast');
-  toast.innerHTML = msg + ' <button onclick="event.stopPropagation();" id="undoBtn" style="margin-left:10px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;padding:2px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;">Undo</button>';
+  currentUndoFn = undoFn;
+  toast.innerHTML = msg + ' <button id="undoBtn" style="margin-left:10px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;padding:2px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;">Undo</button>';
   toast.className = 'toast show';
-  toast.style.cursor = 'pointer';
-  toast.onclick = (e) => { if (e.target.tagName !== 'BUTTON') return; undoFn(); toast.classList.remove('show'); };
-  document.getElementById('undoBtn').onclick = (e) => { e.stopPropagation(); undoFn(); toast.classList.remove('show'); };
+  toast.style.cursor = 'default';
+  toast.onclick = null;
+  const btn = document.getElementById('undoBtn');
+  if (btn) {
+    btn.onclick = (e) => {
+      e.stopPropagation();
+      e.preventDefault();
+      if (currentUndoFn) {
+        try { currentUndoFn(); } catch(err) { console.error('Undo failed', err); }
+        currentUndoFn = null;
+      }
+      toast.classList.remove('show');
+      if (undoTimer) clearTimeout(undoTimer);
+    };
+  }
   if (undoTimer) clearTimeout(undoTimer);
-  undoTimer = setTimeout(() => toast.classList.remove('show'), 5000);
+  undoTimer = setTimeout(() => { toast.classList.remove('show'); currentUndoFn = null; }, 5000);
 }
 
 let confirmDeleteId = 0;
@@ -8535,9 +8549,14 @@ function saveIncomeEvent() {
 function deleteIncomeEvent(id) {
   const inc = state.incomeEvents.find(e => e.id === id);
   if (!inc) return;
-  confirmDelete('Delete income event?', 'Are you sure you want to delete \"' + inc.name + '\" (' + fmt(inc.amount) + ' / ' + inc.frequency + ')?', () => {
+  confirmDelete('Delete income event?', 'Are you sure you want to delete "' + inc.name + '" (' + fmt(inc.amount) + ' / ' + inc.frequency + ')?', () => {
     state.incomeEvents = state.incomeEvents.filter(e => e.id !== id);
-    refreshFinancialEvents(); saveData(); showToast('Income event deleted'); renderIncomeEventList();
+    refreshFinancialEvents(); saveData();
+    showUndoToast('Income event deleted', () => {
+      state.incomeEvents.push(inc);
+      refreshFinancialEvents(); saveData(); renderIncomeEventList();
+    });
+    renderIncomeEventList();
   });
 }
 
