@@ -1356,6 +1356,28 @@
 
   /* Settings */
   .settings-section { margin-bottom: 24px; }
+  .auto-rule-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: var(--bg-secondary);
+    border-radius: var(--radius-sm);
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .auto-rule-item .rule-keywords {
+    font-weight: 600;
+    color: var(--text);
+  }
+  .auto-rule-item .rule-target {
+    color: var(--text-secondary);
+    margin-left: 8px;
+  }
+  .auto-rule-item .rule-actions {
+    display: flex;
+    gap: 6px;
+  }
   .settings-card {
     background: var(--card);
     border: 1px solid var(--border);
@@ -3187,6 +3209,39 @@
           <div id="incomeEventList"></div>
         </div>
 
+        <!-- Auto-Categorization Rules -->
+        <div class="settings-card" style="margin-bottom:20px;">
+          <div class="settings-title">Auto-categorization rules</div>
+          <div class="settings-desc" style="margin-bottom:16px;">
+            Create keyword rules so transactions auto-fill category as you type.
+          </div>
+          <div id="autoRulesList" style="margin-bottom:16px;"></div>
+          <div style="background:var(--bg-secondary);border-radius:var(--radius-sm);padding:14px;">
+            <div class="form-row">
+              <div class="form-group" style="flex:2;">
+                <label class="form-label">Keywords (comma-separated)</label>
+                <input type="text" class="form-input" id="ruleKeywords" placeholder="e.g. Uber, Bolt, Taxi">
+              </div>
+              <div class="form-group" style="flex:1;">
+                <label class="form-label">Type</label>
+                <select class="form-input" id="ruleType" onchange="populateRuleCategoryOptions()">
+                  <option value="expense">Expense</option>
+                  <option value="income">Income</option>
+                  <option value="giving">Giving</option>
+                  <option value="transfer">Transfer</option>
+                </select>
+              </div>
+              <div class="form-group" style="flex:2;">
+                <label class="form-label">Category</label>
+                <select class="form-input" id="ruleCategory"></select>
+              </div>
+            </div>
+            <div style="text-align:right;">
+              <button class="btn btn-sm btn-primary" onclick="addAutoRule()">Add rule</button>
+            </div>
+          </div>
+        </div>
+
         <!-- Data Management -->
         <div class="settings-card" style="margin-bottom:20px;">
           <div class="settings-title">Data management</div>
@@ -3361,7 +3416,7 @@
       </div>
       <div class="form-group">
         <label class="form-label">Description</label>
-        <input type="text" class="form-input" id="txDescription" placeholder="What was this for?">
+        <input type="text" class="form-input" id="txDescription" placeholder="What was this for?" oninput="onTxDescriptionInput()">
       </div>
       <div class="form-row" id="txNormalAccountRow">
         <div class="form-group">
@@ -3884,6 +3939,7 @@ function ensureStateDefaults() {
   if (!state.incomeEvents) state.incomeEvents = [];
   if (!state.financialEvents) state.financialEvents = [];
   if (!state.hasOnboarded) state.hasOnboarded = false;
+  if (!state.autoRules) state.autoRules = [];
   if (!state.profile) state.profile = { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' };
   if (!state.settings) state.settings = {
     googleCalendar: { connected: false, accessToken: null, tokenExpiry: null, calendarId: null, calendars: [], clientId: '', accountEmail: '' },
@@ -4219,6 +4275,17 @@ function seedData() {
     {id: uid(), name: 'Vacation Fund', target: 500000, current: 180000, date: addDays(now, 75), priority: 'medium', icon: 'Sun', contributions: [{date: d(5), time: '08:45 AM', timestamp: new Date(y, m, 5, 8, 45).toISOString(), amount: 80000, sourceType: 'account', sourceId: op, sourceName: 'Opay'},{date: d(20), time: '03:30 PM', timestamp: new Date(y, m, 20, 15, 30).toISOString(), amount: 100000, sourceType: 'custom', sourceName: 'Freelance payout'}]},
     {id: uid(), name: 'New Laptop', target: 800000, current: 320000, date: addDays(now, 150), priority: 'medium', icon: 'Monitor', contributions: [{date: d(10), time: '10:00 AM', timestamp: new Date(y, m, 10, 10, 0).toISOString(), amount: 120000, sourceType: 'account', sourceId: ac, sourceName: 'Access Bank'},{date: d(18), time: '01:20 PM', timestamp: new Date(y, m, 18, 13, 20).toISOString(), amount: 200000, sourceType: 'account', sourceId: gt, sourceName: 'GTBank'}]},
     {id: uid(), name: 'Investment Capital', target: 2000000, current: 750000, date: addDays(now, 200), priority: 'low', icon: 'Investment', contributions: [{date: d(1), time: '07:15 AM', timestamp: new Date(y, m, 1, 7, 15).toISOString(), amount: 200000, sourceType: 'custom', sourceName: 'Business profit'},{date: d(12), time: '05:45 PM', timestamp: new Date(y, m, 12, 17, 45).toISOString(), amount: 300000, sourceType: 'account', sourceId: gt, sourceName: 'GTBank'},{date: d(22), time: '09:00 AM', timestamp: new Date(y, m, 22, 9, 0).toISOString(), amount: 250000, sourceType: 'custom', sourceName: 'Dividend payment'}]},
+  ];
+
+  // Auto-categorization rules (seed examples)
+  state.autoRules = [
+    { keywords: ['uber','bolt','taxi','ride'], type: 'expense', category: 'Transportation' },
+    { keywords: ['shoprite','market','groceries','supermarket','foodstuff'], type: 'expense', category: 'Food' },
+    { keywords: ['salary','payroll'], type: 'income', category: 'Salary' },
+    { keywords: ['freelance','client','project','design'], type: 'income', category: 'Freelance' },
+    { keywords: ['church','offering','tithe','donation','charity'], type: 'giving', category: 'Church' },
+    { keywords: ['transfer to savings','move to savings'], type: 'transfer', category: 'Bank to Savings' },
+    { keywords: ['data','airtime','mtn','glo','airtel','9mobile'], type: 'expense', category: 'Internet' },
   ];
 
   // Compute total balance from accounts so everything stays consistent
@@ -7309,6 +7376,8 @@ function renderSettings() {
   document.getElementById('defaultReminder').value = state.settings.defaultReminder;
   document.getElementById('notifWindow').value = state.settings.notifWindow;
   renderIncomeEventList();
+  renderAutoRules();
+  populateRuleCategoryOptions();
   updateLastBackupUI();
   const storageDesc = document.getElementById('dataStorageDesc');
   if (storageDesc) {
@@ -7322,6 +7391,102 @@ function setToggleState(id, value) { const el = document.getElementById(id); if 
 function toggleSetting(key, el) { state.settings[key] = !state.settings[key]; el.classList.toggle('on', state.settings[key]); saveData(); }
 function changeDefaultReminder() { state.settings.defaultReminder = parseInt(document.getElementById('defaultReminder').value); saveData(); }
 function changeNotifWindow() { state.settings.notifWindow = parseInt(document.getElementById('notifWindow').value); saveData(); }
+
+function renderAutoRules() {
+  const container = document.getElementById('autoRulesList');
+  if (!container) return;
+  const rules = state.autoRules || [];
+  if (rules.length === 0) {
+    container.innerHTML = '<div class="settings-desc" style="color:var(--text-tertiary);font-style:italic;">No rules yet. Add keywords to auto-categorize transactions.</div>';
+    return;
+  }
+  container.innerHTML = rules.map((r, i) => {
+    const kwText = (r.keywords || []).join(', ');
+    return `<div class="auto-rule-item">
+      <div style="display:flex;align-items:center;gap:8px;min-width:0;">
+        <span class="rule-keywords">${kwText}</span>
+        <span class="rule-target">→ ${r.type} / ${r.category}</span>
+      </div>
+      <div class="rule-actions">
+        <button class="btn btn-sm" style="padding:4px 8px;font-size:12px;" onclick="deleteAutoRule(${i})">Remove</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function addAutoRule() {
+  const kwStr = document.getElementById('ruleKeywords').value.trim();
+  const type = document.getElementById('ruleType').value;
+  const category = document.getElementById('ruleCategory').value;
+  if (!kwStr || !category) { showToast('Enter keywords and select a category'); return; }
+  const keywords = kwStr.split(',').map(k => k.trim().toLowerCase()).filter(Boolean);
+  if (keywords.length === 0) { showToast('Enter at least one keyword'); return; }
+  state.autoRules = state.autoRules || [];
+  state.autoRules.push({ keywords, type, category });
+  saveData();
+  document.getElementById('ruleKeywords').value = '';
+  renderAutoRules();
+  showToast('Rule added');
+}
+
+function deleteAutoRule(index) {
+  state.autoRules.splice(index, 1);
+  saveData();
+  renderAutoRules();
+  showToast('Rule removed');
+}
+
+function applyAutoCategorization(description, currentType) {
+  if (!description || !state.autoRules || state.autoRules.length === 0) return null;
+  const desc = description.toLowerCase();
+  for (const rule of state.autoRules) {
+    for (const kw of rule.keywords) {
+      if (desc.includes(kw)) {
+        return { type: rule.type, category: rule.category };
+      }
+    }
+  }
+  return null;
+}
+
+function onTxDescriptionInput() {
+  if (editingTxId) return; // Don't auto-categorize when editing
+  const desc = document.getElementById('txDescription').value;
+  const suggestion = applyAutoCategorization(desc, currentTxType);
+  if (suggestion) {
+    // Only auto-switch type/category if user hasn't manually changed it recently
+    // For simplicity, just apply it if the current type/category doesn't match
+    if (currentTxType !== suggestion.type) {
+      currentTxType = suggestion.type;
+      updateTypeSelector(suggestion.type);
+      updateCategoryOptions(suggestion.type);
+      updateTransferFields(suggestion.type);
+    }
+    const catSelect = document.getElementById('txCategory');
+    if (catSelect && catSelect.value !== suggestion.category) {
+      // Check if option exists
+      const opts = [...catSelect.options].map(o => o.value);
+      if (opts.includes(suggestion.category)) {
+        catSelect.value = suggestion.category;
+        // Flash the field subtly to show it was auto-filled
+        catSelect.style.transition = 'background 0.3s';
+        catSelect.style.background = 'var(--success-bg)';
+        setTimeout(() => { catSelect.style.background = ''; }, 600);
+      }
+    }
+  }
+}
+
+function populateRuleCategoryOptions() {
+  const type = document.getElementById('ruleType').value;
+  let cats;
+  if (type === 'income') cats = incomeCategories;
+  else if (type === 'giving') cats = givingCategories;
+  else if (type === 'transfer') cats = transferCategories;
+  else cats = expenseCategories;
+  document.getElementById('ruleCategory').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
 
 // ============ BROWSER PUSH NOTIFICATIONS ============
 
@@ -7495,6 +7660,7 @@ function clearOldNotificationIds() {
 }
 
 function saveProfile() {
+  if (!state.autoRules) state.autoRules = [];
   if (!state.profile) state.profile = { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' };
   state.profile.name = document.getElementById('profileName').value;
   state.profile.email = document.getElementById('profileEmail').value;
@@ -7589,6 +7755,7 @@ window.confirmImport = confirmImport;
 
 function applyImport(data) {
   state = data;
+  if (!state.autoRules) state.autoRules = [];
   if (!state.profile) state.profile = { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' };
   if (!state.incomeEvents) state.incomeEvents = [];
   if (!state.financialEvents) state.financialEvents = [];
