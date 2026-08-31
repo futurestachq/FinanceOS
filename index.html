@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#397968">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://accounts.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.google.com https://cdnjs.cloudflare.com; img-src 'self' data: blob:; frame-src https://accounts.google.com;">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FinanceOS">
@@ -3354,6 +3355,18 @@
             <div style="display:flex;gap:10px;flex-wrap:wrap;">
               <button class="btn btn-sm" onclick="openPinSetupModal('change')">Change PIN</button>
               <button class="btn btn-sm btn-danger" onclick="resetPin()">Remove PIN</button>
+            </div>
+          </div>
+          <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border-secondary);">
+            <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span style="font-size:13px;font-weight:600;color:var(--text);">Data protection</span>
+            </div>
+            <div class="settings-desc" style="margin-bottom:8px;">
+              Your data is stored in Google Firebase Cloud Firestore and encrypted in transit. Each user can only access their own data when Firestore security rules are properly configured.
+            </div>
+            <div id="securityStatus" style="font-size:12px;color:var(--text-tertiary);">
+              Checking security status...
             </div>
           </div>
         </div>
@@ -7754,6 +7767,7 @@ function renderSettings() {
   const pinLock = state.settings.pinLock || { enabled: false };
   setToggleState('togglePinLock', pinLock.enabled);
   document.getElementById('pinLockActions').style.display = pinLock.enabled ? '' : 'none';
+  checkSecurityStatus();
   document.getElementById('defaultReminder').value = state.settings.defaultReminder;
   document.getElementById('notifWindow').value = state.settings.notifWindow;
   renderIncomeEventList();
@@ -7887,14 +7901,20 @@ let setupPinMode = 'setup'; // 'setup' or 'change'
 let lastActivity = Date.now();
 
 function hashPin(pin) {
-  // Simple client-side hash for PIN storage
+  // Iterated hash with salt — better than single-pass but still client-side only
+  const salt = 'FinanceOS-v2-' + (state.profile.email || 'default');
+  let input = pin + salt;
   let hash = 0;
-  for (let i = 0; i < pin.length; i++) {
-    const chr = pin.charCodeAt(i);
-    hash = ((hash << 5) - hash) + chr;
-    hash |= 0;
+  for (let round = 0; round < 5000; round++) {
+    let h = 0;
+    for (let j = 0; j < input.length; j++) {
+      h = ((h << 5) - h) + input.charCodeAt(j);
+      h |= 0;
+    }
+    input = Math.abs(h).toString(36) + salt;
+    hash = h;
   }
-  return hash.toString();
+  return Math.abs(hash).toString(36);
 }
 
 function showPinOverlay() {
@@ -8066,6 +8086,27 @@ window.backspaceSetupPin = backspaceSetupPin;
 window.closePinSetup = closePinSetup;
 window.openPinSetupModal = openPinSetupModal;
 window.resetPin = resetPin;
+
+function checkSecurityStatus() {
+  const el = document.getElementById('securityStatus');
+  if (!el) return;
+  const checks = [];
+  // PIN lock
+  const pinLock = state.settings.pinLock || {};
+  checks.push(pinLock.enabled ? 'PIN lock enabled' : 'PIN lock disabled');
+  // Auth provider
+  if (currentUser) {
+    const hasGoogle = currentUser.providerData.some(p => p.providerId === 'google.com');
+    const hasEmail = currentUser.providerData.some(p => p.providerId === 'password');
+    checks.push(hasGoogle ? 'Google sign-in' : (hasEmail ? 'Email sign-in' : 'Signed in'));
+  } else {
+    checks.push('Not signed in');
+  }
+  // Data storage
+  checks.push(currentUser && !isGuest ? 'Cloud sync active' : 'Local storage only');
+  el.innerHTML = checks.map(c => '<span style="display:inline-flex;align-items:center;gap:4px;margin-right:12px;"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--success)" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>' + c + '</span>').join('');
+}
+window.checkSecurityStatus = checkSecurityStatus;
 
 // ============ BROWSER PUSH NOTIFICATIONS ============
 
