@@ -1517,197 +1517,234 @@
   .mobile-profile-name { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100px; }
 
 
-  /* ===== PREMIUM LANDING PAGE ===== */
-  .landing-page { width:100%; max-width:1200px; margin:0 auto; padding:0 24px; text-align:center; }
-  
+  /* ===== PAYDO-INSPIRED LANDING PAGE ===== */
+  .landing-page { width:100%; text-align:left; }
+
+  /* Navbar */
+  .landing-nav {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 0; max-width:1200px; margin:0 auto;
+  }
+  .landing-nav-logo {
+    display:flex; align-items:center; gap:10px;
+    font-size:22px; font-weight:800; color:var(--text); letter-spacing:-0.5px;
+  }
+  .landing-nav-logo img { width:36px; height:36px; border-radius:10px; }
+  .landing-nav-links { display:flex; gap:36px; font-size:15px; }
+  .landing-nav-links a {
+    color:var(--text-secondary); text-decoration:none; font-weight:500;
+    transition:color 0.2s;
+  }
+  .landing-nav-links a:hover { color:var(--text); }
+  .landing-nav-actions { display:flex; gap:12px; align-items:center; }
+  .landing-nav-btn {
+    padding:9px 22px; border-radius:10px; font-size:14px; font-weight:600;
+    cursor:pointer; transition:all 0.2s;
+  }
+  .landing-nav-btn.login {
+    background:transparent; color:var(--text); border:1.5px solid var(--border-strong);
+  }
+  .landing-nav-btn.login:hover { background:var(--card); }
+  .landing-nav-btn.register {
+    background:var(--text); color:var(--bg); border:1.5px solid var(--text);
+  }
+  .landing-nav-btn.register:hover { opacity:0.85; transform:translateY(-1px); }
+
   /* Hero */
-  .landing-hero { position:relative; padding:120px 0 80px; overflow:hidden; }
-  .landing-hero::before {
-    content:''; position:absolute; top:-50%; left:-30%; width:160%; height:160%;
-    background:
-      radial-gradient(circle at 20% 50%, rgba(57,121,104,0.10) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(57,121,104,0.07) 0%, transparent 50%),
-      radial-gradient(circle at 50% 90%, rgba(57,121,104,0.09) 0%, transparent 40%);
-    pointer-events:none; z-index:0;
-  }
-  .landing-hero::after {
-    content:''; position:absolute; inset:0;
-    background-image: linear-gradient(rgba(57,121,104,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(57,121,104,0.04) 1px, transparent 1px);
-    background-size: 80px 80px; pointer-events:none; z-index:0;
-  }
-  .landing-hero > * { position:relative; z-index:1; }
-  .landing-hero-logo { width:72px; height:72px; margin:0 auto 28px; position:relative; }
-  .landing-hero-logo::before {
-    content:''; position:absolute; inset:-24px;
-    background:radial-gradient(circle, rgba(57,121,104,0.18) 0%, transparent 70%);
-    border-radius:50%; z-index:-1; animation:landingPulse 4s ease-in-out infinite;
-  }
-  @keyframes landingPulse { 0%,100%{ opacity:0.7; transform:scale(1); } 50%{ opacity:1; transform:scale(1.05); } }
-  .landing-hero-badge {
-    display:inline-flex; align-items:center; gap:6px; font-size:13px; font-weight:500;
-    color:var(--accent); background:rgba(57,121,104,0.08); border:1px solid rgba(57,121,104,0.15);
-    padding:6px 14px; border-radius:20px; margin-bottom:24px;
-  }
+  .landing-hero { padding:40px 0 60px; }
+  .landing-hero-inner { max-width:1200px; margin:0 auto; }
   .landing-hero-title {
-    font-size:56px; font-weight:800; letter-spacing:-1.5px; line-height:1.1; margin-bottom:16px;
-    background:linear-gradient(135deg, var(--text) 0%, var(--accent) 60%, #5aaa94 100%);
-    -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    font-size:72px; font-weight:800; letter-spacing:-3px; line-height:1.05;
+    color:var(--text); max-width:700px; margin-bottom:20px;
   }
-  .landing-hero-tagline { font-size:20px; color:var(--text-secondary); max-width:540px; margin:0 auto 40px; line-height:1.6; }
-  .landing-hero-cta { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; margin-bottom:32px; }
+  .landing-hero-tagline {
+    font-size:18px; color:var(--text-secondary); max-width:480px;
+    margin-bottom:32px; line-height:1.6;
+  }
+  .landing-hero-cta { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:60px; }
   .landing-btn-primary {
-    padding:16px 32px; background:linear-gradient(135deg, var(--accent), #2d6354); color:white;
-    border:none; border-radius:12px; font-size:16px; font-weight:600; cursor:pointer;
-    transition:all 0.3s ease; box-shadow:0 4px 14px rgba(57,121,104,0.3);
-    position:relative; overflow:hidden;
+    padding:15px 28px; background:var(--text); color:var(--bg);
+    border:none; border-radius:10px; font-size:15px; font-weight:600;
+    cursor:pointer; transition:all 0.2s;
   }
-  .landing-btn-primary::before {
-    content:''; position:absolute; inset:0; background:linear-gradient(135deg, transparent 40%, rgba(255,255,255,0.15) 100%);
-    opacity:0; transition:opacity 0.3s;
-  }
-  .landing-btn-primary:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(57,121,104,0.4); }
-  .landing-btn-primary:hover::before { opacity:1; }
+  .landing-btn-primary:hover { opacity:0.85; transform:translateY(-1px); }
   .landing-btn-secondary {
-    padding:16px 32px; background:transparent; color:var(--text); border:1.5px solid var(--border);
-    border-radius:12px; font-size:16px; font-weight:600; cursor:pointer;
-    transition:all 0.3s ease; position:relative;
+    padding:15px 28px; background:transparent; color:var(--text);
+    border:1.5px solid var(--border-strong); border-radius:10px;
+    font-size:15px; font-weight:600; cursor:pointer; transition:all 0.2s;
   }
-  .landing-btn-secondary:hover { border-color:var(--accent); background:rgba(57,121,104,0.05); transform:translateY(-2px); }
-  .landing-trust { display:flex; gap:32px; justify-content:center; flex-wrap:wrap; font-size:13px; color:var(--text-secondary); margin-bottom:60px; }
-  .landing-trust span { display:flex; align-items:center; gap:8px; }
-  .landing-trust svg { color:var(--accent); }
+  .landing-btn-secondary:hover { background:var(--card); border-color:var(--text-tertiary); }
 
   /* App Mockup */
-  .landing-mockup { position:relative; max-width:900px; margin:0 auto; perspective:1000px; }
+  .landing-mockup-wrap { max-width:1100px; margin:0 auto; position:relative; }
   .landing-mockup-frame {
-    background:var(--card); border:1px solid var(--border); border-radius:16px;
-    padding:4px; box-shadow:0 24px 80px rgba(0,0,0,0.25), 0 0 0 1px rgba(255,255,255,0.03) inset;
-    transform:rotateX(5deg); transition:transform 0.6s ease;
+    background:var(--card); border:1px solid var(--border); border-radius:20px;
+    padding:5px; box-shadow:0 40px 80px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.03) inset;
+    position:relative;
   }
-  .landing-mockup-frame:hover { transform:rotateX(2deg) translateY(-4px); }
-  .landing-mockup-inner { background:var(--bg); border-radius:12px; padding:24px; text-align:left; }
-  .landing-mockup-header { display:flex; align-items:center; gap:12px; margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid var(--border); }
-  .landing-mockup-avatar { width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg, var(--accent), #5aaa94); display:flex; align-items:center; justify-content:center; color:white; font-weight:700; font-size:12px; }
-  .landing-mockup-title { font-size:14px; font-weight:600; color:var(--text); }
+  .landing-mockup-frame::before {
+    content:''; position:absolute; top:-40px; left:5%; right:5%; height:120%;
+    background:radial-gradient(ellipse at 50% 0%, rgba(57,121,104,0.08) 0%, transparent 60%);
+    z-index:-1; pointer-events:none;
+  }
+  .landing-mockup-inner {
+    background:var(--bg); border-radius:15px; padding:28px; text-align:left;
+  }
+  .landing-mockup-header {
+    display:flex; align-items:center; gap:14px; margin-bottom:24px;
+    padding-bottom:18px; border-bottom:1px solid var(--border);
+  }
+  .landing-mockup-avatar {
+    width:36px; height:36px; border-radius:10px;
+    background:linear-gradient(135deg, var(--accent), #3a8b75);
+    display:flex; align-items:center; justify-content:center;
+    color:white; font-weight:700; font-size:14px;
+  }
+  .landing-mockup-title { font-size:15px; font-weight:600; color:var(--text); }
   .landing-mockup-sub { font-size:12px; color:var(--text-secondary); }
-  .landing-mockup-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:12px; }
-  .landing-mockup-metric { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; }
+  .landing-mockup-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; }
+  .landing-mockup-metric {
+    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px;
+  }
   .landing-mockup-metric-label { font-size:11px; color:var(--text-secondary); margin-bottom:6px; }
-  .landing-mockup-metric-value { font-size:18px; font-weight:700; color:var(--accent); }
+  .landing-mockup-metric-value { font-size:20px; font-weight:700; }
   .landing-mockup-metric-sub { font-size:10px; color:var(--text-secondary); margin-top:2px; }
-  .landing-mockup-chart { background:var(--card); border:1px solid var(--border); border-radius:10px; padding:14px; grid-column:span 3; min-height:80px; display:flex; align-items:flex-end; gap:6px; }
-  .landing-mockup-bar { flex:1; background:linear-gradient(to top, var(--accent), rgba(57,121,104,0.3)); border-radius:4px 4px 0 0; }
-  .landing-mockup-bar:nth-child(1) { height:40%; } .landing-mockup-bar:nth-child(2) { height:65%; }
-  .landing-mockup-bar:nth-child(3) { height:45%; } .landing-mockup-bar:nth-child(4) { height:80%; }
-  .landing-mockup-bar:nth-child(5) { height:55%; } .landing-mockup-bar:nth-child(6) { height:90%; }
-  .landing-mockup-bar:nth-child(7) { height:70%; } .landing-mockup-bar:nth-child(8) { height:60%; }
+  .landing-mockup-chart {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:16px; grid-column:span 3; min-height:90px;
+    display:flex; align-items:flex-end; gap:6px;
+  }
+  .landing-mockup-bar {
+    flex:1; background:linear-gradient(to top, var(--accent), rgba(57,121,104,0.25));
+    border-radius:3px 3px 0 0; min-height:20%;
+  }
+  .landing-mockup-bar:nth-child(1){height:35%} .landing-mockup-bar:nth-child(2){height:60%}
+  .landing-mockup-bar:nth-child(3){height:42%} .landing-mockup-bar:nth-child(4){height:78%}
+  .landing-mockup-bar:nth-child(5){height:52%} .landing-mockup-bar:nth-child(6){height:88%}
+  .landing-mockup-bar:nth-child(7){height:68%} .landing-mockup-bar:nth-child(8){height:55%}
 
   /* Sections */
-  .landing-section { padding:100px 0; border-top:1px solid var(--border); position:relative; }
-  .landing-section-title { font-size:40px; font-weight:800; letter-spacing:-0.5px; margin-bottom:12px; color:var(--text); }
-  .landing-section-subtitle { font-size:17px; color:var(--text-secondary); margin-bottom:56px; max-width:560px; margin-left:auto; margin-right:auto; line-height:1.6; }
+  .landing-section { padding:100px 0; border-top:1px solid var(--border); }
+  .landing-section-header {
+    max-width:1200px; margin:0 auto; text-align:center; margin-bottom:56px;
+  }
+  .landing-section-title {
+    font-size:44px; font-weight:800; letter-spacing:-1px;
+    margin-bottom:12px; color:var(--text); line-height:1.1;
+  }
+  .landing-section-subtitle {
+    font-size:17px; color:var(--text-secondary); max-width:520px;
+    margin:0 auto; line-height:1.6;
+  }
 
   /* Feature Cards */
-  .landing-features { display:grid; grid-template-columns:repeat(3, 1fr); gap:20px; text-align:left; }
+  .landing-features {
+    display:grid; grid-template-columns:repeat(3, 1fr); gap:28px;
+    max-width:1200px; margin:0 auto;
+  }
   .landing-feature-card {
-    background:var(--card); border:1px solid var(--border); border-radius:16px; padding:28px;
-    transition:all 0.4s cubic-bezier(0.4,0,0.2,1); position:relative; overflow:hidden;
+    text-align:left; padding:4px; transition:opacity 0.2s;
   }
-  .landing-feature-card::before {
-    content:''; position:absolute; top:0; left:0; right:0; height:1px;
-    background:linear-gradient(90deg, transparent, rgba(57,121,104,0.3), transparent);
-    opacity:0; transition:opacity 0.4s;
-  }
-  .landing-feature-card:hover { transform:translateY(-6px); box-shadow:0 20px 40px rgba(0,0,0,0.12); border-color:rgba(57,121,104,0.2); }
-  .landing-feature-card:hover::before { opacity:1; }
+  .landing-feature-card:hover { opacity:0.8; }
   .landing-feature-icon {
-    width:44px; height:44px; border-radius:12px; background:linear-gradient(135deg, var(--light-green), rgba(57,121,104,0.1));
-    display:flex; align-items:center; justify-content:center; margin-bottom:18px; color:var(--accent);
-    box-shadow:0 4px 12px rgba(57,121,104,0.1);
+    width:44px; height:44px; border-radius:12px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:18px;
   }
-  .landing-feature-title { font-size:17px; font-weight:700; margin-bottom:8px; color:var(--text); }
-  .landing-feature-desc { font-size:14px; color:var(--text-secondary); line-height:1.6; }
+  .landing-feature-icon.green { background:rgba(57,121,104,0.12); color:var(--accent); }
+  .landing-feature-icon.lime { background:rgba(174,239,51,0.18); color:#6a9e1f; }
+  .landing-feature-icon.yellow { background:rgba(217,154,61,0.12); color:var(--warning); }
+  .landing-feature-icon.blue { background:rgba(37,99,235,0.08); color:var(--blue-accent); }
+  .landing-feature-icon.violet { background:rgba(124,58,237,0.08); color:var(--violet-accent); }
+  .landing-feature-icon.gray { background:var(--border-secondary); color:var(--gray-accent); }
+  .landing-feature-title { font-size:18px; font-weight:700; margin-bottom:8px; color:var(--text); }
+  .landing-feature-desc { font-size:14px; color:var(--text-secondary); line-height:1.6; margin-bottom:14px; }
+  .landing-feature-link {
+    font-size:14px; font-weight:600; color:var(--text);
+    text-decoration:none; display:inline-flex; align-items:center; gap:6px;
+    transition:gap 0.2s;
+  }
+  .landing-feature-link:hover { gap:10px; }
+  .landing-feature-link svg { width:16px; height:16px; }
 
-  /* Stats Bar */
-  .landing-stats { display:flex; justify-content:center; gap:64px; flex-wrap:wrap; padding:48px 0 0; }
-  .landing-stat { text-align:center; }
-  .landing-stat-value { font-size:36px; font-weight:800; color:var(--accent); line-height:1; margin-bottom:6px; }
-  .landing-stat-label { font-size:14px; color:var(--text-secondary); }
+  /* Dark Feature Section */
+  .landing-dark-section {
+    background:#0f1f29; color:white; padding:100px 0; position:relative; overflow:hidden;
+  }
+  [data-theme="dark"] .landing-dark-section { background:#0a161c; }
+  .landing-dark-inner { max-width:1200px; margin:0 auto; display:flex; gap:60px; align-items:center; }
+  .landing-dark-content { flex:1; }
+  .landing-dark-badge {
+    display:inline-flex; align-items:center; gap:6px;
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
+    padding:6px 14px; border-radius:20px; font-size:13px; font-weight:500;
+    color:rgba(255,255,255,0.8); margin-bottom:20px;
+  }
+  .landing-dark-title { font-size:38px; font-weight:800; letter-spacing:-1px; margin-bottom:16px; line-height:1.15; }
+  .landing-dark-desc { font-size:16px; color:rgba(255,255,255,0.65); line-height:1.7; margin-bottom:32px; max-width:440px; }
+  .landing-dark-visual { flex:1; position:relative; }
+  .landing-dark-card {
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
+    backdrop-filter:blur(12px); border-radius:16px; padding:20px;
+    position:absolute; width:220px;
+  }
+  .landing-dark-card.top { top:-20px; right:20px; }
+  .landing-dark-card.bottom { bottom:-10px; left:20px; }
+  .landing-dark-card-title { font-size:13px; color:rgba(255,255,255,0.5); margin-bottom:6px; }
+  .landing-dark-card-value { font-size:24px; font-weight:700; }
+  .landing-dark-card-sub { font-size:12px; color:rgba(255,255,255,0.4); margin-top:4px; }
 
-  /* Steps */
-  .landing-steps-wrap { position:relative; max-width:900px; margin:0 auto; }
-  .landing-steps { display:flex; gap:24px; justify-content:center; flex-wrap:wrap; position:relative; z-index:1; }
-  .landing-step {
+  /* Stats */
+  .landing-stats { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; }
+  .landing-stat-card {
     background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px;
-    width:100%; max-width:280px; text-align:center; transition:all 0.4s ease;
+    display:flex; flex-direction:column; justify-content:space-between; min-height:180px;
+    transition:transform 0.3s, box-shadow 0.3s;
   }
-  .landing-step:hover { transform:translateY(-4px); box-shadow:0 16px 32px rgba(0,0,0,0.08); }
-  .landing-step-num {
-    width:48px; height:48px; border-radius:14px; background:linear-gradient(135deg, var(--accent), #2d6354);
-    color:white; font-weight:800; font-size:18px; display:flex; align-items:center; justify-content:center;
-    margin:0 auto 18px; box-shadow:0 4px 12px rgba(57,121,104,0.25);
-  }
-  .landing-step-title { font-size:18px; font-weight:700; margin-bottom:8px; color:var(--text); }
-  .landing-step-desc { font-size:14px; color:var(--text-secondary); line-height:1.6; }
+  .landing-stat-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,0.08); }
+  .landing-stat-top { font-size:14px; font-weight:600; color:var(--text-secondary); margin-bottom:20px; }
+  .landing-stat-num { font-size:48px; font-weight:800; color:var(--text); line-height:1; margin-bottom:8px; }
+  .landing-stat-desc { font-size:14px; color:var(--text-secondary); line-height:1.5; }
 
-  /* Security CTA */
-  .landing-security {
-    background:linear-gradient(135deg, rgba(57,121,104,0.08), rgba(57,121,104,0.03));
-    border:1px solid rgba(57,121,104,0.12); border-radius:20px; padding:48px;
-    margin:0 auto; max-width:680px; position:relative; overflow:hidden;
-  }
-  .landing-security::before {
-    content:''; position:absolute; top:-50%; left:-50%; width:200%; height:200%;
-    background:radial-gradient(circle at 50% 50%, rgba(57,121,104,0.06) 0%, transparent 50%);
-    pointer-events:none;
-  }
-  .landing-security-title { font-size:22px; font-weight:700; margin-bottom:14px; color:var(--text); position:relative; z-index:1; }
-  .landing-security-desc { font-size:15px; color:var(--text-secondary); line-height:1.7; position:relative; z-index:1; }
-
-  /* Dark CTA Section */
-  .landing-cta-section {
-    position:relative; padding:100px 0; overflow:hidden;
-    background:linear-gradient(180deg, var(--bg) 0%, rgba(57,121,104,0.04) 100%);
-    border-top:1px solid var(--border); border-bottom:1px solid var(--border);
-  }
-  .landing-cta-section::before {
-    content:''; position:absolute; inset:0;
-    background:radial-gradient(circle at 50% 50%, rgba(57,121,104,0.08) 0%, transparent 60%);
-    pointer-events:none;
-  }
-  .landing-cta-section > * { position:relative; z-index:1; }
-  .landing-cta-title { font-size:36px; font-weight:800; letter-spacing:-0.5px; margin-bottom:16px; color:var(--text); }
-  .landing-cta-subtitle { font-size:17px; color:var(--text-secondary); margin-bottom:36px; max-width:460px; margin-left:auto; margin-right:auto; line-height:1.6; }
+  /* CTA Section */
+  .landing-cta-section { padding:100px 0; text-align:center; }
+  .landing-cta-section .landing-section-title { margin-bottom:16px; }
+  .landing-cta-section .landing-section-subtitle { margin-bottom:36px; }
 
   /* Footer */
-  .landing-footer { padding:48px 0; text-align:center; }
-  .landing-footer-text { font-size:14px; color:var(--text-secondary); }
-  .landing-footer a { color:var(--accent); text-decoration:none; font-weight:500; transition:opacity 0.2s; }
-  .landing-footer a:hover { opacity:0.8; }
-  .landing-footer-links { display:flex; gap:24px; justify-content:center; margin-bottom:16px; flex-wrap:wrap; }
-  .landing-footer-links a { font-size:14px; color:var(--text-secondary); text-decoration:none; transition:color 0.2s; }
+  .landing-footer { padding:48px 0; border-top:1px solid var(--border); text-align:center; }
+  .landing-footer-links { display:flex; gap:28px; justify-content:center; margin-bottom:16px; flex-wrap:wrap; }
+  .landing-footer-links a { font-size:14px; color:var(--text-secondary); text-decoration:none; font-weight:500; }
   .landing-footer-links a:hover { color:var(--text); }
+  .landing-footer-text { font-size:14px; color:var(--text-tertiary); }
+  .landing-footer-text a { color:var(--text-secondary); text-decoration:none; font-weight:500; }
+  .landing-footer-text a:hover { color:var(--text); }
 
-  /* Auth Form inside landing */
-  .auth-back-link { display:inline-flex; align-items:center; gap:6px; font-size:14px; color:var(--text-secondary); cursor:pointer; margin-bottom:20px; transition:var(--transition); }
+  /* Auth Form */
+  .auth-back-link {
+    display:inline-flex; align-items:center; gap:6px; font-size:14px;
+    color:var(--text-secondary); cursor:pointer; margin-bottom:20px;
+    transition:color 0.2s;
+  }
   .auth-back-link:hover { color:var(--text); }
 
   /* Mobile */
   @media (max-width:768px) {
-    .landing-hero { padding:60px 0 40px; }
-    .landing-hero-title { font-size:32px; letter-spacing:-0.5px; }
-    .landing-hero-tagline { font-size:16px; }
+    .landing-nav-links { display:none; }
+    .landing-hero { padding:30px 0 40px; }
+    .landing-hero-title { font-size:36px; letter-spacing:-1px; }
+    .landing-hero-tagline { font-size:15px; }
     .landing-section { padding:60px 0; }
-    .landing-section-title { font-size:26px; }
+    .landing-section-title { font-size:28px; }
     .landing-features { grid-template-columns:1fr; }
     .landing-mockup-grid { grid-template-columns:repeat(2, 1fr); }
     .landing-mockup-chart { grid-column:span 2; }
-    .landing-stats { gap:32px; }
-    .landing-stat-value { font-size:28px; }
-    .landing-cta-title { font-size:26px; }
-    .landing-security { padding:28px; }
+    .landing-dark-inner { flex-direction:column; gap:40px; }
+    .landing-dark-card { position:relative; width:100%; top:auto; right:auto; bottom:auto; left:auto; margin-bottom:12px; }
+    .landing-stats { grid-template-columns:1fr; }
+    .landing-stat-num { font-size:36px; }
+    .landing-nav-btn { padding:8px 16px; font-size:13px; }
   }
-
   /* Onboarding */
   .onboarding-overlay {
     position: fixed;
@@ -2243,177 +2280,183 @@
 
 <!-- Auth Login Modal / Landing Page -->
 <div class="auth-overlay" id="authOverlay">
-  <!-- Landing Page -->
-  <div class="landing-page" id="landingPage">
+
+  <!-- ===== LANDING PAGE ===== -->
+  <div class="landing-page" id="landingPage" style="padding:0 24px;">
+
+    <!-- Navbar -->
+    <nav class="landing-nav">
+      <div class="landing-nav-logo">
+        <img src="icon-192.svg" alt="FinanceOS">
+        FinanceOS
+      </div>
+      <div class="landing-nav-links">
+        <a href="#features">Features</a>
+        <a href="#benefits">Benefits</a>
+      </div>
+      <div class="landing-nav-actions">
+        <button class="landing-nav-btn login" onclick="showAuthForm()">Log In</button>
+        <button class="landing-nav-btn register" onclick="showAuthForm()">Get Started</button>
+      </div>
+    </nav>
+
+    <!-- Hero -->
     <section class="landing-hero">
-      <div class="landing-hero-badge">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-        Now on the web — mobile app coming soon
-      </div>
-      <img src="icon-192.svg" class="landing-hero-logo" alt="FinanceOS" style="border-radius:16px;">
-      <h1 class="landing-hero-title">Your money,<br>finally organized.</h1>
-      <p class="landing-hero-tagline">Track income, expenses, budgets, and goals in one beautiful app. Built for people who take their money seriously.</p>
-      <div class="landing-hero-cta">
-        <button class="landing-btn-primary" onclick="showAuthForm()">Get Started Free</button>
-        <button class="landing-btn-secondary" onclick="showAuthForm()">Sign In</button>
-      </div>
-      <div class="landing-trust">
-        <span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          Cloud Sync
-        </span>
-        <span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>
-          PIN Protected
-        </span>
-        <span>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-          Private &amp; Secure
-        </span>
-      </div>
-      <div class="landing-mockup">
-        <div class="landing-mockup-frame">
-          <div class="landing-mockup-inner">
-            <div class="landing-mockup-header">
-              <div class="landing-mockup-avatar">₦</div>
-              <div>
-                <div class="landing-mockup-title">FinanceOS Dashboard</div>
-                <div class="landing-mockup-sub">August 2026</div>
-              </div>
-            </div>
-            <div class="landing-mockup-grid">
-              <div class="landing-mockup-metric">
-                <div class="landing-mockup-metric-label">Balance</div>
-                <div class="landing-mockup-metric-value" style="color:var(--accent);">₦1.2M</div>
-                <div class="landing-mockup-metric-sub">+12% this month</div>
-              </div>
-              <div class="landing-mockup-metric">
-                <div class="landing-mockup-metric-label">Income</div>
-                <div class="landing-mockup-metric-value" style="color:var(--green-accent);">₦850K</div>
-                <div class="landing-mockup-metric-sub">3 sources</div>
-              </div>
-              <div class="landing-mockup-metric">
-                <div class="landing-mockup-metric-label">Expenses</div>
-                <div class="landing-mockup-metric-value" style="color:var(--red-accent);">₦320K</div>
-                <div class="landing-mockup-metric-sub">Under budget</div>
-              </div>
-              <div class="landing-mockup-metric">
-                <div class="landing-mockup-metric-label">Goals</div>
-                <div class="landing-mockup-metric-value" style="color:var(--amber-accent);">67%</div>
-                <div class="landing-mockup-metric-sub">Emergency fund</div>
-              </div>
-              <div class="landing-mockup-chart">
-                <div class="landing-mockup-bar"></div>
-                <div class="landing-mockup-bar"></div>
-                <div class="landing-mockup-bar"></div>
-                <div class="landing-mockup-bar"></div>
-                <div class="landing-mockup-bar"></div>
-                <div class="landing-mockup-bar"></div>
-                <div class="landing-mockup-bar"></div>
-                <div class="landing-mockup-bar"></div>
-              </div>
-            </div>
-          </div>
+      <div class="landing-hero-inner">
+        <h1 class="landing-hero-title">Startups with better banking experience.</h1>
+        <p class="landing-hero-tagline">Track income, expenses, budgets, and goals in one beautiful app. Built for people who take their money seriously.</p>
+        <div class="landing-hero-cta">
+          <button class="landing-btn-primary" onclick="showAuthForm()">Get Started</button>
+          <button class="landing-btn-secondary" onclick="showAuthForm()">Sign In</button>
         </div>
       </div>
     </section>
 
-    <section class="landing-section">
-      <h2 class="landing-section-title">Everything you need</h2>
-      <p class="landing-section-subtitle">One powerful app to track, budget, plan, and grow your money — all in one place.</p>
+    <!-- App Mockup -->
+    <div class="landing-mockup-wrap">
+      <div class="landing-mockup-frame">
+        <div class="landing-mockup-inner">
+          <div class="landing-mockup-header">
+            <div class="landing-mockup-avatar">₦</div>
+            <div>
+              <div class="landing-mockup-title">FinanceOS Dashboard</div>
+              <div class="landing-mockup-sub">August 2026</div>
+            </div>
+          </div>
+          <div class="landing-mockup-grid">
+            <div class="landing-mockup-metric">
+              <div class="landing-mockup-metric-label">Balance</div>
+              <div class="landing-mockup-metric-value" style="color:var(--accent);">₦1.2M</div>
+              <div class="landing-mockup-metric-sub">+12% this month</div>
+            </div>
+            <div class="landing-mockup-metric">
+              <div class="landing-mockup-metric-label">Income</div>
+              <div class="landing-mockup-metric-value" style="color:var(--green-accent);">₦850K</div>
+              <div class="landing-mockup-metric-sub">3 sources</div>
+            </div>
+            <div class="landing-mockup-metric">
+              <div class="landing-mockup-metric-label">Expenses</div>
+              <div class="landing-mockup-metric-value" style="color:var(--red-accent);">₦320K</div>
+              <div class="landing-mockup-metric-sub">Under budget</div>
+            </div>
+            <div class="landing-mockup-metric">
+              <div class="landing-mockup-metric-label">Goals</div>
+              <div class="landing-mockup-metric-value" style="color:var(--amber-accent);">67%</div>
+              <div class="landing-mockup-metric-sub">Emergency fund</div>
+            </div>
+            <div class="landing-mockup-chart">
+              <div class="landing-mockup-bar"></div>
+              <div class="landing-mockup-bar"></div>
+              <div class="landing-mockup-bar"></div>
+              <div class="landing-mockup-bar"></div>
+              <div class="landing-mockup-bar"></div>
+              <div class="landing-mockup-bar"></div>
+              <div class="landing-mockup-bar"></div>
+              <div class="landing-mockup-bar"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <section class="landing-section" id="features">
+      <div class="landing-section-header">
+        <h2 class="landing-section-title">Banking features to bring your product vision to life</h2>
+        <p class="landing-section-subtitle">Each of our features has the depth required to archive a fully customised user flow</p>
+      </div>
       <div class="landing-features">
         <div class="landing-feature-card">
-          <div class="landing-feature-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 4H3a2 2 0 00-2 2v12a2 2 0 002 2h18a2 2 0 002-2V6a2 2 0 00-2-2z"/><path d="M1 10h22"/></svg>
+          <div class="landing-feature-icon green">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
           </div>
-          <div class="landing-feature-title">Smart Budgets</div>
-          <div class="landing-feature-desc">Set monthly limits for every spending category and get alerts before you overspend.</div>
+          <div class="landing-feature-title">Accounts</div>
+          <div class="landing-feature-desc">Create and manage accounts for your company or your customers</div>
+          <a href="#" onclick="showAuthForm();return false;" class="landing-feature-link">Explore now <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         </div>
         <div class="landing-feature-card">
-          <div class="landing-feature-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+          <div class="landing-feature-icon lime">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>
           </div>
-          <div class="landing-feature-title">Savings Goals</div>
-          <div class="landing-feature-desc">Create goals, track contributions, and watch your progress with visual milestones.</div>
+          <div class="landing-feature-title">Cards</div>
+          <div class="landing-feature-desc">Issue MasterCard cards, with your rules and your branding</div>
+          <a href="#" onclick="showAuthForm();return false;" class="landing-feature-link">Explore now <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         </div>
         <div class="landing-feature-card">
-          <div class="landing-feature-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          <div class="landing-feature-icon yellow">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
           </div>
-          <div class="landing-feature-title">Calendar &amp; Reminders</div>
-          <div class="landing-feature-desc">See all your bills, income, and subscriptions on a calendar. Never miss a due date.</div>
-        </div>
-        <div class="landing-feature-card">
-          <div class="landing-feature-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          </div>
-          <div class="landing-feature-title">Multi-Account</div>
-          <div class="landing-feature-desc">Track multiple bank accounts, cash, and mobile wallets in one place.</div>
-        </div>
-        <div class="landing-feature-card">
-          <div class="landing-feature-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          </div>
-          <div class="landing-feature-title">Auto-Reports</div>
-          <div class="landing-feature-desc">Monthly breakdowns, spending trends, and AI-powered insights on your finances.</div>
-        </div>
-        <div class="landing-feature-card">
-          <div class="landing-feature-icon">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          </div>
-          <div class="landing-feature-title">Bank-Grade Security</div>
-          <div class="landing-feature-desc">PIN lock, encrypted cloud sync via Firebase, and your data stays yours.</div>
+          <div class="landing-feature-title">Payments</div>
+          <div class="landing-feature-desc">Enable transfer and debits create many IBANs want your account</div>
+          <a href="#" onclick="showAuthForm();return false;" class="landing-feature-link">Explore now <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg></a>
         </div>
       </div>
     </section>
 
+    <!-- Dark Feature Section -->
+    <section class="landing-dark-section" id="benefits">
+      <div class="landing-dark-inner">
+        <div class="landing-dark-content">
+          <div class="landing-dark-badge">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            Real-time analytics
+          </div>
+          <h2 class="landing-dark-title">Empower your finance teams and money.</h2>
+          <p class="landing-dark-desc">Finance is the contextualised integration of financial services into digital products. Tech companies of all kinds like accounts, cards, and payments.</p>
+        </div>
+        <div class="landing-dark-visual">
+          <div class="landing-dark-card top">
+            <div class="landing-dark-card-title">Spendings</div>
+            <div class="landing-dark-card-value">$4,802.00</div>
+            <div class="landing-dark-card-sub">23 Transactions +34%</div>
+          </div>
+          <div class="landing-dark-card bottom">
+            <div class="landing-dark-card-title">Income</div>
+            <div class="landing-dark-card-value">$8,189.0</div>
+            <div class="landing-dark-card-sub">84 Transactions +10%</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Stats Section -->
     <section class="landing-section">
-      <h2 class="landing-section-title">How it works</h2>
-      <p class="landing-section-subtitle">Get started in under 60 seconds.</p>
-      <div class="landing-steps">
-        <div class="landing-step">
-          <div class="landing-step-num">1</div>
-          <div class="landing-step-title">Create your account</div>
-          <div class="landing-step-desc">Sign up with Google or email. Your data syncs securely to the cloud.</div>
+      <div class="landing-section-header">
+        <h2 class="landing-section-title">Cash management essentials purpose-built for startups</h2>
+      </div>
+      <div class="landing-stats">
+        <div class="landing-stat-card">
+          <div class="landing-stat-top">Earn 4.32% APY with the Transfer account</div>
+          <div class="landing-stat-num">10X</div>
+          <div class="landing-stat-desc">Higher yield than traditional savings accounts with instant liquidity.</div>
         </div>
-        <div class="landing-step">
-          <div class="landing-step-num">2</div>
-          <div class="landing-step-title">Add your accounts</div>
-          <div class="landing-step-desc">Set up your bank accounts, cash, and mobile money wallets.</div>
+        <div class="landing-stat-card">
+          <div class="landing-stat-top">Run your startup with the operating account</div>
+          <div class="landing-stat-num">18%</div>
+          <div class="landing-stat-desc">Average reduction in time spent on financial operations.</div>
         </div>
-        <div class="landing-step">
-          <div class="landing-step-num">3</div>
-          <div class="landing-step-title">Track everything</div>
-          <div class="landing-step-desc">Log transactions, set budgets, create goals, and watch your wealth grow.</div>
+        <div class="landing-stat-card">
+          <div class="landing-stat-top">Unlock instant the reserve account</div>
+          <div class="landing-stat-num">10%</div>
+          <div class="landing-stat-desc">Better capital efficiency with separated reserve funds.</div>
         </div>
       </div>
     </section>
 
-    <section class="landing-section" style="border-top:none;">
-      <div class="landing-security">
-        <div class="landing-security-title">Your data is yours. Always.</div>
-        <div class="landing-security-desc">
-          FinanceOS stores your data securely in the cloud with Firebase Authentication and Firestore.
-          No third-party trackers. No data selling. No ads. Optional PIN lock for extra protection.
-          Export your data anytime — because it's your money, and your data.
-        </div>
-      </div>
-    </section>
-
+    <!-- CTA Section -->
     <section class="landing-cta-section">
-      <h2 class="landing-cta-title">Ready to take control?</h2>
-      <p class="landing-cta-subtitle">Join thousands of people who've stopped guessing where their money goes.</p>
+      <h2 class="landing-section-title">Ready to take control?</h2>
+      <p class="landing-section-subtitle">Join thousands of people who've stopped guessing where their money goes.</p>
       <div class="landing-hero-cta">
         <button class="landing-btn-primary" onclick="showAuthForm()">Get Started Free</button>
-        <button class="landing-btn-secondary" onclick="showAuthForm()">Sign In</button>
       </div>
     </section>
 
+    <!-- Footer -->
     <footer class="landing-footer">
       <div class="landing-footer-links">
         <a href="https://github.com/futurestachq/FinanceOS" target="_blank">GitHub</a>
         <a href="#" onclick="showAuthForm(); return false;">Sign In</a>
-        <a href="mailto:hello@futurestack.co">Contact</a>
       </div>
       <div class="landing-footer-text">
         Built by <a href="https://github.com/futurestachq" target="_blank">FutureStack</a>. Open source on <a href="https://github.com/futurestachq/FinanceOS" target="_blank">GitHub</a>.
@@ -2421,7 +2464,7 @@
     </footer>
   </div>
 
-  <!-- Auth Form Container (hidden by default, shown when user clicks Sign In) -->
+  <!-- ===== AUTH FORM (hidden by default) ===== -->
   <div class="auth-container" id="authFormContainer" style="display:none;">
     <div class="auth-back-link" onclick="showLandingPage()">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
@@ -2435,8 +2478,6 @@
       Sign in with Google
     </button>
     <div class="auth-divider">or</div>
-
-    <!-- Sign In Form -->
     <div class="auth-form" id="signInForm">
       <input type="email" class="onboarding-input" id="signInEmail" placeholder="Email address" style="text-align:left;margin-bottom:0;">
       <input type="password" class="onboarding-input" id="signInPassword" placeholder="Password" style="text-align:left;margin-bottom:0;">
@@ -2446,8 +2487,6 @@
         <a href="#" onclick="showSignUpMode(); return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Create one</a>
       </div>
     </div>
-
-    <!-- Sign Up Form -->
     <div class="auth-form" id="signUpForm" style="display:none;">
       <input type="email" class="onboarding-input" id="signUpEmail" placeholder="Email address" style="text-align:left;margin-bottom:0;">
       <input type="password" class="onboarding-input" id="signUpPassword" placeholder="Password" style="text-align:left;margin-bottom:0;">
@@ -2458,10 +2497,9 @@
         <a href="#" onclick="showSignInMode(); return false;" style="color:var(--accent);font-weight:600;text-decoration:none;">Sign in</a>
       </div>
     </div>
-
     <div style="font-size:12px;color:var(--text-secondary);margin-top:16px;">Sign in to keep your data safe and sync across devices.</div>
   </div>
-</div>
+</div><!-- /authOverlay -->
 
 <!-- Onboarding -->
 <div class="onboarding-overlay" id="onboardingOverlay">
