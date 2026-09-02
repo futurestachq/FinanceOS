@@ -996,7 +996,7 @@ const subscriptionLogos = {
   youtube: 'https://upload.wikimedia.org/wikipedia/commons/0/09/YouTube_full-color_icon_%282017%29.svg',
   figma: 'https://upload.wikimedia.org/wikipedia/commons/3/33/Figma-logo.svg',
   udemy: 'https://upload.wikimedia.org/wikipedia/commons/e/e3/Udemy_logo.svg',
-  google: 'https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg',
+  google: 'https://upload.wikimedia.org/wikipedia/commons/c/c1/Google_%22G%22_logo.svg',
   microsoft: 'https://upload.wikimedia.org/wikipedia/commons/4/44/Microsoft_logo.svg',
   adobe: 'https://upload.wikimedia.org/wikipedia/commons/6/6e/Adobe_Corporate_logo.svg',
   apple: 'https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg',
@@ -1005,19 +1005,21 @@ const subscriptionLogos = {
   notion: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png',
   slack: 'https://upload.wikimedia.org/wikipedia/commons/d/d5/Slack_icon_2019.svg',
   zoom: 'https://upload.wikimedia.org/wikipedia/commons/7/7b/Zoom_Communications_Logo.svg',
-  discord: 'https://upload.wikimedia.org/wikipedia/commons/3/3f/Discord_logo.svg',
+  discord: 'https://cdn.simpleicons.org/discord',
   twitter: 'https://upload.wikimedia.org/wikipedia/commons/6/6f/Logo_of_Twitter.svg',
   linkedin: 'https://upload.wikimedia.org/wikipedia/commons/c/ca/LinkedIn_logo_initials.png',
 };
 
 function getSubscriptionLogoHtml(sub) {
+  const icon = categoryIcons[sub.category] || categoryIcons['Subscriptions'];
+  const fallback = 'this.onerror=null;var p=document.createElement(\'div\');p.className=\'sub-icon\';p.setAttribute(\'style\',\'background:var(--light-green);color:var(--accent);\');p.innerHTML=this.getAttribute(\'data-fallback-icon\');this.replaceWith(p);';
+  const fallbackAttr = 'data-fallback-icon="' + icon.replace(/"/g, '&quot;') + '"';
   if (sub.logo && sub.logo.startsWith('data:')) {
-    return '<img src="' + sub.logo + '" style="width:36px;height:36px;border-radius:10px;object-fit:cover;" alt="">';
+    return '<img src="' + sub.logo + '" ' + fallbackAttr + ' onerror="' + fallback + '" style="width:36px;height:36px;border-radius:10px;object-fit:cover;" alt="">';
   }
   if (sub.logo && subscriptionLogos[sub.logo]) {
-    return '<img src="' + subscriptionLogos[sub.logo] + '" style="width:36px;height:36px;border-radius:10px;object-fit:contain;background:var(--card);padding:2px;" alt="">';
+    return '<img src="' + subscriptionLogos[sub.logo] + '" ' + fallbackAttr + ' onerror="' + fallback + '" style="width:36px;height:36px;border-radius:10px;object-fit:contain;background:var(--card);padding:2px;" alt="">';
   }
-  const icon = categoryIcons[sub.category] || categoryIcons['Subscriptions'];
   return '<div class="sub-icon" style="background:var(--light-green);color:var(--accent);">' + icon + '</div>';
 }
 
