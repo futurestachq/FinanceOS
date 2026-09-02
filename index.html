@@ -1716,6 +1716,33 @@
     .fqlp-section { padding:48px 20px; }
     .fqlp-section h2 { font-size:28px; }
   }
+    .fqlp-hero { grid-template-columns:1fr; gap:40px; padding:60px 24px 40px; }
+    .fqlp-hero h1 { font-size:40px; letter-spacing:-1.5px; }
+    .fqlp-mockup-wrap { animation:none; }
+    .fqlp-stats { grid-template-columns:repeat(2, 1fr); }
+    .fqlp-features { grid-template-columns:1fr; }
+    .fqlp-steps { grid-template-columns:1fr; }
+    .fqlp-steps::before { display:none; }
+    .fqlp-security-card { grid-template-columns:1fr; padding:40px 32px; gap:40px; }
+    .fqlp-section { padding:60px 24px; }
+    .fqlp-section h2 { font-size:32px; }
+    .fqlp-cta { padding:60px 24px; }
+    .fqlp-cta h2 { font-size:32px; }
+    .fqlp-footer { flex-direction:column; text-align:center; }
+    .fqlp-ticker { display:none; }
+  }
+  @media(max-width:500px) {
+    .fqlp-nav-links .fqlp-nav-btn.ghost { display:none; }
+    .fqlp-hero h1 { font-size:32px; }
+    .fqlp-stats { grid-template-columns:1fr; }
+    .fqlp-stat-num { font-size:36px; }
+    .fqlp-stat-cell { padding:28px 20px; }
+    .fqlp-badge-grid { grid-template-columns:1fr; }
+    .fqlp-sec-stats { grid-template-columns:1fr; }
+    .fqlp-security-card { padding:32px 24px; }
+    .fqlp-section { padding:48px 20px; }
+    .fqlp-section h2 { font-size:28px; }
+  }
   /* Onboarding */
   .onboarding-overlay {
     position: fixed;
@@ -2225,33 +2252,6 @@
   .pin-key.backspace svg { width: 22px; height: 22px; }
   .pin-error { color: var(--danger); font-size: 13px; margin-top: 16px; min-height: 20px; text-align: center; }
   .pin-forgot {
-    margin-top: 24px;
-    font-size: 13px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    text-decoration: underline;
-    text-align: center;
-  }
-  .pin-forgot:hover { color: var(--danger); }
-  @keyframes pinShake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-8px); }
-    40% { transform: translateX(8px); }
-    60% { transform: translateX(-6px); }
-    80% { transform: translateX(6px); }
-  }
-  @media (max-width: 768px) {
-    .pin-keypad { grid-template-columns: repeat(3, 64px); gap: 10px; justify-content: center; margin: 0 auto; }
-    .pin-key { width: 64px; height: 52px; font-size: 18px; }
-  }
-
-</style>
-</head>
-<body>
-
-<!-- Auth Login Modal / Landing Page -->
-<div class="auth-overlay" id="authOverlay">
-
   <div class="landing-page" id="landingPage">
 
     <!-- Ticker -->
@@ -2589,7 +2589,6 @@
       </div>
     </footer>
   </div>
-
 
 <!-- ===== AUTH FORM (hidden by default) ===== -->
   <div class="auth-container" id="authFormContainer" style="display:none;">
