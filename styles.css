@@ -2561,3 +2561,51 @@
     transition-duration: 0.001ms !important;
   }
 }
+
+/* --- Topbar month navigation ---------------------------------- */
+.topbar-month {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  padding: 2px;
+  box-shadow: var(--shadow-soft);
+  animation: monthIn 320ms var(--ease-out);
+}
+@keyframes monthIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+.month-nav-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background var(--dur) var(--ease-out), color var(--dur) var(--ease-out), transform 120ms var(--ease-pop);
+}
+.month-nav-btn:hover { background: var(--light-green); color: var(--accent); }
+.month-nav-btn:active { transform: scale(0.9); }
+.month-nav-label {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--text);
+  min-width: 110px;
+  white-space: nowrap;
+  transition: background var(--dur) var(--ease-out), color var(--dur) var(--ease-out);
+}
+.month-nav-label:hover { background: var(--light-green); color: var(--accent); }
+.topbar-month.browsing .month-nav-label { color: var(--accent); }
+
+@media (max-width: 720px) {
+  .topbar-month { order: 3; margin-top: 10px; width: 100%; justify-content: center; }
+  .topbar { flex-wrap: wrap; }
+}

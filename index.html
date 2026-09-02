@@ -755,6 +755,15 @@
         <div class="topbar-title" id="pageTitle">Dashboard</div>
         <div class="topbar-sub" id="pageSubtitle"></div>
       </div>
+      <div class="topbar-month" id="topbarMonth" style="display:none;">
+        <button class="month-nav-btn" onclick="shiftViewMonth(-1)" title="Previous month" aria-label="Previous month">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="month-nav-label" id="topbarMonthLabel" onclick="resetViewMonth()" title="Click for current month">Current month</button>
+        <button class="month-nav-btn" onclick="shiftViewMonth(1)" title="Next month" aria-label="Next month">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
       <div class="topbar-right">
         <div class="mobile-profile-chip" id="mobileProfileChip" onclick="navigate('settings')" style="display:none;">
           <div class="mobile-profile-avatar" id="mobileProfileAvatar">U</div>

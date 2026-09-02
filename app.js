@@ -119,6 +119,7 @@ let state = {
   hasOnboarded: false,
   dashboardLayout: null,
   dashEmptyDismissed: false,
+  viewMonth: null,
   profile: {
     name: '',
     currency: '₦',
@@ -162,6 +163,7 @@ function ensureStateDefaults() {
   if (!state.financialEvents) state.financialEvents = [];
   if (!state.hasOnboarded) state.hasOnboarded = false;
   if (!state.dashEmptyDismissed) state.dashEmptyDismissed = false;
+  if (state.viewMonth === undefined) state.viewMonth = null;
   if (!state.autoRules) state.autoRules = [];
   if (!state.profile) state.profile = { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' };
   if (!state.settings) state.settings = {
@@ -260,6 +262,7 @@ function resetState() {
     accounts: [], balance: 0, incomeEvents: [], financialEvents: [], hasOnboarded: false,
     dashboardLayout: null,
     dashEmptyDismissed: false,
+    viewMonth: null,
     profile: { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' },
     settings: {
       googleCalendar: { connected: false, accessToken: null, tokenExpiry: null, calendarId: null, calendars: [], clientId: '', accountEmail: '' },
@@ -665,6 +668,44 @@ function currentMonthKey() {
   return d.getFullYear() + '-' + d.getMonth();
 }
 
+// ============ GLOBAL MONTH NAVIGATION ============
+function viewMonthKey() {
+  return state.viewMonth || currentMonthKey();
+}
+
+function viewMonthToDate(vm) {
+  const [y, m] = (vm || currentMonthKey()).split('-').map(Number);
+  return new Date(y, m, 1);
+}
+
+function shiftViewMonth(delta) {
+  const d = viewMonthToDate(state.viewMonth || currentMonthKey());
+  d.setMonth(d.getMonth() + delta);
+  state.viewMonth = d.getFullYear() + '-' + d.getMonth();
+  saveData();
+  renderDashboard();
+  updateTopbarMonth();
+}
+
+function resetViewMonth() {
+  state.viewMonth = null;
+  saveData();
+  renderDashboard();
+  updateTopbarMonth();
+}
+
+function updateTopbarMonth() {
+  const wrap = document.getElementById('topbarMonth');
+  const label = document.getElementById('topbarMonthLabel');
+  if (!wrap || !label) return;
+  const show = document.getElementById('page-dashboard') && document.getElementById('page-dashboard').classList.contains('active');
+  wrap.style.display = show ? 'flex' : 'none';
+  const vm = viewMonthKey();
+  const isCurrent = vm === currentMonthKey();
+  label.textContent = viewMonthToDate(vm).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  wrap.classList.toggle('browsing', !isCurrent);
+}
+
 function daysUntil(dateStr) {
   const target = new Date(dateStr);
   const now = new Date();
@@ -759,6 +800,16 @@ function getLastNMonthKeys(n) {
   return keys.reverse();
 }
 
+function getLastNMonthKeysFrom(vm, n) {
+  const [y, m] = (vm || currentMonthKey()).split('-').map(Number);
+  const keys = [];
+  for (let i = 0; i < n; i++) {
+    const d = new Date(y, m - i, 1);
+    keys.push(d.getFullYear() + '-' + d.getMonth());
+  }
+  return keys.reverse();
+}
+
 function getMonthLabelFromKey(key) {
   const [y, m] = key.split('-').map(Number);
   return new Date(y, m, 1).toLocaleDateString('en-US', { month: 'short' });
@@ -829,6 +880,7 @@ function navigate(page) {
   if (page === 'reports') renderReports();
   if (page === 'calendar') renderCalendar();
   if (page === 'settings') renderSettings();
+  updateTopbarMonth();
 }
 
 document.querySelectorAll('[data-page]').forEach(el => {
@@ -1183,7 +1235,7 @@ function dismissDashEmpty() {
 
 // ============ DASHBOARD ============
 function renderDashboard() {
-  const mk = currentMonthKey();
+  const mk = viewMonthKey();
   const income = getIncomeTotal(mk);
   const expenses = getExpenseTotal(mk);
   const savings = income - expenses;
@@ -1196,7 +1248,7 @@ function renderDashboard() {
   document.getElementById('dashSavingsRate').textContent = savingsRate + '% savings rate';
   animateMetricValue(document.getElementById('dashBalance'), balance);
 
-  const lastMk = getLastNMonthKeys(2)[0];
+  const lastMk = getLastNMonthKeysFrom(mk, 2)[0];
   const lastIncome = getIncomeTotal(lastMk);
   const lastExpenses = getExpenseTotal(lastMk);
   document.getElementById('dashIncomeSub').textContent = lastIncome > 0 ? (income > lastIncome ? '↑ ' : '↓ ') + fmt(Math.abs(income - lastIncome)) + ' vs last month' : '—';
@@ -1454,7 +1506,7 @@ function handleDashDragEnd() {
 }
 
 function renderDashboardHealthScore() {
-  const mk = currentMonthKey();
+  const mk = viewMonthKey();
   const score = calculateHealthScore(mk);
   const container = document.getElementById('dashHealthScore');
   if (!container) return;
@@ -1480,7 +1532,7 @@ function renderDashboardHealthScore() {
 
 function renderDashboardCharts() {
   // Income vs Expense bar chart
-  const months = getLastNMonthKeys(4);
+  const months = getLastNMonthKeysFrom(viewMonthKey(), 4);
   destroyChart('chartIncomeExpense');
   charts.chartIncomeExpense = new Chart(document.getElementById('chartIncomeExpense'), {
     type: 'bar',
@@ -1495,7 +1547,7 @@ function renderDashboardCharts() {
   });
 
   // Top categories doughnut
-  const mk = currentMonthKey();
+  const mk = viewMonthKey();
   const cats = getCategoryTotals(mk, 'expense');
   const sorted = Object.entries(cats).sort((a,b) => b[1] - a[1]).slice(0, 6);
   destroyChart('chartTopCategories');
@@ -1515,7 +1567,7 @@ function renderDashboardAccounts() {
     container.innerHTML = '<div class="empty-state">No accounts yet. <button class="btn btn-sm" onclick="openAccountModal()">Add account</button></div>';
     return;
   }
-  const mk = currentMonthKey();
+  const mk = viewMonthKey();
   container.innerHTML = state.accounts.map(a => {
     const txs = getAccountTransactions(a.id);
     const inc = getAccountMonthIncome(a.id, mk);
@@ -1540,7 +1592,7 @@ function renderDashboardAccounts() {
 }
 
 function renderDashboardBudgets() {
-  const mk = currentMonthKey();
+  const mk = viewMonthKey();
   const container = document.getElementById('dashBudgets');
   const budgets = Object.entries(state.budgets);
   if (budgets.length === 0) {
@@ -4822,6 +4874,7 @@ function clearAllData() {
     transactions: [], subscriptions: [], budgets: {}, goals: [], balance: 0,
     incomeEvents: [], financialEvents: [], hasOnboarded: true,
     dashEmptyDismissed: false,
+    viewMonth: null,
     profile: { name: state.profile?.name || '', currency: state.profile?.currency || '₦', currencyCode: state.profile?.currencyCode || 'NGN', monthStart: state.profile?.monthStart || 1, email: state.profile?.email || '' },
     settings: {
       googleCalendar: { connected: false, accessToken: null, tokenExpiry: null, calendarId: null, calendars: [], clientId: '', accountEmail: '' },
