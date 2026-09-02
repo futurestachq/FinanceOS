@@ -2610,6 +2610,9 @@
     <div class="auth-form" id="signInForm">
       <input type="email" class="onboarding-input" id="signInEmail" placeholder="Email address" style="text-align:left;margin-bottom:0;">
       <input type="password" class="onboarding-input" id="signInPassword" placeholder="Password" style="text-align:left;margin-bottom:0;">
+      <div style="text-align:right;margin-top:2px;margin-bottom:4px;">
+        <a href="#" onclick="sendPasswordReset();return false;" style="font-size:12px;color:var(--accent);text-decoration:none;">Forgot password?</a>
+      </div>
       <button class="onboarding-btn" onclick="signInWithEmail()">Sign in</button>
       <div style="font-size:13px;color:var(--text-secondary);margin-top:8px;text-align:center;">
         Don't have an account?
@@ -4589,6 +4592,14 @@ window.addEventListener('unhandledrejection', function(e) {
   }
 });
 try {
+
+// HTML sanitization helper
+function escapeHtml(str) {
+  if (typeof str !== 'string') return String(str);
+  return str.replace(/&/g, '&#38;').replace(/</g, '&#60;').replace(/>/g, '&#62;')
+            .replace(/"/g, '&#34;').replace(/'/g, '&#39;');
+}
+
 // ============ DATA LAYER ============
 const STORAGE_KEY = 'finance_os_data_v1';
 
@@ -4849,6 +4860,17 @@ function signInWithGoogle() {
     }
     showToast(msg);
   });
+}
+
+function sendPasswordReset() {
+  const email = document.getElementById('signInEmail').value.trim();
+  if (!email) {
+    showToast('Enter your email address first');
+    return;
+  }
+  auth.sendPasswordResetEmail(email)
+    .then(() => { showToast('Password reset email sent. Check your inbox.'); })
+    .catch(e => { showToast(e.message); });
 }
 
 function signInWithEmail() {
@@ -6174,7 +6196,7 @@ function populateCategoryFilter() {
   const select = document.getElementById('txFilterCategory');
   const current = select.value;
   const cats = new Set(state.transactions.map(t => t.category));
-  select.innerHTML = '<option value="">All categories</option>' + [...cats].sort().map(c => `<option value="${c}">${c}</option>`).join('');
+  select.innerHTML = '<option value="">All categories</option>' + [...cats].sort().map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join('');
   select.value = current;
 }
 
@@ -7223,7 +7245,7 @@ function updateCategoryOptions(type) {
   else if (type === 'giving') cats = givingCategories;
   else if (type === 'transfer') cats = transferCategories;
   else cats = expenseCategories;
-  document.getElementById('txCategory').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  document.getElementById('txCategory').innerHTML = cats.map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join('');
 }
 
 function updateTransferFields(type) {
@@ -8325,7 +8347,9 @@ function cancelEvent(eventId) {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay active';
     overlay.style.zIndex = '300';
-    overlay.innerHTML = `<div class="modal" style="max-width:400px;"><div class="modal-header"><div class="modal-title" style="color:var(--danger);">Delete recurring event</div><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button></div><div class="modal-body"><p style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px;">\"${event.title}\" is a recurring event. Choose what to delete:</p><div style="display:flex;flex-direction:column;gap:8px;"><button class="btn" style="text-align:left;justify-content:flex-start;" onclick="deleteRecurringEvent('${eventId}','this')">Delete this event only (${fmtDate(event.date)})</button><button class="btn" style="text-align:left;justify-content:flex-start;" onclick="deleteRecurringEvent('${eventId}','future')">Delete this and all future events</button><button class="btn" style="text-align:left;justify-content:flex-start;" onclick="deleteRecurringEvent('${eventId}','all')">Delete all occurrences (past and future)</button></div></div><div class="modal-footer"><button class="btn" onclick="this.closest('.modal-overlay').remove()">Cancel</button></div></div>`;
+    const safeTitle = escapeHtml(event.title);
+    const safeEventId = escapeHtml(eventId);
+    overlay.innerHTML = '<div class="modal" style="max-width:400px;"><div class="modal-header"><div class="modal-title" style="color:var(--danger);">Delete recurring event</div><button class="modal-close" onclick="this.closest('.modal-overlay').remove()">&times;</button></div><div class="modal-body"><p style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:16px;">"' + safeTitle + '" is a recurring event. Choose what to delete:</p><div style="display:flex;flex-direction:column;gap:8px;"><button class="btn" style="text-align:left;justify-content:flex-start;" onclick="deleteRecurringEvent('' + safeEventId + '','this')">Delete this event only (' + fmtDate(event.date) + ')</button><button class="btn" style="text-align:left;justify-content:flex-start;" onclick="deleteRecurringEvent('' + safeEventId + '','future')">Delete this and all future events</button><button class="btn" style="text-align:left;justify-content:flex-start;" onclick="deleteRecurringEvent('' + safeEventId + '','all')">Delete all occurrences (past and future)</button></div></div><div class="modal-footer"><button class="btn" onclick="this.closest('.modal-overlay').remove()">Cancel</button></div></div>';
     document.body.appendChild(overlay);
     overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
   } else {
@@ -8511,7 +8535,7 @@ function populateRuleCategoryOptions() {
   else if (type === 'giving') cats = givingCategories;
   else if (type === 'transfer') cats = transferCategories;
   else cats = expenseCategories;
-  document.getElementById('ruleCategory').innerHTML = cats.map(c => `<option value="${c}">${c}</option>`).join('');
+  document.getElementById('ruleCategory').innerHTML = cats.map(c => '<option value="' + escapeHtml(c) + '">' + escapeHtml(c) + '</option>').join('');
 }
 
 
