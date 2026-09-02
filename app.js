@@ -866,6 +866,10 @@ function getChartLegendColor() { return getThemeColor('--text-secondary'); }
 const chartDefaults = {
   responsive: true,
   maintainAspectRatio: false,
+  animation: {
+    duration: 800,
+    easing: 'easeOutQuart'
+  },
   plugins: {
     legend: { display: false },
     tooltip: {
@@ -1131,6 +1135,23 @@ function deleteAccount(id) {
   });
 }
 
+// ============ METRIC COUNT-UP ============
+function animateMetricValue(el, value, formatter) {
+  if (!el) return;
+  formatter = formatter || ((v) => fmt(v));
+  const target = Number(value) || 0;
+  const start = performance.now();
+  const duration = 900;
+  function tick(now) {
+    const p = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - p, 3);
+    el.textContent = formatter(target * eased);
+    if (p < 1) requestAnimationFrame(tick);
+    else el.textContent = formatter(target);
+  }
+  requestAnimationFrame(tick);
+}
+
 // ============ DASHBOARD ZERO-STATE ============
 function hasDashboardData() {
   return (state.accounts && state.accounts.length > 0) ||
@@ -1169,11 +1190,11 @@ function renderDashboard() {
   const savingsRate = income > 0 ? Math.round((savings / income) * 100) : 0;
   const balance = state.accounts.reduce((s, a) => s + (a.balance || 0), 0);
 
-  document.getElementById('dashIncome').textContent = fmt(income);
-  document.getElementById('dashExpenses').textContent = fmt(expenses);
-  document.getElementById('dashSavings').textContent = fmt(savings);
+  animateMetricValue(document.getElementById('dashIncome'), income);
+  animateMetricValue(document.getElementById('dashExpenses'), expenses);
+  animateMetricValue(document.getElementById('dashSavings'), savings);
   document.getElementById('dashSavingsRate').textContent = savingsRate + '% savings rate';
-  document.getElementById('dashBalance').textContent = fmt(balance);
+  animateMetricValue(document.getElementById('dashBalance'), balance);
 
   const lastMk = getLastNMonthKeys(2)[0];
   const lastIncome = getIncomeTotal(lastMk);
