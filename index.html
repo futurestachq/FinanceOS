@@ -783,6 +783,22 @@
           <button class="btn btn-sm btn-primary" onclick="toggleDashCustomize()">Done</button>
         </div>
 
+        <!-- Dashboard zero-state onboarding banner (shown when there's no data) -->
+        <div class="dash-empty" id="dashEmpty" style="display:none;">
+          <div class="dash-empty-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></svg>
+          </div>
+          <div class="dash-empty-body">
+            <div class="dash-empty-title">Welcome! Let's get your finances rolling.</div>
+            <div class="dash-empty-sub">Add your first account or transaction and your dashboard will light up with insights, budgets, and trends.</div>
+            <div class="dash-empty-actions">
+              <button class="btn btn-primary btn-sm" onclick="openModal()">+ Add transaction</button>
+              <button class="btn btn-sm" onclick="openAccountModal()">Add account</button>
+              <button class="dash-empty-dismiss" id="dashEmptyDismiss" onclick="dismissDashEmpty()">Dismiss</button>
+            </div>
+          </div>
+        </div>
+
         <div id="dashGrid" class="dash-grid">
           <div class="dash-widget" data-widget="metrics" data-span="4">
             <div class="dash-widget-handle"></div>

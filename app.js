@@ -118,6 +118,7 @@ let state = {
   financialEvents: [],
   hasOnboarded: false,
   dashboardLayout: null,
+  dashEmptyDismissed: false,
   profile: {
     name: '',
     currency: '₦',
@@ -160,6 +161,7 @@ function ensureStateDefaults() {
   if (!state.incomeEvents) state.incomeEvents = [];
   if (!state.financialEvents) state.financialEvents = [];
   if (!state.hasOnboarded) state.hasOnboarded = false;
+  if (!state.dashEmptyDismissed) state.dashEmptyDismissed = false;
   if (!state.autoRules) state.autoRules = [];
   if (!state.profile) state.profile = { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' };
   if (!state.settings) state.settings = {
@@ -257,6 +259,7 @@ function resetState() {
     transactions: [], subscriptions: [], budgets: {}, budgetIcons: {}, goals: [],
     accounts: [], balance: 0, incomeEvents: [], financialEvents: [], hasOnboarded: false,
     dashboardLayout: null,
+    dashEmptyDismissed: false,
     profile: { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' },
     settings: {
       googleCalendar: { connected: false, accessToken: null, tokenExpiry: null, calendarId: null, calendars: [], clientId: '', accountEmail: '' },
@@ -1128,6 +1131,35 @@ function deleteAccount(id) {
   });
 }
 
+// ============ DASHBOARD ZERO-STATE ============
+function hasDashboardData() {
+  return (state.accounts && state.accounts.length > 0) ||
+    (state.transactions && state.transactions.length > 0) ||
+    (state.subscriptions && state.subscriptions.length > 0) ||
+    (state.budgets && Object.keys(state.budgets).length > 0) ||
+    (state.goals && state.goals.length > 0) ||
+    (state.financialEvents && state.financialEvents.length > 0) ||
+    (state.incomeEvents && state.incomeEvents.length > 0);
+}
+
+function updateDashEmpty() {
+  const banner = document.getElementById('dashEmpty');
+  if (!banner) return;
+  if (state.dashEmptyDismissed || hasDashboardData()) {
+    banner.style.display = 'none';
+  } else {
+    banner.style.display = 'flex';
+  }
+}
+
+function dismissDashEmpty() {
+  state.dashEmptyDismissed = true;
+  saveData();
+  const banner = document.getElementById('dashEmpty');
+  if (banner) banner.style.display = 'none';
+  showToast('Got it! Ready when you are.');
+}
+
 // ============ DASHBOARD ============
 function renderDashboard() {
   const mk = currentMonthKey();
@@ -1158,6 +1190,7 @@ function renderDashboard() {
   renderDashboardUpcoming();
   renderDashboardNotifications();
   applyDashboardLayout();
+  updateDashEmpty();
 }
 
 // ============ DASHBOARD WIDGET CUSTOMIZATION ============
@@ -4767,6 +4800,7 @@ function clearAllData() {
   state = {
     transactions: [], subscriptions: [], budgets: {}, goals: [], balance: 0,
     incomeEvents: [], financialEvents: [], hasOnboarded: true,
+    dashEmptyDismissed: false,
     profile: { name: state.profile?.name || '', currency: state.profile?.currency || '₦', currencyCode: state.profile?.currencyCode || 'NGN', monthStart: state.profile?.monthStart || 1, email: state.profile?.email || '' },
     settings: {
       googleCalendar: { connected: false, accessToken: null, tokenExpiry: null, calendarId: null, calendars: [], clientId: '', accountEmail: '' },
