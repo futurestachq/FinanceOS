@@ -358,7 +358,11 @@ function signOutUser() {
 function continueAsGuest() {
   isGuest = true;
   currentUser = null;
+  document.querySelector('.app').style.display = 'flex';
+  document.getElementById('landingPage').style.display = 'none';
+  document.getElementById('authFormContainer').style.display = 'none';
   hideAuthModal();
+  updateUserProfileUI();
   loadData().then(() => {
     ensureStateDefaults();
     autoPostRecurring();
@@ -368,6 +372,10 @@ function continueAsGuest() {
     } else {
       navigate('dashboard');
     }
+  }).catch(err => {
+    console.error('Guest mode error:', err);
+    // Fallback - try to show dashboard anyway
+    navigate('dashboard');
   });
 }
 
