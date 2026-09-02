@@ -1516,234 +1516,205 @@
   .mobile-profile-avatar img { width:100%; height:100%; object-fit:cover; border-radius:50%; }
   .mobile-profile-name { font-size:13px; font-weight:500; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100px; }
 
+  /* ===== FINANCE QUEST PREMIUM LANDING PAGE ===== */
+  .landing-page { width:100%; overflow-x:hidden; }
 
-  /* ===== PAYDO-INSPIRED LANDING PAGE ===== */
-  .landing-page { width:100%; text-align:left; }
+  @keyframes fqlp-spin { to { transform:rotate(360deg); } }
+  @keyframes fqlp-drift { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+  @keyframes fqlp-pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  @keyframes fqlp-marquee { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+  @keyframes fqlp-rise { from{transform:translateY(112%)} to{transform:translateY(0)} }
+  @keyframes fqlp-sparkdraw { from{stroke-dashoffset:620} to{stroke-dashoffset:0} }
+
+  .fqlp-reveal { opacity:0; transform:translateY(24px); transition:opacity 0.8s ease, transform 0.8s cubic-bezier(0.22,0.61,0.21,1); }
+  .fqlp-reveal.visible { opacity:1; transform:translateY(0); }
+  .fqlp-d1 { transition-delay:0.1s; }
+  .fqlp-d2 { transition-delay:0.2s; }
+  .fqlp-d3 { transition-delay:0.3s; }
 
   /* Navbar */
-  .landing-nav {
-    display:flex; align-items:center; justify-content:space-between;
-    padding:20px 0; max-width:1200px; margin:0 auto;
-  }
-  .landing-nav-logo {
-    display:flex; align-items:center; gap:10px;
-    font-size:22px; font-weight:800; color:var(--text); letter-spacing:-0.5px;
-  }
-  .landing-nav-logo img { width:36px; height:36px; border-radius:10px; }
-  .landing-nav-links { display:flex; gap:36px; font-size:15px; }
-  .landing-nav-links a {
-    color:var(--text-secondary); text-decoration:none; font-weight:500;
-    transition:color 0.2s;
-  }
-  .landing-nav-links a:hover { color:var(--text); }
-  .landing-nav-actions { display:flex; gap:12px; align-items:center; }
-  .landing-nav-btn {
-    padding:9px 22px; border-radius:10px; font-size:14px; font-weight:600;
-    cursor:pointer; transition:all 0.2s;
-  }
-  .landing-nav-btn.login {
-    background:transparent; color:var(--text); border:1.5px solid var(--border-strong);
-  }
-  .landing-nav-btn.login:hover { background:var(--card); }
-  .landing-nav-btn.register {
-    background:var(--text); color:var(--bg); border:1.5px solid var(--text);
-  }
-  .landing-nav-btn.register:hover { opacity:0.85; transform:translateY(-1px); }
+  .fqlp-nav { position:sticky; top:0; z-index:100; background:rgba(247,248,246,0.82); backdrop-filter:blur(12px) saturate(1.2); border-bottom:1px solid var(--border); }
+  [data-theme="dark"] .fqlp-nav { background:rgba(20,24,22,0.82); }
+  .fqlp-nav-inner { max-width:1200px; margin:0 auto; padding:16px 24px; display:flex; align-items:center; justify-content:space-between; }
+  .fqlp-nav-logo { display:flex; align-items:center; gap:10px; font-size:20px; font-weight:800; color:var(--text); letter-spacing:-0.5px; font-family:'Inter',system-ui,sans-serif; }
+  .fqlp-nav-logo img { width:36px; height:36px; border-radius:10px; }
+  .fqlp-nav-links { display:flex; align-items:center; gap:8px; }
+  .fqlp-nav-btn { padding:10px 22px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; transition:all 0.25s; border:none; text-decoration:none; background:transparent; font-family:inherit; }
+  .fqlp-nav-btn.ghost { color:var(--text); border:1.5px solid var(--border-strong); }
+  .fqlp-nav-btn.ghost:hover { background:var(--card); border-color:var(--text-tertiary); }
+  .fqlp-nav-btn.primary { background:var(--text); color:var(--bg); }
+  .fqlp-nav-btn.primary:hover { opacity:0.85; transform:translateY(-1px); }
+
+  /* Ticker */
+  .fqlp-ticker { border-bottom:1px solid var(--border); background:var(--card); overflow:hidden; padding:10px 0; }
+  .fqlp-ticker-track { display:flex; gap:40px; animation:fqlp-marquee 40s linear infinite; width:max-content; }
+  .fqlp-ticket { font-size:12px; color:var(--text-secondary); white-space:nowrap; display:flex; align-items:center; gap:8px; font-weight:500; }
+  .fqlp-ticket i { display:inline-block; width:6px; height:6px; border-radius:50%; background:var(--accent); animation:fqlp-pulse 2s ease-in-out infinite; }
+  .fqlp-ticket strong { color:var(--text); font-weight:600; }
 
   /* Hero */
-  .landing-hero { padding:40px 0 60px; }
-  .landing-hero-inner { max-width:1200px; margin:0 auto; }
-  .landing-hero-title {
-    font-size:72px; font-weight:800; letter-spacing:-3px; line-height:1.05;
-    color:var(--text); max-width:700px; margin-bottom:20px;
-  }
-  .landing-hero-tagline {
-    font-size:18px; color:var(--text-secondary); max-width:480px;
-    margin-bottom:32px; line-height:1.6;
-  }
-  .landing-hero-cta { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:60px; }
-  .landing-btn-primary {
-    padding:15px 28px; background:var(--text); color:var(--bg);
-    border:none; border-radius:10px; font-size:15px; font-weight:600;
-    cursor:pointer; transition:all 0.2s;
-  }
-  .landing-btn-primary:hover { opacity:0.85; transform:translateY(-1px); }
-  .landing-btn-secondary {
-    padding:15px 28px; background:transparent; color:var(--text);
-    border:1.5px solid var(--border-strong); border-radius:10px;
-    font-size:15px; font-weight:600; cursor:pointer; transition:all 0.2s;
-  }
-  .landing-btn-secondary:hover { background:var(--card); border-color:var(--text-tertiary); }
+  .fqlp-hero-wrap { position:relative; overflow:hidden; }
+  .fqlp-hero-glow { position:absolute; inset:0; pointer-events:none; z-index:0; }
+  .fqlp-hero-glow::before { content:''; position:absolute; top:-10%; left:-5%; width:55%; height:70%; background:radial-gradient(ellipse at 30% 30%, rgba(57,121,104,0.08) 0%, transparent 60%); }
+  .fqlp-hero-glow::after { content:''; position:absolute; bottom:-10%; right:-5%; width:50%; height:60%; background:radial-gradient(ellipse at 70% 70%, rgba(217,154,61,0.05) 0%, transparent 60%); }
+  [data-theme="dark"] .fqlp-hero-glow::before { background:radial-gradient(ellipse at 30% 30%, rgba(75,157,133,0.14) 0%, transparent 60%); }
+  [data-theme="dark"] .fqlp-hero-glow::after { background:radial-gradient(ellipse at 70% 70%, rgba(232,176,94,0.08) 0%, transparent 60%); }
 
-  /* App Mockup */
-  .landing-mockup-wrap { max-width:1100px; margin:0 auto; position:relative; }
-  .landing-mockup-frame {
-    background:var(--card); border:1px solid var(--border); border-radius:20px;
-    padding:5px; box-shadow:0 40px 80px rgba(0,0,0,0.12), 0 0 0 1px rgba(255,255,255,0.03) inset;
-    position:relative;
-  }
-  .landing-mockup-frame::before {
-    content:''; position:absolute; top:-40px; left:5%; right:5%; height:120%;
-    background:radial-gradient(ellipse at 50% 0%, rgba(57,121,104,0.08) 0%, transparent 60%);
-    z-index:-1; pointer-events:none;
-  }
-  .landing-mockup-inner {
-    background:var(--bg); border-radius:15px; padding:28px; text-align:left;
-  }
-  .landing-mockup-header {
-    display:flex; align-items:center; gap:14px; margin-bottom:24px;
-    padding-bottom:18px; border-bottom:1px solid var(--border);
-  }
-  .landing-mockup-avatar {
-    width:36px; height:36px; border-radius:10px;
-    background:linear-gradient(135deg, var(--accent), #3a8b75);
-    display:flex; align-items:center; justify-content:center;
-    color:white; font-weight:700; font-size:14px;
-  }
-  .landing-mockup-title { font-size:15px; font-weight:600; color:var(--text); }
-  .landing-mockup-sub { font-size:12px; color:var(--text-secondary); }
-  .landing-mockup-grid { display:grid; grid-template-columns:repeat(4, 1fr); gap:14px; }
-  .landing-mockup-metric {
-    background:var(--card); border:1px solid var(--border); border-radius:12px; padding:16px;
-  }
-  .landing-mockup-metric-label { font-size:11px; color:var(--text-secondary); margin-bottom:6px; }
-  .landing-mockup-metric-value { font-size:20px; font-weight:700; }
-  .landing-mockup-metric-sub { font-size:10px; color:var(--text-secondary); margin-top:2px; }
-  .landing-mockup-chart {
-    background:var(--card); border:1px solid var(--border); border-radius:12px;
-    padding:16px; grid-column:span 3; min-height:90px;
-    display:flex; align-items:flex-end; gap:6px;
-  }
-  .landing-mockup-bar {
-    flex:1; background:linear-gradient(to top, var(--accent), rgba(57,121,104,0.25));
-    border-radius:3px 3px 0 0; min-height:20%;
-  }
-  .landing-mockup-bar:nth-child(1){height:35%} .landing-mockup-bar:nth-child(2){height:60%}
-  .landing-mockup-bar:nth-child(3){height:42%} .landing-mockup-bar:nth-child(4){height:78%}
-  .landing-mockup-bar:nth-child(5){height:52%} .landing-mockup-bar:nth-child(6){height:88%}
-  .landing-mockup-bar:nth-child(7){height:68%} .landing-mockup-bar:nth-child(8){height:55%}
+  .fqlp-hero { position:relative; z-index:1; max-width:1200px; margin:0 auto; padding:80px 24px 60px; display:grid; grid-template-columns:1fr 1fr; gap:60px; align-items:center; }
+  .fqlp-hero-label { font-size:11px; font-weight:600; color:var(--accent); text-transform:uppercase; letter-spacing:2.5px; margin-bottom:18px; font-family:'Inter',system-ui,sans-serif; }
+  .fqlp-maskline { display:block; overflow:hidden; padding-bottom:0.08em; }
+  .fqlp-maskline > span { display:block; transform:translateY(112%); animation:fqlp-rise 0.95s cubic-bezier(0.22,0.61,0.21,1) forwards; animation-delay:var(--rise-delay,0ms); }
+  .fqlp-hero h1 { font-size:54px; font-weight:800; line-height:1.05; letter-spacing:-2.5px; color:var(--text); margin:0 0 20px 0; font-family:'Inter',system-ui,sans-serif; }
+  .fqlp-hero h1 em { font-style:italic; color:var(--accent); font-weight:700; }
+  .fqlp-hero > div > p { font-size:17px; color:var(--text-secondary); line-height:1.65; max-width:460px; margin:0 0 32px 0; }
 
-  /* Sections */
-  .landing-section { padding:100px 0; border-top:1px solid var(--border); }
-  .landing-section-header {
-    max-width:1200px; margin:0 auto; text-align:center; margin-bottom:56px;
-  }
-  .landing-section-title {
-    font-size:44px; font-weight:800; letter-spacing:-1px;
-    margin-bottom:12px; color:var(--text); line-height:1.1;
-  }
-  .landing-section-subtitle {
-    font-size:17px; color:var(--text-secondary); max-width:520px;
-    margin:0 auto; line-height:1.6;
-  }
+  .fqlp-hero-btns { display:flex; gap:14px; flex-wrap:wrap; margin-bottom:32px; }
+  .fqlp-btn { padding:14px 28px; border-radius:10px; font-size:15px; font-weight:600; cursor:pointer; transition:all 0.25s; border:none; display:inline-flex; align-items:center; gap:8px; text-decoration:none; background:transparent; font-family:inherit; }
+  .fqlp-btn.filled { background:var(--text); color:var(--bg); }
+  .fqlp-btn.filled:hover { opacity:0.85; transform:translateY(-1px); }
+  .fqlp-btn.outline { background:transparent; color:var(--text); border:1.5px solid var(--border-strong); }
+  .fqlp-btn.outline:hover { background:var(--card); border-color:var(--text-tertiary); }
 
-  /* Feature Cards */
-  .landing-features {
-    display:grid; grid-template-columns:repeat(3, 1fr); gap:28px;
-    max-width:1200px; margin:0 auto;
-  }
-  .landing-feature-card {
-    text-align:left; padding:4px; transition:opacity 0.2s;
-  }
-  .landing-feature-card:hover { opacity:0.8; }
-  .landing-feature-icon {
-    width:44px; height:44px; border-radius:12px;
-    display:flex; align-items:center; justify-content:center;
-    margin-bottom:18px;
-  }
-  .landing-feature-icon.green { background:rgba(57,121,104,0.12); color:var(--accent); }
-  .landing-feature-icon.lime { background:rgba(174,239,51,0.18); color:#6a9e1f; }
-  .landing-feature-icon.yellow { background:rgba(217,154,61,0.12); color:var(--warning); }
-  .landing-feature-icon.blue { background:rgba(37,99,235,0.08); color:var(--blue-accent); }
-  .landing-feature-icon.violet { background:rgba(124,58,237,0.08); color:var(--violet-accent); }
-  .landing-feature-icon.gray { background:var(--border-secondary); color:var(--gray-accent); }
-  .landing-feature-title { font-size:18px; font-weight:700; margin-bottom:8px; color:var(--text); }
-  .landing-feature-desc { font-size:14px; color:var(--text-secondary); line-height:1.6; margin-bottom:14px; }
-  .landing-feature-link {
-    font-size:14px; font-weight:600; color:var(--text);
-    text-decoration:none; display:inline-flex; align-items:center; gap:6px;
-    transition:gap 0.2s;
-  }
-  .landing-feature-link:hover { gap:10px; }
-  .landing-feature-link svg { width:16px; height:16px; }
+  .fqlp-trust { display:flex; flex-wrap:wrap; gap:20px; align-items:center; }
+  .fqlp-trust span { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text-secondary); font-weight:500; }
+  .fqlp-trust svg { width:18px; height:18px; color:var(--accent); flex-shrink:0; }
 
-  /* Dark Feature Section */
-  .landing-dark-section {
-    background:#0f1f29; color:white; padding:100px 0; position:relative; overflow:hidden;
-  }
-  [data-theme="dark"] .landing-dark-section { background:#0a161c; }
-  .landing-dark-inner { max-width:1200px; margin:0 auto; display:flex; gap:60px; align-items:center; }
-  .landing-dark-content { flex:1; }
-  .landing-dark-badge {
-    display:inline-flex; align-items:center; gap:6px;
-    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.12);
-    padding:6px 14px; border-radius:20px; font-size:13px; font-weight:500;
-    color:rgba(255,255,255,0.8); margin-bottom:20px;
-  }
-  .landing-dark-title { font-size:38px; font-weight:800; letter-spacing:-1px; margin-bottom:16px; line-height:1.15; }
-  .landing-dark-desc { font-size:16px; color:rgba(255,255,255,0.65); line-height:1.7; margin-bottom:32px; max-width:440px; }
-  .landing-dark-visual { flex:1; position:relative; }
-  .landing-dark-card {
-    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.1);
-    backdrop-filter:blur(12px); border-radius:16px; padding:20px;
-    position:absolute; width:220px;
-  }
-  .landing-dark-card.top { top:-20px; right:20px; }
-  .landing-dark-card.bottom { bottom:-10px; left:20px; }
-  .landing-dark-card-title { font-size:13px; color:rgba(255,255,255,0.5); margin-bottom:6px; }
-  .landing-dark-card-value { font-size:24px; font-weight:700; }
-  .landing-dark-card-sub { font-size:12px; color:rgba(255,255,255,0.4); margin-top:4px; }
+  .fqlp-mockup-wrap { position:relative; animation:fqlp-drift 7s ease-in-out infinite; }
+  .fqlp-mockup { position:relative; border-radius:16px; border:1px solid var(--border); background:var(--card); box-shadow:0 24px 60px rgba(0,0,0,0.08); overflow:hidden; }
+  .fqlp-mockup::before { content:''; position:absolute; inset:-20px; border-radius:20px; background:linear-gradient(135deg, var(--accent) 0%, transparent 60%); opacity:0.1; filter:blur(20px); z-index:-1; pointer-events:none; }
+  .fqlp-mockup-header { display:flex; align-items:center; justify-content:space-between; padding:14px 18px; border-bottom:1px solid var(--border); }
+  .fqlp-mockup-dots { display:flex; gap:6px; }
+  .fqlp-mockup-dots span { width:10px; height:10px; border-radius:50%; }
+  .fqlp-mockup-title { font-size:13px; font-weight:600; color:var(--text); display:flex; align-items:center; gap:8px; }
+  .fqlp-mockup-live { display:flex; align-items:center; gap:6px; font-size:11px; font-weight:600; color:var(--green-accent); background:var(--green-light); padding:4px 10px; border-radius:20px; }
+  .fqlp-mockup-live i { width:6px; height:6px; border-radius:50%; background:var(--green-accent); animation:fqlp-pulse 1.5s ease-in-out infinite; display:inline-block; }
+  .fqlp-mockup-body { padding:20px; }
+  .fqlp-mockup-balance-label { font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:1px; margin-bottom:6px; font-weight:500; }
+  .fqlp-mockup-balance-val { font-size:36px; font-weight:800; color:var(--text); letter-spacing:-1px; }
+  .fqlp-mockup-balance-val span { font-size:20px; color:var(--text-secondary); font-weight:500; }
+  .fqlp-spark svg { width:100%; height:60px; }
+  .fqlp-mockup-tx { display:flex; align-items:center; gap:12px; padding:10px 0; border-bottom:1px solid var(--border); }
+  .fqlp-mockup-tx:last-child { border-bottom:none; }
+  .fqlp-mockup-tx-icon { width:28px; height:28px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; flex-shrink:0; }
+  .fqlp-mockup-tx-icon.up { background:var(--green-light); color:var(--green-accent); }
+  .fqlp-mockup-tx-icon.down { background:var(--red-light); color:var(--red-accent); }
+  .fqlp-mockup-tx-name { font-size:13px; font-weight:600; color:var(--text); }
+  .fqlp-mockup-tx-meta { font-size:11px; color:var(--text-secondary); }
+  .fqlp-mockup-tx-amt { font-size:13px; font-weight:600; font-family:'Inter',monospace; flex-shrink:0; }
+
+  .fqlp-chip { position:absolute; border-radius:10px; border:1px solid var(--border); background:var(--card); padding:10px 14px; box-shadow:0 4px 16px rgba(0,0,0,0.06); z-index:10; }
+  .fqlp-chip p:first-child { font-size:10px; text-transform:uppercase; letter-spacing:0.6px; color:var(--text-secondary); margin-bottom:2px; font-weight:500; }
+  .fqlp-chip p:last-child { font-size:14px; font-weight:700; color:var(--accent); }
+
+  /* Marquee */
+  .fqlp-marquee { border-top:1px solid var(--border); border-bottom:1px solid var(--border); background:var(--bg); overflow:hidden; padding:24px 0; position:relative; }
+  .fqlp-marquee::before, .fqlp-marquee::after { content:''; position:absolute; top:0; bottom:0; width:80px; z-index:2; pointer-events:none; }
+  .fqlp-marquee::before { left:0; background:linear-gradient(90deg, var(--bg), transparent); }
+  .fqlp-marquee::after { right:0; background:linear-gradient(-90deg, var(--bg), transparent); }
+  .fqlp-marquee-track { display:flex; gap:48px; animation:fqlp-marquee 30s linear infinite; width:max-content; }
+  .fqlp-marquee-track:hover { animation-play-state:paused; }
+  .fqlp-marquee span { font-size:18px; font-weight:600; color:var(--text-tertiary); white-space:nowrap; letter-spacing:-0.3px; transition:color 0.3s; cursor:default; }
+  .fqlp-marquee span:hover { color:var(--text); }
+  .fqlp-marquee i { display:inline-block; width:5px; height:5px; border-radius:50%; background:var(--border-strong); margin-left:48px; vertical-align:middle; }
 
   /* Stats */
-  .landing-stats { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; }
-  .landing-stat-card {
-    background:var(--card); border:1px solid var(--border); border-radius:16px; padding:32px;
-    display:flex; flex-direction:column; justify-content:space-between; min-height:180px;
-    transition:transform 0.3s, box-shadow 0.3s;
-  }
-  .landing-stat-card:hover { transform:translateY(-4px); box-shadow:0 12px 32px rgba(0,0,0,0.08); }
-  .landing-stat-top { font-size:14px; font-weight:600; color:var(--text-secondary); margin-bottom:20px; }
-  .landing-stat-num { font-size:48px; font-weight:800; color:var(--text); line-height:1; margin-bottom:8px; }
-  .landing-stat-desc { font-size:14px; color:var(--text-secondary); line-height:1.5; }
+  .fqlp-stats { max-width:1200px; margin:0 auto; display:grid; grid-template-columns:repeat(4, 1fr); gap:1px; background:var(--border); border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+  .fqlp-stat-cell { background:var(--card); padding:40px 32px; text-align:center; transition:background 0.3s, color 0.3s; cursor:default; }
+  .fqlp-stat-cell:hover { background:var(--bg); }
+  .fqlp-stat-cell:hover .fqlp-stat-num { color:var(--accent); }
+  .fqlp-stat-num { font-size:44px; font-weight:800; color:var(--text); line-height:1; letter-spacing:-1px; margin-bottom:8px; transition:color 0.3s; }
+  .fqlp-stat-label { font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:1.5px; color:var(--text-secondary); margin-bottom:4px; }
+  .fqlp-stat-note { font-size:13px; color:var(--text-tertiary); }
 
-  /* CTA Section */
-  .landing-cta-section { padding:100px 0; text-align:center; }
-  .landing-cta-section .landing-section-title { margin-bottom:16px; }
-  .landing-cta-section .landing-section-subtitle { margin-bottom:36px; }
+  /* Features */
+  .fqlp-section { max-width:1200px; margin:0 auto; padding:100px 24px; }
+  .fqlp-section-label { font-size:11px; font-weight:600; color:var(--accent); text-transform:uppercase; letter-spacing:2.5px; margin-bottom:18px; }
+  .fqlp-section h2 { font-size:40px; font-weight:800; line-height:1.1; letter-spacing:-1.5px; color:var(--text); margin:0 0 16px 0; }
+  .fqlp-section h2 em { font-style:italic; color:var(--accent); font-weight:700; }
+  .fqlp-section-sub { font-size:17px; color:var(--text-secondary); line-height:1.6; max-width:480px; margin-bottom:56px; }
+  .fqlp-features { display:grid; grid-template-columns:repeat(3, 1fr); gap:24px; }
+  .fqlp-feature { padding:32px; border-radius:16px; border:1px solid var(--border); background:var(--card); transition:all 0.35s cubic-bezier(0.22,0.61,0.21,1); position:relative; overflow:hidden; }
+  .fqlp-feature:hover { transform:translateY(-4px); box-shadow:0 12px 40px rgba(0,0,0,0.08); border-color:var(--border-strong); }
+  .fqlp-feature::before { content:''; position:absolute; top:0; left:0; right:0; height:1px; background:linear-gradient(90deg, transparent, var(--accent), transparent); opacity:0; transition:opacity 0.3s; }
+  .fqlp-feature:hover::before { opacity:0.4; }
+  .fqlp-feature-icon { width:48px; height:48px; border-radius:12px; background:var(--light-green); display:flex; align-items:center; justify-content:center; color:var(--accent); margin-bottom:20px; transition:all 0.3s; }
+  .fqlp-feature:hover .fqlp-feature-icon { background:var(--accent); color:var(--bg); }
+  .fqlp-feature-icon svg { width:24px; height:24px; }
+  .fqlp-feature h3 { font-size:18px; font-weight:700; color:var(--text); margin-bottom:6px; }
+  .fqlp-feature-tag { font-size:15px; font-style:italic; color:var(--warning); margin-bottom:12px; font-weight:500; }
+  .fqlp-feature p { font-size:14px; color:var(--text-secondary); line-height:1.6; }
+  .fqlp-feature-tags { display:flex; flex-wrap:wrap; gap:6px; margin-top:16px; }
+  .fqlp-feature-tags span { font-size:11px; font-weight:500; color:var(--text-tertiary); background:var(--bg); border:1px solid var(--border); padding:3px 10px; border-radius:20px; }
+
+  /* Steps */
+  .fqlp-steps { display:grid; grid-template-columns:repeat(3, 1fr); gap:40px; margin-top:56px; position:relative; }
+  .fqlp-steps::before { content:''; position:absolute; top:28px; left:10%; right:10%; border-top:1px dashed var(--border-strong); z-index:0; }
+  .fqlp-step { position:relative; z-index:1; }
+  .fqlp-step-num { width:56px; height:56px; border-radius:50%; border:1px solid var(--border); background:var(--bg); display:flex; align-items:center; justify-content:center; font-size:18px; font-weight:800; color:var(--accent); margin-bottom:20px; transition:all 0.3s; }
+  .fqlp-step:hover .fqlp-step-num { background:var(--accent); color:var(--bg); border-color:var(--accent); box-shadow:0 0 20px rgba(57,121,104,0.2); }
+  .fqlp-step h3 { font-size:18px; font-weight:700; color:var(--text); margin-bottom:8px; }
+  .fqlp-step p { font-size:14px; color:var(--text-secondary); line-height:1.6; }
+
+  /* Security */
+  .fqlp-security { max-width:1200px; margin:0 auto 100px; padding:0 24px; }
+  .fqlp-security-card { border-radius:20px; border:1px solid var(--border); background:var(--card); padding:64px; display:grid; grid-template-columns:1fr 1fr; gap:64px; align-items:center; position:relative; overflow:hidden; }
+  .fqlp-security-card::before { content:''; position:absolute; inset:0; background:repeating-linear-gradient(135deg, rgba(57,121,104,0.03) 0 1px, transparent 1px 16px); pointer-events:none; }
+  .fqlp-security h2 { font-size:36px; font-weight:800; line-height:1.1; letter-spacing:-1px; color:var(--text); margin:0 0 16px 0; }
+  .fqlp-security h2 em { font-style:italic; color:var(--accent); }
+  .fqlp-security p { font-size:16px; color:var(--text-secondary); line-height:1.6; margin-bottom:32px; }
+  .fqlp-badge-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+  .fqlp-badge { display:flex; align-items:center; gap:12px; padding:14px 16px; border-radius:10px; border:1px solid var(--border); background:var(--bg); transition:border-color 0.3s; }
+  .fqlp-badge:hover { border-color:var(--accent); }
+  .fqlp-badge svg { width:20px; height:20px; color:var(--accent); flex-shrink:0; }
+  .fqlp-badge span { font-size:14px; font-weight:600; color:var(--text); }
+  .fqlp-vault { width:280px; height:280px; margin:0 auto; display:block; }
+  .fqlp-sec-stats { margin-top:20px; display:grid; grid-template-columns:1fr; gap:10px; }
+  .fqlp-sec-stat { display:flex; align-items:center; gap:12px; padding:12px 16px; border-radius:10px; border:1px solid var(--border); background:var(--bg); }
+  .fqlp-sec-stat svg { width:18px; height:18px; color:var(--warning); flex-shrink:0; }
+  .fqlp-sec-stat p { font-size:14px; color:var(--text-secondary); margin:0; }
+  .fqlp-sec-stat strong { color:var(--text); font-weight:600; }
+
+  /* CTA */
+  .fqlp-cta { max-width:1200px; margin:0 auto; padding:100px 24px; border-top:1px solid var(--border); text-align:center; }
+  .fqlp-cta h2 { font-size:40px; font-weight:800; line-height:1.1; letter-spacing:-1.5px; color:var(--text); margin:0 0 16px 0; }
+  .fqlp-cta h2 em { font-style:italic; color:var(--accent); }
+  .fqlp-cta p { font-size:17px; color:var(--text-secondary); line-height:1.6; max-width:460px; margin:0 auto 32px auto; }
 
   /* Footer */
-  .landing-footer { padding:48px 0; border-top:1px solid var(--border); text-align:center; }
-  .landing-footer-links { display:flex; gap:28px; justify-content:center; margin-bottom:16px; flex-wrap:wrap; }
-  .landing-footer-links a { font-size:14px; color:var(--text-secondary); text-decoration:none; font-weight:500; }
-  .landing-footer-links a:hover { color:var(--text); }
-  .landing-footer-text { font-size:14px; color:var(--text-tertiary); }
-  .landing-footer-text a { color:var(--text-secondary); text-decoration:none; font-weight:500; }
-  .landing-footer-text a:hover { color:var(--text); }
+  .fqlp-footer { max-width:1200px; margin:0 auto; padding:40px 24px; border-top:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; }
+  .fqlp-footer-left { font-size:14px; color:var(--text-secondary); }
+  .fqlp-footer-left a { color:var(--text); text-decoration:none; font-weight:600; }
+  .fqlp-footer-right { display:flex; gap:24px; }
+  .fqlp-footer-right a { font-size:14px; color:var(--text-secondary); text-decoration:none; font-weight:500; transition:color 0.2s; }
+  .fqlp-footer-right a:hover { color:var(--text); }
 
-  /* Auth Form */
-  .auth-back-link {
-    display:inline-flex; align-items:center; gap:6px; font-size:14px;
-    color:var(--text-secondary); cursor:pointer; margin-bottom:20px;
-    transition:color 0.2s;
+  @media(max-width:768px) {
+    .fqlp-hero { grid-template-columns:1fr; gap:40px; padding:60px 24px 40px; }
+    .fqlp-hero h1 { font-size:40px; letter-spacing:-1.5px; }
+    .fqlp-mockup-wrap { animation:none; }
+    .fqlp-stats { grid-template-columns:repeat(2, 1fr); }
+    .fqlp-features { grid-template-columns:1fr; }
+    .fqlp-steps { grid-template-columns:1fr; }
+    .fqlp-steps::before { display:none; }
+    .fqlp-security-card { grid-template-columns:1fr; padding:40px 32px; gap:40px; }
+    .fqlp-section { padding:60px 24px; }
+    .fqlp-section h2 { font-size:32px; }
+    .fqlp-cta { padding:60px 24px; }
+    .fqlp-cta h2 { font-size:32px; }
+    .fqlp-footer { flex-direction:column; text-align:center; }
+    .fqlp-ticker { display:none; }
   }
-  .auth-back-link:hover { color:var(--text); }
-
-  /* Mobile */
-  @media (max-width:768px) {
-    .landing-nav-links { display:none; }
-    .landing-hero { padding:30px 0 40px; }
-    .landing-hero-title { font-size:36px; letter-spacing:-1px; }
-    .landing-hero-tagline { font-size:15px; }
-    .landing-section { padding:60px 0; }
-    .landing-section-title { font-size:28px; }
-    .landing-features { grid-template-columns:1fr; }
-    .landing-mockup-grid { grid-template-columns:repeat(2, 1fr); }
-    .landing-mockup-chart { grid-column:span 2; }
-    .landing-dark-inner { flex-direction:column; gap:40px; }
-    .landing-dark-card { position:relative; width:100%; top:auto; right:auto; bottom:auto; left:auto; margin-bottom:12px; }
-    .landing-stats { grid-template-columns:1fr; }
-    .landing-stat-num { font-size:36px; }
-    .landing-nav-btn { padding:8px 16px; font-size:13px; }
+  @media(max-width:500px) {
+    .fqlp-nav-links .fqlp-nav-btn.ghost { display:none; }
+    .fqlp-hero h1 { font-size:32px; }
+    .fqlp-stats { grid-template-columns:1fr; }
+    .fqlp-stat-num { font-size:36px; }
+    .fqlp-stat-cell { padding:28px 20px; }
+    .fqlp-badge-grid { grid-template-columns:1fr; }
+    .fqlp-sec-stats { grid-template-columns:1fr; }
+    .fqlp-security-card { padding:32px 24px; }
+    .fqlp-section { padding:48px 20px; }
+    .fqlp-section h2 { font-size:28px; }
   }
   /* Onboarding */
   .onboarding-overlay {
@@ -2283,157 +2254,352 @@
 
   <div class="landing-page" id="landingPage">
 
-    <!-- Navbar -->
-    <nav class="landing-nav" style="max-width:1100px;margin:0 auto;padding:20px 24px;display:flex;align-items:center;justify-content:space-between;">
-      <div class="landing-nav-logo" style="display:flex;align-items:center;gap:10px;font-size:20px;font-weight:800;color:var(--text);letter-spacing:-0.5px;">
-        <img src="icon-192.svg" alt="FinanceOS" style="width:32px;height:32px;border-radius:8px;">
-        FinanceOS
+    <!-- Ticker -->
+    <div class="fqlp-ticker">
+      <div class="fqlp-ticker-track">
+        <span class="fqlp-ticket"><i></i> <strong>Live sync</strong> &mdash; your data stays encrypted</span>
+        <span class="fqlp-ticket"><i></i> <strong>Free forever</strong> &mdash; no credit card required</span>
+        <span class="fqlp-ticket"><i></i> <strong>Multi-account</strong> &mdash; track every wallet in one place</span>
+        <span class="fqlp-ticket"><i></i> <strong>Bill alerts</strong> &mdash; never miss a due date</span>
+        <span class="fqlp-ticket"><i></i> <strong>Export ready</strong> &mdash; CSV &amp; JSON any time</span>
+        <span class="fqlp-ticket"><i></i> <strong>Goal tracking</strong> &mdash; save with purpose</span>
+        <span class="fqlp-ticket"><i></i> <strong>Live sync</strong> &mdash; your data stays encrypted</span>
+        <span class="fqlp-ticket"><i></i> <strong>Free forever</strong> &mdash; no credit card required</span>
+        <span class="fqlp-ticket"><i></i> <strong>Multi-account</strong> &mdash; track every wallet in one place</span>
+        <span class="fqlp-ticket"><i></i> <strong>Bill alerts</strong> &mdash; never miss a due date</span>
+        <span class="fqlp-ticket"><i></i> <strong>Export ready</strong> &mdash; CSV &amp; JSON any time</span>
+        <span class="fqlp-ticket"><i></i> <strong>Goal tracking</strong> &mdash; save with purpose</span>
       </div>
-      <div style="display:flex;align-items:center;gap:12px;">
-        <button onclick="showAuthForm()" style="padding:8px 18px;border-radius:8px;font-size:14px;font-weight:500;background:transparent;color:var(--text);border:1px solid var(--border);cursor:pointer;">Sign In</button>
-        <button onclick="showAuthForm()" style="padding:8px 18px;border-radius:8px;font-size:14px;font-weight:600;background:var(--text);color:var(--bg);border:none;cursor:pointer;">Get Started</button>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="fqlp-nav">
+      <div class="fqlp-nav-inner">
+        <div class="fqlp-nav-logo">
+          <img src="icon-192.svg" alt="FinanceOS">
+          FinanceOS
+        </div>
+        <div class="fqlp-nav-links">
+          <button onclick="showAuthForm()" class="fqlp-nav-btn ghost">Sign In</button>
+          <button onclick="showAuthForm()" class="fqlp-nav-btn primary">Get Started</button>
+        </div>
       </div>
     </nav>
 
     <!-- Hero -->
-    <section style="max-width:1100px;margin:0 auto;padding:100px 24px 80px;">
-      <h1 style="font-size:56px;font-weight:800;line-height:1.1;letter-spacing:-2px;color:var(--text);max-width:700px;margin:0 0 20px 0;">Know where every naira goes.</h1>
-      <p style="font-size:18px;color:var(--text-secondary);line-height:1.6;max-width:480px;margin:0 0 32px 0;">Track budgets, hit savings goals, and never miss a bill. Your money, finally organized.</p>
-      <div style="display:flex;gap:14px;">
-        <button onclick="showAuthForm()" style="padding:14px 26px;background:var(--text);color:var(--bg);border:none;border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Start tracking free</button>
-        <button onclick="showAuthForm()" style="padding:14px 26px;background:transparent;color:var(--text);border:1px solid var(--border);border-radius:8px;font-size:15px;font-weight:600;cursor:pointer;">Sign In</button>
-      </div>
-    </section>
-
-    <!-- Mockup -->
-    <section style="max-width:1000px;margin:0 auto;padding:0 24px 80px;">
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:16px;padding:4px;box-shadow:0 20px 60px rgba(0,0,0,0.08);">
-        <div style="background:var(--bg);border-radius:12px;padding:24px;">
-          <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:1px solid var(--border);">
-            <div style="width:32px;height:32px;border-radius:8px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:14px;">₦</div>
-            <div>
-              <div style="font-size:14px;font-weight:600;color:var(--text);">Dashboard</div>
-              <div style="font-size:12px;color:var(--text-secondary);">August 2026</div>
-            </div>
+    <div class="fqlp-hero-wrap">
+      <div class="fqlp-hero-glow" aria-hidden="true"></div>
+      <section class="fqlp-hero">
+        <div>
+          <p class="fqlp-hero-label fqlp-reveal">Financial operating system</p>
+          <h1>
+            <span class="fqlp-maskline"><span style="--rise-delay:120ms">Every naira,</span></span>
+            <span class="fqlp-maskline"><span style="--rise-delay:260ms">accounted for &mdash;</span></span>
+            <span class="fqlp-maskline"><span style="--rise-delay:400ms"><em>in real time.</em></span></span>
+          </h1>
+          <p class="fqlp-reveal fqlp-d1">Finance Quest unifies budgets, savings goals, subscriptions and bills into one clear view &mdash; so you always know where you stand and where you are headed.</p>
+          <div class="fqlp-hero-btns fqlp-reveal fqlp-d2">
+            <button onclick="showAuthForm()" class="fqlp-btn filled">Start tracking free <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7M17 7H7M17 7V17"/></svg></button>
+            <button onclick="showAuthForm()" class="fqlp-btn outline">Sign In</button>
           </div>
-          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;">
-            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;">
-              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Balance</div>
-              <div style="font-size:18px;font-weight:700;color:var(--accent);">₦1.2M</div>
-            </div>
-            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;">
-              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Income</div>
-              <div style="font-size:18px;font-weight:700;color:var(--green-accent);">₦850K</div>
-            </div>
-            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;">
-              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Expenses</div>
-              <div style="font-size:18px;font-weight:700;color:var(--red-accent);">₦320K</div>
-            </div>
-            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;">
-              <div style="font-size:11px;color:var(--text-secondary);margin-bottom:4px;">Goals</div>
-              <div style="font-size:18px;font-weight:700;color:var(--amber-accent);">67%</div>
-            </div>
-            <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px;grid-column:span 3;display:flex;align-items:flex-end;gap:6px;min-height:70px;">
-              <div style="flex:1;background:var(--accent);border-radius:3px;height:35%;opacity:0.5;"></div>
-              <div style="flex:1;background:var(--accent);border-radius:3px;height:60%;opacity:0.6;"></div>
-              <div style="flex:1;background:var(--accent);border-radius:3px;height:42%;opacity:0.4;"></div>
-              <div style="flex:1;background:var(--accent);border-radius:3px;height:78%;opacity:0.7;"></div>
-              <div style="flex:1;background:var(--accent);border-radius:3px;height:52%;opacity:0.5;"></div>
-              <div style="flex:1;background:var(--accent);border-radius:3px;height:88%;opacity:0.8;"></div>
-              <div style="flex:1;background:var(--accent);border-radius:3px;height:68%;opacity:0.6;"></div>
-              <div style="flex:1;background:var(--accent);border-radius:3px;height:55%;opacity:0.5;"></div>
-            </div>
+          <div class="fqlp-trust fqlp-reveal fqlp-d3">
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><path d="M9 12l2 2 4-4"/></svg> Secure sync</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> PIN protected</span>
+            <span><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg> No tracking</span>
           </div>
         </div>
+
+        <div class="fqlp-mockup-wrap fqlp-reveal fqlp-d1">
+          <div class="fqlp-mockup">
+            <div class="fqlp-mockup-header">
+              <div style="display:flex; align-items:center; gap:10px;">
+                <div class="fqlp-mockup-dots"><span style="background:var(--danger);"></span><span style="background:var(--warning);"></span><span style="background:var(--success);"></span></div>
+                <span class="fqlp-mockup-title"><img src="icon-192.svg" style="width:20px;height:20px;border-radius:5px;"> Dashboard</span>
+              </div>
+              <div class="fqlp-mockup-live"><i></i> Live</div>
+            </div>
+            <div class="fqlp-mockup-body">
+              <div>
+                <div class="fqlp-mockup-balance-label">Total Balance</div>
+                <div class="fqlp-mockup-balance-val">&#8358;1,245,000<span>.00</span></div>
+                <div style="display:flex; align-items:center; gap:6px; margin-top:4px;">
+                  <span style="background:var(--green-light); color:var(--green-accent); font-size:11px; font-weight:600; padding:2px 8px; border-radius:4px;">+12.4%</span>
+                  <span style="font-size:12px; color:var(--text-secondary);">vs last month</span>
+                </div>
+              </div>
+              <div class="fqlp-spark">
+                <svg viewBox="0 0 300 88" preserveAspectRatio="none" aria-hidden="true">
+                  <defs>
+                    <linearGradient id="sq" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" style="stop-color:var(--accent); stop-opacity:0.25;"/>
+                      <stop offset="100%" style="stop-color:var(--accent); stop-opacity:0;"/>
+                    </linearGradient>
+                  </defs>
+                  <polygon points="0,88 6,70 18,74 30,58 42,64 54,48 66,52 78,36 90,40 102,28 114,32 126,18 138,22 150,12 162,16 174,6 186,10 198,4 210,8 222,2 234,6 246,0 258,4 270,0 282,2 294,0 300,0 300,88" fill="url(#sq)"/>
+                  <polyline points="6,70 18,74 30,58 42,64 54,48 66,52 78,36 90,40 102,28 114,32 126,18 138,22 150,12 162,16 174,6 186,10 198,4 210,8 222,2 234,6 246,0 258,4 270,0 282,2 294,0" style="stroke:var(--accent); stroke-width:2; fill:none; stroke-linecap:round; stroke-dasharray:620; stroke-dashoffset:620; animation:fqlp-sparkdraw 2.4s cubic-bezier(0.4,0,0.2,1) 0.4s forwards;"/>
+                  <circle cx="300" cy="0" r="3.5" fill="var(--accent)"/>
+                </svg>
+              </div>
+              <div style="border-top:1px solid var(--border); padding-top:12px;">
+                <div style="font-size:11px; color:var(--text-secondary); text-transform:uppercase; letter-spacing:0.6px; margin-bottom:8px;">Recent activity</div>
+                <div class="fqlp-mockup-tx">
+                  <div class="fqlp-mockup-tx-icon up">&#8595;</div>
+                  <div style="flex:1; min-width:0;">
+                    <div class="fqlp-mockup-tx-name">Salary deposit</div>
+                    <div class="fqlp-mockup-tx-meta">Bank transfer &#183; just now</div>
+                  </div>
+                  <div class="fqlp-mockup-tx-amt" style="color:var(--green-accent);">+&#8358;450,000</div>
+                </div>
+                <div class="fqlp-mockup-tx">
+                  <div class="fqlp-mockup-tx-icon down">&#8593;</div>
+                  <div style="flex:1; min-width:0;">
+                    <div class="fqlp-mockup-tx-name">Grocery run</div>
+                    <div class="fqlp-mockup-tx-meta">Card &#183; 12m ago</div>
+                  </div>
+                  <div class="fqlp-mockup-tx-amt" style="color:var(--red-accent);">&#8722;&#8358;24,500</div>
+                </div>
+                <div class="fqlp-mockup-tx">
+                  <div class="fqlp-mockup-tx-icon down">&#8593;</div>
+                  <div style="flex:1; min-width:0;">
+                    <div class="fqlp-mockup-tx-name">Netflix subscription</div>
+                    <div class="fqlp-mockup-tx-meta">Card &#183; 41m ago</div>
+                  </div>
+                  <div class="fqlp-mockup-tx-amt" style="color:var(--red-accent);">&#8722;&#8358;5,600</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fqlp-chip" style="top:-12px;left:-20px;">
+            <p>Goals on track</p>
+            <p>67%</p>
+          </div>
+          <div class="fqlp-chip" style="bottom:-14px;right:-16px;">
+            <p>Budget left</p>
+            <p>&#8358;128K</p>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- Marquee -->
+    <div class="fqlp-marquee">
+      <div class="fqlp-marquee-track">
+        <span>Smart Budgets</span><i></i>
+        <span>Savings Goals</span><i></i>
+        <span>Bill Calendar</span><i></i>
+        <span>Multi-Account</span><i></i>
+        <span>Auto-Reports</span><i></i>
+        <span>Bank-Grade Security</span><i></i>
+        <span>Smart Budgets</span><i></i>
+        <span>Savings Goals</span><i></i>
+        <span>Bill Calendar</span><i></i>
+        <span>Multi-Account</span><i></i>
+        <span>Auto-Reports</span><i></i>
+        <span>Bank-Grade Security</span><i></i>
       </div>
-    </section>
+    </div>
+
+    <!-- Stats -->
+    <div class="fqlp-stats" id="fqlpStats">
+      <div class="fqlp-stat-cell fqlp-reveal">
+        <div class="fqlp-stat-label">Users tracking</div>
+        <div class="fqlp-stat-num" data-count="12500">0</div>
+        <div class="fqlp-stat-note">active this month</div>
+      </div>
+      <div class="fqlp-stat-cell fqlp-reveal fqlp-d1">
+        <div class="fqlp-stat-label">Transactions logged</div>
+        <div class="fqlp-stat-num" data-count="890000">0</div>
+        <div class="fqlp-stat-note">and counting</div>
+      </div>
+      <div class="fqlp-stat-cell fqlp-reveal fqlp-d2">
+        <div class="fqlp-stat-label">Goals achieved</div>
+        <div class="fqlp-stat-num" data-count="34200">0</div>
+        <div class="fqlp-stat-note">since launch</div>
+      </div>
+      <div class="fqlp-stat-cell fqlp-reveal fqlp-d3">
+        <div class="fqlp-stat-label">Average savings</div>
+        <div class="fqlp-stat-num" data-count="28"><span style="color:var(--accent);">%</span></div>
+        <div class="fqlp-stat-note">per user monthly</div>
+      </div>
+    </div>
 
     <!-- Features -->
-    <section style="max-width:1100px;margin:0 auto;padding:80px 24px;border-top:1px solid var(--border);">
-      <p style="font-size:13px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">Features</p>
-      <h2 style="font-size:36px;font-weight:800;line-height:1.2;letter-spacing:-1px;color:var(--text);max-width:500px;margin:0 0 48px 0;">Everything you need to master your money.</h2>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;">
-        <div>
-          <div style="width:40px;height:40px;border-radius:10px;background:var(--light-green);display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:16px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          </div>
-          <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;">Smart Budgets</h3>
-          <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;">Set monthly limits for every spending category. Get instant alerts when you are close to overspending.</p>
+    <section class="fqlp-section">
+      <div class="fqlp-reveal">
+        <p class="fqlp-section-label">Features</p>
+        <h2>Everything you need to <em>master your money.</em></h2>
+        <p class="fqlp-section-sub">No spreadsheets. No guesswork. Just a clear picture of where you stand and where you are headed.</p>
+      </div>
+      <div class="fqlp-features">
+        <div class="fqlp-feature fqlp-reveal fqlp-d1">
+          <div class="fqlp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+          <h3>Smart Budgets</h3>
+          <div class="fqlp-feature-tag">Set limits. Get alerts. Stay on track.</div>
+          <p>Set monthly limits for every spending category. Get instant alerts when you are close to overspending.</p>
+          <div class="fqlp-feature-tags"><span>auto-alerts</span><span>categories</span><span>rollover</span></div>
         </div>
-        <div>
-          <div style="width:40px;height:40px;border-radius:10px;background:var(--light-green);display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:16px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-          </div>
-          <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;">Savings Goals</h3>
-          <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;">Create goals for anything — rent, a car, an emergency fund. Track contributions and watch your progress grow.</p>
+        <div class="fqlp-feature fqlp-reveal fqlp-d2">
+          <div class="fqlp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+          <h3>Savings Goals</h3>
+          <div class="fqlp-feature-tag">Save with purpose. Watch it grow.</div>
+          <p>Create goals for anything &mdash; rent, a car, an emergency fund. Track contributions and watch your progress grow.</p>
+          <div class="fqlp-feature-tags"><span>auto-save</span><span>deadlines</span><span>progress</span></div>
         </div>
-        <div>
-          <div style="width:40px;height:40px;border-radius:10px;background:var(--light-green);display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:16px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          </div>
-          <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;">Calendar & Reminders</h3>
-          <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;">See all your bills, income, and subscriptions on one calendar. Never miss a due date again.</p>
+        <div class="fqlp-feature fqlp-reveal fqlp-d3">
+          <div class="fqlp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+          <h3>Bill Calendar</h3>
+          <div class="fqlp-feature-tag">See everything. Miss nothing.</div>
+          <p>See all your bills, income, and subscriptions on one calendar. Never miss a due date again.</p>
+          <div class="fqlp-feature-tags"><span>reminders</span><span>recurring</span><span>GCal sync</span></div>
         </div>
-        <div>
-          <div style="width:40px;height:40px;border-radius:10px;background:var(--light-green);display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:16px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          </div>
-          <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;">Multi-Account Tracking</h3>
-          <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;">Track multiple bank accounts, cash, and mobile wallets in one place. Transfers between accounts included.</p>
+        <div class="fqlp-feature fqlp-reveal fqlp-d1">
+          <div class="fqlp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg></div>
+          <h3>Multi-Account</h3>
+          <div class="fqlp-feature-tag">All accounts. One view.</div>
+          <p>Track multiple bank accounts, cash, and mobile wallets in one place. Transfers between accounts included.</p>
+          <div class="fqlp-feature-tags"><span>transfers</span><span>cash</span><span>mobile money</span></div>
         </div>
-        <div>
-          <div style="width:40px;height:40px;border-radius:10px;background:var(--light-green);display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:16px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          </div>
-          <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;">Auto-Reports</h3>
-          <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;">Monthly breakdowns, spending trends, and income reports — generated automatically from your transactions.</p>
+        <div class="fqlp-feature fqlp-reveal fqlp-d2">
+          <div class="fqlp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></div>
+          <h3>Auto-Reports</h3>
+          <div class="fqlp-feature-tag">Your numbers, summarized.</div>
+          <p>Monthly breakdowns, spending trends, and income reports &mdash; generated automatically from your transactions.</p>
+          <div class="fqlp-feature-tags"><span>monthly</span><span>trends</span><span>export</span></div>
         </div>
-        <div>
-          <div style="width:40px;height:40px;border-radius:10px;background:var(--light-green);display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:16px;">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          </div>
-          <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;">Bank-Grade Security</h3>
-          <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;">PIN lock, encrypted cloud sync, and your data stays yours. Export anytime. No tracking, no ads.</p>
+        <div class="fqlp-feature fqlp-reveal fqlp-d3">
+          <div class="fqlp-feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+          <h3>Bank-Grade Security</h3>
+          <div class="fqlp-feature-tag">Your data is yours. Period.</div>
+          <p>PIN lock, encrypted cloud sync, and your data stays yours. Export anytime. No tracking, no ads.</p>
+          <div class="fqlp-feature-tags"><span>PIN lock</span><span>encrypted</span><span>no ads</span></div>
         </div>
       </div>
     </section>
 
     <!-- How it works -->
-    <section style="max-width:1100px;margin:0 auto;padding:80px 24px;border-top:1px solid var(--border);">
-      <p style="font-size:13px;font-weight:600;color:var(--accent);text-transform:uppercase;letter-spacing:1px;margin-bottom:12px;">How it works</p>
-      <h2 style="font-size:36px;font-weight:800;line-height:1.2;letter-spacing:-1px;color:var(--text);max-width:500px;margin:0 0 48px 0;">Get started in under 60 seconds.</h2>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:32px;">
-        <div>
-          <div style="font-size:36px;font-weight:800;color:var(--border-strong);margin-bottom:12px;">01</div>
-          <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;">Create your account</h3>
-          <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;">Sign up with Google or email. Your data syncs securely to the cloud so you never lose it.</p>
+    <section class="fqlp-section" style="border-top:1px solid var(--border);">
+      <div class="fqlp-reveal">
+        <p class="fqlp-section-label">How it works</p>
+        <h2>Get started in under <em>60 seconds.</em></h2>
+      </div>
+      <div class="fqlp-steps">
+        <div class="fqlp-step fqlp-reveal fqlp-d1">
+          <div class="fqlp-step-num">01</div>
+          <h3>Create your account</h3>
+          <p>Sign up with Google or email. Your data syncs securely to the cloud so you never lose it.</p>
         </div>
-        <div>
-          <div style="font-size:36px;font-weight:800;color:var(--border-strong);margin-bottom:12px;">02</div>
-          <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;">Add your accounts</h3>
-          <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;">Set up your bank accounts, cash, and mobile money wallets. Set starting balances.</p>
+        <div class="fqlp-step fqlp-reveal fqlp-d2">
+          <div class="fqlp-step-num">02</div>
+          <h3>Add your accounts</h3>
+          <p>Set up your bank accounts, cash, and mobile money wallets. Add your starting balances.</p>
         </div>
-        <div>
-          <div style="font-size:36px;font-weight:800;color:var(--border-strong);margin-bottom:12px;">03</div>
-          <h3 style="font-size:17px;font-weight:700;color:var(--text);margin-bottom:8px;">Track everything</h3>
-          <p style="font-size:14px;color:var(--text-secondary);line-height:1.6;">Log transactions, set budgets, create goals, and watch your wealth grow week by week.</p>
+        <div class="fqlp-step fqlp-reveal fqlp-d3">
+          <div class="fqlp-step-num">03</div>
+          <h3>Set budgets &amp; goals</h3>
+          <p>Define spending limits and create savings goals. The app guides you every step of the way.</p>
         </div>
       </div>
     </section>
 
+    <!-- Security -->
+    <div class="fqlp-security">
+      <div class="fqlp-security-card fqlp-reveal">
+        <div>
+          <p class="fqlp-section-label">Security &amp; compliance</p>
+          <h2>Your data is yours. <em>Period.</em></h2>
+          <p>We do not sell your data. We do not show ads. We do not track you across the web. Your financial life stays private.</p>
+          <div class="fqlp-badge-grid">
+            <div class="fqlp-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+              <span>Cloud encrypted</span>
+            </div>
+            <div class="fqlp-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <span>PIN protected</span>
+            </div>
+            <div class="fqlp-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Export anytime</span>
+            </div>
+            <div class="fqlp-badge">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span>No tracking</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <svg class="fqlp-vault" viewBox="0 0 240 240" fill="none" aria-hidden="true">
+            <circle cx="120" cy="120" r="110" stroke="var(--border-strong)" stroke-dasharray="4 10"/>
+            <circle cx="120" cy="120" r="80" stroke="var(--border)" stroke-dasharray="3 8"/>
+            <circle cx="120" cy="120" r="52" stroke="var(--border-strong)"/>
+            <g style="transform-origin:center; animation:fqlp-spin 50s linear infinite;">
+              <line x1="120" y1="14" x2="120" y2="26" stroke="var(--accent)" stroke-width="1.5" transform="rotate(0 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(15 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(30 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(45 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(60 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(75 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="26" stroke="var(--accent)" stroke-width="1.5" transform="rotate(90 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(105 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(120 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(135 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(150 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(165 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="26" stroke="var(--accent)" stroke-width="1.5" transform="rotate(180 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(195 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(210 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(225 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(240 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(255 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="26" stroke="var(--accent)" stroke-width="1.5" transform="rotate(270 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(285 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(300 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(315 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(330 120 120)"/>
+              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(345 120 120)"/>
+            </g>
+            <path d="M120 96l-46 18v42c0 34 19 58 46 70 27-12 46-36 46-70v-42l-46-18Z" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+            <path d="M120 96l-46 18v42c0 34 19 58 46 70V96Z" fill="var(--bg)" opacity="0.5"/>
+            <circle cx="120" cy="156" r="12" stroke="var(--warning)" stroke-width="2"/>
+            <path d="M120 168v26M120 194l-10 8M120 194l10 8" stroke="var(--warning)" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="120" cy="156" r="4" fill="var(--warning)"/>
+            <circle cx="120" cy="48" r="5" fill="var(--accent)"/>
+            <circle cx="222" cy="205" r="4" fill="var(--warning)"/>
+            <circle cx="18" cy="205" r="4" fill="var(--accent)" opacity="0.7"/>
+          </svg>
+          <div class="fqlp-sec-stats">
+            <div class="fqlp-sec-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              <p><strong>AES-256</strong> &mdash; encryption at rest</p>
+            </div>
+            <div class="fqlp-sec-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              <p><strong>24/7 monitoring</strong> &mdash; anomaly detection</p>
+            </div>
+            <div class="fqlp-sec-stat">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              <p><strong>Zero-trust</strong> &mdash; your device, your keys</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- CTA -->
-    <section style="max-width:1100px;margin:0 auto;padding:100px 24px;border-top:1px solid var(--border);text-align:center;">
-      <h2 style="font-size:40px;font-weight:800;line-height:1.15;letter-spacing:-1px;color:var(--text);max-width:600px;margin:0 auto 16px auto;">Stop wondering where your money went.</h2>
-      <p style="font-size:17px;color:var(--text-secondary);max-width:450px;margin:0 auto 32px auto;line-height:1.6;">Join thousands of people taking control of their finances with FinanceOS.</p>
-      <button onclick="showAuthForm()" style="padding:16px 32px;background:var(--text);color:var(--bg);border:none;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;">Start tracking free</button>
+    <section class="fqlp-cta">
+      <div class="fqlp-reveal">
+        <h2>Ready to take control of <em>your money?</em></h2>
+        <p>Join thousands of people who have already started their journey to financial clarity. It takes less than 60 seconds.</p>
+        <button onclick="showAuthForm()" class="fqlp-btn filled" style="font-size:16px;padding:16px 36px;">Start tracking free</button>
+      </div>
     </section>
 
     <!-- Footer -->
-    <footer style="max-width:1100px;margin:0 auto;padding:40px 24px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-      <div style="font-size:14px;color:var(--text-secondary);">Built by <a href="https://github.com/futurestachq" target="_blank" style="color:var(--text);text-decoration:none;font-weight:500;">FutureStack</a></div>
-      <div style="display:flex;gap:24px;">
-        <a href="https://github.com/futurestachq/FinanceOS" target="_blank" style="font-size:14px;color:var(--text-secondary);text-decoration:none;">GitHub</a>
-        <a href="#" onclick="showAuthForm();return false;" style="font-size:14px;color:var(--text-secondary);text-decoration:none;">Sign In</a>
+    <footer class="fqlp-footer">
+      <div class="fqlp-footer-left">Built by <a href="https://github.com/futurestachq" target="_blank">FutureStack</a></div>
+      <div class="fqlp-footer-right">
+        <a href="https://github.com/futurestachq/FinanceOS" target="_blank">GitHub</a>
+        <a href="#" onclick="showAuthForm();return false;">Sign In</a>
       </div>
     </footer>
   </div>
@@ -9657,6 +9823,79 @@ if (typeof document !== 'undefined') {
     }
   });
 }
+
+// Landing page scroll-reveal + count-up animations (isolated from app logic)
+(function initLandingPage() {
+  if (!document.getElementById('landingPage')) return;
+
+  // Scroll reveal
+  var revealEls = document.querySelectorAll('.fqlp-reveal');
+  if (window.IntersectionObserver) {
+    var revealObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12 });
+    revealEls.forEach(function(el) { revealObserver.observe(el); });
+  } else {
+    revealEls.forEach(function(el) { el.classList.add('visible'); });
+  }
+
+  // Count-up stats
+  function countUp(el, target, duration) {
+    var start = 0;
+    var startTime = null;
+    var suffix = el.textContent.replace(/[0-9]/g, '').replace(/,/g, '');
+    function step(timestamp) {
+      if (!startTime) startTime = timestamp;
+      var progress = Math.min((timestamp - startTime) / duration, 1);
+      var value = Math.floor(progress * target);
+      if (target >= 1000) {
+        el.textContent = value.toLocaleString() + suffix;
+      } else {
+        el.textContent = value + suffix;
+      }
+      if (progress < 1) {
+        window.requestAnimationFrame(step);
+      } else {
+        if (target >= 1000) {
+          el.textContent = target.toLocaleString() + suffix;
+        } else {
+          el.textContent = target + suffix;
+        }
+      }
+    }
+    window.requestAnimationFrame(step);
+  }
+
+  var statEls = document.querySelectorAll('.fqlp-stat-num[data-count]');
+  if (window.IntersectionObserver) {
+    var countObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var el = entry.target;
+          var target = parseInt(el.dataset.count, 10);
+          var suffixEl = el.querySelector('.accent');
+          var suffix = suffixEl ? suffixEl.outerHTML : '';
+          el.innerHTML = '0' + suffix;
+          countUp(el, target, 1800);
+          countObserver.unobserve(el);
+        }
+      });
+    }, { threshold: 0.3 });
+    statEls.forEach(function(el) { countObserver.observe(el); });
+  } else {
+    statEls.forEach(function(el) {
+      var target = parseInt(el.dataset.count, 10);
+      var suffixEl = el.querySelector('.accent');
+      var suffix = suffixEl ? suffixEl.outerHTML : '';
+      el.innerHTML = target.toLocaleString() + suffix;
+    });
+  }
+})();
 
 // Auth listener handles loadData, navigate, and onboarding flow
 } catch(e) {
