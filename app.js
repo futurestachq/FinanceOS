@@ -117,6 +117,7 @@ let state = {
   incomeEvents: [],
   financialEvents: [],
   hasOnboarded: false,
+  dashboardLayout: null,
   profile: {
     name: '',
     currency: '₦',
@@ -255,6 +256,7 @@ function resetState() {
   state = {
     transactions: [], subscriptions: [], budgets: {}, budgetIcons: {}, goals: [],
     accounts: [], balance: 0, incomeEvents: [], financialEvents: [], hasOnboarded: false,
+    dashboardLayout: null,
     profile: { name: '', currency: '₦', currencyCode: 'NGN', monthStart: 1, email: '' },
     settings: {
       googleCalendar: { connected: false, accessToken: null, tokenExpiry: null, calendarId: null, calendars: [], clientId: '', accountEmail: '' },
@@ -1155,6 +1157,246 @@ function renderDashboard() {
   renderAIInsights();
   renderDashboardUpcoming();
   renderDashboardNotifications();
+  applyDashboardLayout();
+}
+
+// ============ DASHBOARD WIDGET CUSTOMIZATION ============
+const DASH_WIDGETS = [
+  { id: 'metrics', label: 'Summary cards', span: 4 },
+  { id: 'health', label: 'Financial health score', span: 1 },
+  { id: 'incomeExpense', label: 'Income vs expenses', span: 1 },
+  { id: 'topCategories', label: 'Top spending categories', span: 1 },
+  { id: 'budgets', label: 'Budget progress', span: 1 },
+  { id: 'renewals', label: 'Upcoming renewals', span: 1 },
+  { id: 'recent', label: 'Recent transactions', span: 1 },
+  { id: 'insights', label: 'AI insights', span: 1 },
+  { id: 'upcoming', label: 'Upcoming financial events', span: 1 }
+];
+
+function getDashLayout() {
+  const cfg = state.dashboardLayout || {};
+  const order = (cfg.order || DASH_WIDGETS.map(w => w.id)).filter(id => DASH_WIDGETS.some(w => w.id === id));
+  const hidden = cfg.hidden || [];
+  // Ensure all widget ids are present in order
+  DASH_WIDGETS.forEach(w => { if (!order.includes(w.id)) order.push(w.id); });
+  return { order, hidden: hidden.filter(id => DASH_WIDGETS.some(w => w.id === id)) };
+}
+
+function applyDashboardLayout() {
+  const grid = document.getElementById('dashGrid');
+  if (!grid) return;
+  const { order, hidden } = getDashLayout();
+
+  // Hide widget elements per saved state
+  document.querySelectorAll('#dashGrid .dash-widget').forEach(el => {
+    const id = el.getAttribute('data-widget');
+    el.style.display = hidden.includes(id) ? 'none' : '';
+  });
+
+  // Reorder widgets by appending them in saved order
+  const widgets = document.querySelectorAll('#dashGrid .dash-widget');
+  const widgetMap = {};
+  widgets.forEach(el => widgetMap[el.getAttribute('data-widget')] = el);
+
+  // Detach all, then re-append in order
+  widgets.forEach(el => el.remove());
+  order.forEach(id => {
+    if (widgetMap[id]) grid.appendChild(widgetMap[id]);
+  });
+}
+
+function saveDashLayout() {
+  const grid = document.getElementById('dashGrid');
+  if (!grid) return;
+  const order = [];
+  grid.querySelectorAll('.dash-widget').forEach(el => order.push(el.getAttribute('data-widget')));
+  // Preserve hidden state from existing layout
+  const existing = state.dashboardLayout && state.dashboardLayout.hidden ? state.dashboardLayout.hidden : [];
+  const hidden = existing.filter(id => DASH_WIDGETS.some(w => w.id === id));
+  state.dashboardLayout = { order, hidden };
+  saveData();
+}
+
+function toggleDashCustomize() {
+  const page = document.getElementById('page-dashboard');
+  const customizeBtn = document.getElementById('dashCustomizeBtn');
+  const hint = document.getElementById('dashSortHint');
+  const hintText = document.getElementById('dashSortHintText');
+
+  const isActive = page.classList.contains('dash-customize-active');
+  if (isActive) {
+    page.classList.remove('dash-customize-active');
+    saveDashLayout();
+    if (customizeBtn) customizeBtn.style.display = '';
+    hint.style.display = 'none';
+    // Clean up drag state
+    document.querySelectorAll('.dash-widget').forEach(el => {
+      el.setAttribute('draggable', 'false');
+      el.classList.remove('dragging', 'drag-over', 'is-hidden-widget');
+      el.removeEventListener('dragstart', handleDashDragStart);
+      el.removeEventListener('dragover', handleDashDragOver);
+      el.removeEventListener('dragleave', handleDashDragLeave);
+      el.removeEventListener('drop', handleDashDrop);
+      el.removeEventListener('dragend', handleDashDragEnd);
+      const eye = el.querySelector('.dash-widget-hide');
+      if (eye) eye.remove();
+    });
+    // Re-render to restore normal layout
+    applyDashboardLayout();
+    // Re-render charts to fill any newly-shown containers
+    renderDashboardCharts();
+  } else {
+    page.classList.add('dash-customize-active');
+    hint.style.display = 'flex';
+    hintText.textContent = 'Drag widgets to reorder. Use the eye button to show/hide widgets.';
+    // Show all widgets when customizing
+    const { hidden } = getDashLayout();
+    document.querySelectorAll('#dashGrid .dash-widget').forEach(el => {
+      el.style.display = '';
+      const id = el.getAttribute('data-widget');
+      if (hidden.includes(id)) el.classList.add('is-hidden-widget');
+    });
+    const btn = document.getElementById('dashCustomizeBtn');
+    if (btn) btn.style.display = 'none';
+    initDashDrag();
+  }
+}
+
+function resetDashLayout() {
+  state.dashboardLayout = { order: DASH_WIDGETS.map(w => w.id), hidden: [] };
+  saveData();
+  applyDashboardLayout();
+  // If in customize mode, re-init to update icons
+  const page = document.getElementById('page-dashboard');
+  if (page && page.classList.contains('dash-customize-active')) {
+    document.querySelectorAll('#dashGrid .dash-widget').forEach(el => el.style.display = '');
+    initDashDrag();
+  }
+}
+
+function initDashDrag() {
+  const grid = document.getElementById('dashGrid');
+  if (!grid) return;
+
+  // Remove any existing drag listeners
+  document.querySelectorAll('.dash-widget').forEach(el => {
+    el.removeEventListener('dragstart', handleDashDragStart);
+    el.removeEventListener('dragover', handleDashDragOver);
+    el.removeEventListener('dragleave', handleDashDragLeave);
+    el.removeEventListener('drop', handleDashDrop);
+    el.removeEventListener('dragend', handleDashDragEnd);
+
+    // Remove existing eye buttons
+    const oldEye = el.querySelector('.dash-widget-hide');
+    if (oldEye) oldEye.remove();
+  });
+
+  document.querySelectorAll('.dash-widget').forEach(el => {
+    el.setAttribute('draggable', 'true');
+    el.addEventListener('dragstart', handleDashDragStart);
+    el.addEventListener('dragover', handleDashDragOver);
+    el.addEventListener('dragleave', handleDashDragLeave);
+    el.addEventListener('drop', handleDashDrop);
+    el.addEventListener('dragend', handleDashDragEnd);
+
+    // Add hide (eye) toggle button
+    const widgetId = el.getAttribute('data-widget');
+    const eyeBtn = document.createElement('button');
+    eyeBtn.className = 'dash-widget-hide';
+    const { hidden: curHidden } = getDashLayout();
+    const isHidden = curHidden.includes(widgetId);
+    eyeBtn.title = isHidden ? 'Show widget' : 'Hide widget';
+    updateEyeBtnIcon(eyeBtn, isHidden);
+    eyeBtn.addEventListener('click', (ev) => {
+      ev.preventDefault();
+      ev.stopPropagation();
+      hideDashWidget(widgetId);
+    });
+    el.appendChild(eyeBtn);
+  });
+}
+
+function updateEyeBtnIcon(eyeBtn, isHidden) {
+  if (isHidden) {
+    eyeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  } else {
+    eyeBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  }
+}
+
+function hideDashWidget(widgetId) {
+  const { order, hidden } = getDashLayout();
+  const el = document.querySelector('#dashGrid .dash-widget[data-widget="' + widgetId + '"]');
+  const eyeBtn = el ? el.querySelector('.dash-widget-hide') : null;
+
+  if (hidden.includes(widgetId)) {
+    // Un-hide
+    state.dashboardLayout = { order, hidden: hidden.filter(id => id !== widgetId) };
+    if (el) {
+      el.classList.remove('is-hidden-widget');
+      el.style.display = '';
+      if (eyeBtn) { eyeBtn.title = 'Hide widget'; updateEyeBtnIcon(eyeBtn, false); }
+    }
+  } else {
+    // Hide
+    state.dashboardLayout = { order, hidden: [...hidden, widgetId] };
+    if (el) {
+      el.classList.add('is-hidden-widget');
+      el.style.display = '';
+      if (eyeBtn) { eyeBtn.title = 'Show widget'; updateEyeBtnIcon(eyeBtn, true); }
+    }
+  }
+  saveData();
+}
+
+function showDashWidget(widgetId) {
+  const { order, hidden } = getDashLayout();
+  state.dashboardLayout = { order, hidden: hidden.filter(id => id !== widgetId) };
+  saveData();
+  const el = document.querySelector('#dashGrid .dash-widget[data-widget="' + widgetId + '"]');
+  if (el) el.style.display = '';
+  initDashDrag();
+}
+
+let dashDragSource = null;
+
+function handleDashDragStart(e) {
+  dashDragSource = this;
+  this.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+  e.dataTransfer.setData('text/plain', this.getAttribute('data-widget'));
+}
+
+function handleDashDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  if (this !== dashDragSource) this.classList.add('drag-over');
+}
+
+function handleDashDragLeave(e) {
+  this.classList.remove('drag-over');
+}
+
+function handleDashDrop(e) {
+  e.preventDefault();
+  this.classList.remove('drag-over');
+  if (dashDragSource && this !== dashDragSource) {
+    const grid = document.getElementById('dashGrid');
+    const widgets = Array.from(grid.querySelectorAll('.dash-widget'));
+    const sourceIndex = widgets.indexOf(dashDragSource);
+    const targetIndex = widgets.indexOf(this);
+    if (sourceIndex < targetIndex) {
+      this.after(dashDragSource);
+    } else {
+      this.before(dashDragSource);
+    }
+  }
+}
+
+function handleDashDragEnd() {
+  this.classList.remove('dragging');
+  dashDragSource = null;
+  document.querySelectorAll('.dash-widget').forEach(el => el.classList.remove('drag-over'));
 }
 
 function renderDashboardHealthScore() {
