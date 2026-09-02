@@ -150,7 +150,7 @@
   ::-webkit-scrollbar-thumb { background: var(--scrollbar); border-radius: 4px; }
 
   .app {
-    display: flex;
+    display: none;
     min-height: 100vh;
   }
 
@@ -4917,11 +4917,13 @@ function continueAsGuest() {
 }
 
 function showLandingPage() {
+  document.querySelector('.app').style.display = 'none';
   document.getElementById('landingPage').style.display = 'block';
   document.getElementById('authFormContainer').style.display = 'none';
 }
 
 function showAuthForm() {
+  document.querySelector('.app').style.display = 'none';
   document.getElementById('landingPage').style.display = 'none';
   document.getElementById('authFormContainer').style.display = 'block';
 }
@@ -4987,6 +4989,9 @@ auth.onAuthStateChanged(user => {
   currentUser = user;
   if (user) {
     isGuest = false;
+    document.querySelector('.app').style.display = 'flex';
+    document.getElementById('landingPage').style.display = 'none';
+    document.getElementById('authFormContainer').style.display = 'none';
     hideAuthModal();
     updateUserProfileUI();
     loadData().then(() => {
