@@ -2661,6 +2661,38 @@
   }
 }
 
+/* --- Dashboard toolbar (welcome + month nav + customize) --------- */
+.dash-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.dash-toolbar-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.dash-welcome-name {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: -0.4px;
+  color: var(--text);
+}
+.dash-welcome-sub {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+@media (max-width: 720px) {
+  .dash-toolbar { flex-direction: column; align-items: flex-start; }
+  .dash-toolbar-controls { width: 100%; justify-content: space-between; flex-wrap: wrap; }
+  .dash-welcome-name { font-size: 17px; }
+}
+
 /* --- Topbar month navigation ---------------------------------- */
 .topbar-month {
   display: flex;

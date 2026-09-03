@@ -785,6 +785,19 @@ function updateTopbarMonth() {
   wrap.classList.toggle('browsing', !isCurrent);
 }
 
+function updateDashWelcome() {
+  const nameEl = document.getElementById('dashWelcomeName');
+  const subEl = document.getElementById('dashWelcomeSub');
+  if (!nameEl || !subEl) return;
+  const profileName = (state.profile && state.profile.name && state.profile.name.trim()) || '';
+  const authName = currentUser && !isGuest
+    ? (currentUser.displayName || (currentUser.email ? currentUser.email.split('@')[0] : ''))
+    : '';
+  const name = profileName || authName || 'there';
+  nameEl.textContent = 'Welcome, ' + name;
+  subEl.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
+}
+
 function daysUntil(dateStr) {
   const target = new Date(dateStr);
   const now = new Date();
@@ -1322,6 +1335,8 @@ function renderDashboard() {
   const savings = income - expenses;
   const savingsRate = income > 0 ? Math.round((savings / income) * 100) : 0;
   const balance = state.accounts.reduce((s, a) => s + (a.balance || 0), 0);
+
+  updateDashWelcome();
 
   animateMetricValue(document.getElementById('dashIncome'), income);
   animateMetricValue(document.getElementById('dashExpenses'), expenses);
