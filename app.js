@@ -50,6 +50,7 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
 let currentUser = null;
+const GUEST_MODE_ENABLED = false; // flip to true to re-enable guest mode
 let isGuest = true;
 
 const _s = (p) => '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">' + p + '</svg>';
@@ -440,6 +441,7 @@ function signOutUser() {
 }
 
 function continueAsGuest() {
+  if (!GUEST_MODE_ENABLED) { showAuthForm(); return; }
   isGuest = true;
   currentUser = null;
   document.querySelector('.app').style.display = 'flex';
@@ -6799,6 +6801,12 @@ if (typeof document !== 'undefined') {
 // Landing page scroll-reveal + count-up animations (isolated from app logic)
 (function initLandingPage() {
   if (!document.getElementById('landingPage')) return;
+  if (!GUEST_MODE_ENABLED) {
+    var gbLand = document.getElementById('guestBtnLanding');
+    if (gbLand) gbLand.style.display = 'none';
+    var gbAuth = document.getElementById('guestBtnAuth');
+    if (gbAuth) gbAuth.style.display = 'none';
+  }
 
   // Scroll reveal
   var revealEls = document.querySelectorAll('.fqlp-reveal');
