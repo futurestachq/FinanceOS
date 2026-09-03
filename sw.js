@@ -1,4 +1,4 @@
-const CACHE_NAME = 'financeos-v9';
+const CACHE_NAME = 'financeos-v10';
 const APP_SHELL = [
   './index.html',
   './styles.css',
@@ -26,6 +26,28 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+  const requestUrl = new URL(event.request.url);
+  const isAppShell = APP_SHELL.some((p) => requestUrl.pathname.endsWith(p) || requestUrl.pathname.endsWith(p.replace('./', '/')));
+
+  if (isAppShell && event.request.method === 'GET') {
+    // Stale-while-revalidate: serve cached instantly, update cache in background
+    // so the app shell always converges to the latest deployed version.
+    event.respondWith(
+      caches.open(CACHE_NAME).then(async (cache) => {
+        const cached = await cache.match(event.request);
+        const network = fetch(event.request).then((response) => {
+          if (response && response.status === 200) {
+            cache.put(event.request, response.clone());
+          }
+          return response;
+        }).catch(() => cached);
+        return cached || network;
+      })
+    );
+    return;
+  }
+
+  // Everything else: cache-first with network fallback
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       return cachedResponse || fetch(event.request);
