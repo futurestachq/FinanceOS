@@ -5332,6 +5332,10 @@ function readCSVFile(file) {
           const nScore = scoreParsed(nMapped);
           if (nScore > bestScore) { bestScore = nScore; best = nMapped; }
         }
+        // Opay-style record-based layout (multi-line records, not a clean table).
+        const oRows = parseOpayRecords(text);
+        const oScore = scoreParsed(oRows);
+        if (oScore > bestScore) { bestScore = oScore; best = oRows; }
       }
       importParsedRows = best || [];
       importCatOverrides = {};
@@ -5359,6 +5363,57 @@ function scoreParsed(mapped) {
     if (a.amount > 0 && (r.description || '').trim().length > 0) complete++;
   }
   return dates * 10 + complete * 100;
+}
+
+function parseOpayRecords(text) {
+  // Opay exports are a record-based layout (NOT a clean table):
+  //   <DD/Mon/YYYY> <DD/Mon/YYYY> <reference (may wrap to next line)>
+  //   - <description spanning multiple lines>
+  //   [-?] <amount> <balance>      <- amount line, often the last line
+  // Each new record starts on a line whose first token is a DD/Mon/YYYY date.
+  const lines = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const records = [];
+  let cur = null;
+  const isStart = (l) => /^\d{1,2}\/[A-Za-z]{3,9}\/\d{4}\b/.test(l);
+  for (const l of lines) {
+    if (isStart(l)) { if (cur) records.push(cur); cur = { header: l, body: [] }; }
+    else if (cur) cur.body.push(l);
+  }
+  if (cur) records.push(cur);
+  const currencyTok = /([\d][\d,]*(?:\.\d{1,2})?)/;
+  const out = [];
+  for (const rec of records) {
+    const dateM = rec.header.match(/^(\d{1,2}\/[A-Za-z]{3,9}\/\d{4})/);
+    const date = dateM ? parseImportDate(dateM[1]) : '';
+    // amount line = last body line carrying a currency-formatted figure
+    let amtIdx = -1;
+    for (let i = rec.body.length - 1; i >= 0; i--) {
+      if (/([\d,]+\.\d{1,2})/.test(rec.body[i])) { amtIdx = i; break; }
+    }
+    const descParts = [];
+    let amount = 0, type = 'expense';
+    if (amtIdx >= 0) {
+      const amtLine = rec.body[amtIdx];
+      const nums = amtLine.match(/([\d][\d,]*(?:\.\d{1,2})?)/g) || [];
+      const money = nums.map(n => n.replace(/,/g, '')).filter(n => n.indexOf('.') >= 0);
+      if (money.length >= 1) amount = parseFloat(money[0]);
+      // balance = last money figure (ignored but confirms it is the amount line)
+      // sign: '-' immediately before the amount -> debit(expense); '+' or 'Cr' -> credit(income)
+      const amtStart = amtLine.search(/([\d,]+\.\d{1,2})/);
+      const beforeAmt = amtLine.slice(0, amtStart);
+      if (beforeAmt.indexOf('-') >= 0) type = 'expense';
+      else if (beforeAmt.indexOf('+') >= 0 || /Cr/i.test(beforeAmt)) type = 'income';
+      else type = 'income';
+      let pre = amtStart >= 0 ? amtLine.slice(0, amtStart).replace(/^[\s\-\+]+/, '') : '';
+      if (pre.trim()) descParts.push(pre.trim());
+    }
+    for (let i = 0; i < rec.body.length; i++) {
+      if (i !== amtIdx) descParts.push(rec.body[i]);
+    }
+    const description = descParts.join(' ').replace(/\s+/g, ' ').trim().replace(/\b\d{8,}\b/g, ' ').replace(/\s+/g, ' ').trim();
+    out.push({ date, description, amount: String(amount), type });
+  }
+  return out;
 }
 
 function diagnoseImport(text) {
@@ -5691,8 +5746,8 @@ function parseImportDate(val) {
   let m = raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b/);
   if (m) return validDateStr(m[1], m[2], m[3]);
 
-  // 2) Month-name dates: 03-Aug-2026, 03-Aug-26, 03 Aug 2026, Aug 03, 2026, 03-Aug
-  m = raw.match(/^(\d{1,2})[-\s.,]?([A-Za-z]{3,9})[-\s.,]?(\d{2,4})?\b/);
+  // 2) Month-name dates: 03-Aug-2026, 03-Aug-26, 03 Aug 2026, Aug 03, 2026, 02/Aug/2026, 03-Aug
+  m = raw.match(/^(\d{1,2})[-\s.\/]?([A-Za-z]{3,9})[-\s.\/]?(\d{2,4})?\b/);
   if (m) {
     const day = m[1];
     const mon = monthNameToNum(m[2]);
