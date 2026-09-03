@@ -5466,20 +5466,25 @@ function autoCategory(description) {
 function parseImportAmount(rec) {
   let amount = 0;
   let isExpense = null;
-  const amtStr = String(rec.amount || '').replace(/[₦$,]/g, '').trim();
-  if (amtStr !== '') {
-    const n = parseFloat(amtStr);
-    if (!isNaN(n)) {
-      amount = Math.abs(n);
-      if (n < 0) isExpense = true;
-    }
+  const parseNum = (v) => {
+    const s = String(v || '').replace(/[₦$,]/g, '').trim();
+    if (s === '' || s === '-' || s === '--' || /^[-.]+$/.test(s)) return null;
+    const n = parseFloat(s);
+    return isNaN(n) ? null : n;
+  };
+  const amtN = parseNum(rec.amount);
+  if (amtN !== null) {
+    amount = Math.abs(amtN);
+    if (amtN < 0) isExpense = true;
   }
-  if (typeof rec.debit !== 'undefined' && rec.debit !== null && rec.debit !== '') {
-    const d = String(rec.debit).replace(/[₦$,]/g, '').trim();
-    if (d !== '' && !isNaN(parseFloat(d))) { amount = Math.abs(parseFloat(d)); isExpense = true; }
-  } else if (typeof rec.credit !== 'undefined' && rec.credit !== null && rec.credit !== '') {
-    const c = String(rec.credit).replace(/[₦$,]/g, '').trim();
-    if (c !== '' && !isNaN(parseFloat(c))) { amount = Math.abs(parseFloat(c)); isExpense = false; }
+  const debitN = parseNum(rec.debit);
+  const creditN = parseNum(rec.credit);
+  if (debitN !== null && debitN > 0) {
+    amount = Math.abs(debitN);
+    isExpense = true;
+  } else if (creditN !== null && creditN > 0) {
+    amount = Math.abs(creditN);
+    isExpense = false;
   }
   let type = rec.type ? String(rec.type).trim().toLowerCase() : '';
   if (type.includes('expense') || type.includes('debit') || type.includes('withdrawal') || type.includes('payment') || type.includes('spent')) {
