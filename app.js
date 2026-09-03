@@ -5940,7 +5940,10 @@ function confirmImportTxns() {
   if (added === 0) { showToast('No new transactions to import'); return; }
   showToast(added + ' transaction' + (added === 1 ? '' : 's') + ' imported' + (skipped > 0 ? ' (' + skipped + ' skipped)' : ''));
   renderTransactions();
-  if (currentPage && renderDashboard) renderDashboard();
+  const activePageEl = document.querySelector('.page.active');
+  if (activePageEl && String(activePageEl.id || '').replace('page-', '') === 'dashboard' && typeof renderDashboard === 'function') {
+    renderDashboard();
+  }
 }
 window.confirmImportTxns = confirmImportTxns;
 
