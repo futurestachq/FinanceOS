@@ -5194,21 +5194,38 @@ function inferColumnCount(text, sep, rows) {
       if (keys.filter(k => joined.includes(k)).length >= 2) return r.length;
     }
   }
-  // Otherwise derive the count from the position offset between fields
-  // that look like dates (e.g. Opay's '03 Aug 2026 15:33:14' recurring).
+  // Otherwise derive the count from the position offset between the
+  // first date field of each record. Records often start with a
+  // date-with-time token like '03 Aug 2026 15:33:14' (Opay), so key on a
+  // full date(+time) marker instead of every date-ish cell.
   const flat = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean).join(sep).split(sep).map(f => f.trim());
+  const firstOfLine = new Set();
+  // Record starts line up with the first field of each trimmed line in
+  // tab/space files where each line is a partial record.
   const dateIdx = [];
-  for (let i = 0; i < Math.min(flat.length, 120); i++) {
-    if (/^\d{1,2}[-/.\s]?[A-Za-z]{3,9}[-/.\s]/i.test(flat[i]) || /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(flat[i]) || /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}/.test(flat[i])) dateIdx.push(i);
+  for (let i = 0; i < Math.min(flat.length, 200); i++) {
+    if (/^\d{1,2}[-/.\s]?[A-Za-z]{3,9}[-/.\s]\d{2,4}(\s+\d{1,2}:\d{2})?/i.test(flat[i]) ||
+        /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(flat[i]) ||
+        /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}/.test(flat[i])) dateIdx.push(i);
   }
-  if (dateIdx.length >= 2) {
+  // Restrict to plausible record-start markers: prefer fields whose next
+  // field is NOT itself the same date form (i.e. skip the redundant
+  // second date column).
+  const starts = [];
+  for (let i = 0; i < dateIdx.length; i++) {
+    const cur = dateIdx[i];
+    const next = dateIdx[i + 1];
+    if (next === cur + 1) continue; // redundant adjacent date column
+    starts.push(cur);
+  }
+  if (starts.length >= 2) {
     const diffs = [];
-    for (let i = 1; i < dateIdx.length; i++) diffs.push(dateIdx[i] - dateIdx[i - 1]);
+    for (let i = 1; i < starts.length; i++) diffs.push(starts[i] - starts[i - 1]);
     const diffsFreq = {};
     diffs.forEach(d => { diffsFreq[d] = (diffsFreq[d] || 0) + 1; });
     let best = null, bestCount = 0;
     Object.entries(diffsFreq).forEach(([d, c]) => { if (c > bestCount) { bestCount = c; best = parseInt(d, 10); } });
-    if (best >= 3) return best;
+    if (best !== null && best >= 3) return best;
   }
   return 0;
 }
@@ -5353,11 +5370,32 @@ function mapImportRows(rows) {
         if (idx >= 0 && idx < row.length) rec[field] = row[idx];
       });
     } else {
-      rec = { date: row[0] || '', description: row[1] || '', amount: row[2] || '', type: row[3] || '' };
+      rec = mapPositionalRec(row);
     }
     mapped.push(rec);
   }
   return mapped;
+}
+
+// Headerless fallback: guess the column meaning by position/shape.
+// Handles both simple (date/description/amount) and OPay-style
+// (date/date/description/debit/credit/balance/channel/reference) layouts.
+function mapPositionalRec(row) {
+  if (!Array.isArray(row) || row.length === 0) return { date: '', description: '', amount: '', type: '' };
+  const looksDate = (v) => {
+    const s = String(v || '').trim();
+    return /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(s) || /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}/.test(s) || /^\d{1,2}[-/.\s]?[A-Za-z]{3,9}[-/.\s]\d{2,4}/i.test(s);
+  };
+  const looksAmount = (v) => {
+    const s = String(v || '').replace(/[₦$,]/g, '').trim();
+    return s !== '' && s !== '-' && s !== '--' && !/^[-.]+$/.test(s) && !isNaN(parseFloat(s));
+  };
+  // OPay-ish: field0 is a date, field1 is also a short date, description is
+  // a long text, and we have debit/credit/balance markers later.
+  if (row.length >= 6 && looksDate(row[0]) && looksDate(row[1])) {
+    return { date: row[0] || '', description: row[2] || '', debit: row[3] || '', credit: row[4] || '', balance: row[5] || '', amount: '' };
+  }
+  return { date: row[0] || '', description: row[1] || '', amount: row[2] || '', type: row[3] || '' };
 }
 
 function mapColumnsToFields(header) {
@@ -5402,16 +5440,22 @@ function mapColumnsToFields(header) {
 
 function inferColumns(firstRow) {
   const f = firstRow.map(x => String(x || '').toLowerCase().trim());
-  const hasWord = (v, n) => (' ' + v + ' ').includes(n);
+  // Only treat a cell as a header keyword if it actually looks like a
+  // header label: short and alphabetic with the keyword as a whole word.
+  // This avoids matching words like "withdrawal" hiding inside a long
+  // description (e.g. "... Selar withdrawal") as a Debit column.
+  const looksHeaderish = (v) => /^[a-z .,\-()&/]+$/.test(v) && v.split(' ').length <= 4 && v.length <= 28;
+  const hasWholeWord = (v, n) => (' ' + v + ' ').includes(' ' + n + ' ');
   const map = {};
   f.forEach((v, i) => {
-    if (hasWord(v, 'date') || hasWord(v, 'posted') || v.includes('date')) map.date = i;
-    else if (hasWord(v, 'amount') || v.includes('amt') || v === 'amount') map.amount = i;
-    else if (v.includes('description') || v.includes('memo') || v.includes('narration') || v.includes('details') || v.includes('payee')) map.description = i;
-    else if (v === 'type' || v.includes('type')) map.type = i;
+    if (!looksHeaderish(v)) return;
+    if (hasWholeWord(v, 'date') || v === 'date' || v.includes('date')) map.date = i;
+    else if (hasWholeWord(v, 'amount') || v === 'amount') map.amount = i;
+    else if (hasWholeWord(v, 'description') || v === 'memo' || v === 'narration' || v === 'details' || v === 'payee') map.description = i;
+    else if (v === 'type') map.type = i;
     else if (v.includes('category')) map.category = i;
-    else if (v.includes('debit') || v.includes('withdrawal')) map.debit = i;
-    else if (v.includes('credit') || v.includes('deposit')) map.credit = i;
+    else if (hasWholeWord(v, 'debit') || hasWholeWord(v, 'withdrawal') || v === 'debit') map.debit = i;
+    else if (hasWholeWord(v, 'credit') || hasWholeWord(v, 'deposit') || v === 'credit') map.credit = i;
   });
   return map;
 }
