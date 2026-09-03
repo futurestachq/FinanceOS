@@ -1329,6 +1329,7 @@ function dismissDashEmpty() {
 
 // ============ DASHBOARD ============
 function renderDashboard() {
+  if (!state.accounts) state.accounts = [];
   const mk = viewMonthKey();
   const income = getIncomeTotal(mk);
   const expenses = getExpenseTotal(mk);
@@ -6024,7 +6025,7 @@ window.confirmClearData = confirmClearData;
 
 function clearAllData() {
   state = {
-    transactions: [], subscriptions: [], budgets: {}, goals: [], balance: 0,
+    accounts: [], transactions: [], subscriptions: [], budgets: {}, goals: [], balance: 0,
     incomeEvents: [], financialEvents: [], hasOnboarded: true,
     dashEmptyDismissed: false,
     viewMonth: null,
