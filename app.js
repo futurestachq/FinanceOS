@@ -5282,7 +5282,7 @@ function loadPastedPreview() {
       const idx = mapping[field];
       if (idx !== undefined && idx >= 0 && idx < row.length) rec[field] = row[idx];
     }
-    if (!rec.date && rec.amount) continue; // no date or amount -> skip
+    if (!rec.date) continue; // no date -> skip (can't place a transaction)
     parsed.push(rec);
   }
   importParsedRows = parsed;
@@ -5313,18 +5313,33 @@ function readCSVFile(file) {
   reader.onload = function(e) {
     try {
       const text = e.target.result;
-      const sep = detectDelimiter(text);
-      let rows = parseDelimited(text, sep);
-      importParsedRows = mapImportRows(rows);
-      showImportPreview();
-      const validDates = importParsedRows.reduce((n, r) => n + (parseImportDate(r.date) ? 1 : 0), 0);
-      if (validDates === 0 && importParsedRows.length > 0) {
+      const seps = [];
+      const detected = detectDelimiter(text);
+      if (seps.indexOf(detected) < 0) seps.push(detected); // try the detected one first
+      ['\t', ',', ';', '  '].forEach(s => { if (s !== detected && seps.indexOf(s) < 0) seps.push(s); });
+
+      let best = null, bestScore = -1;
+      for (const sep of seps) {
+        const rows = parseDelimited(text, sep);
+        const mapped = mapImportRows(rows);
+        const score = scoreParsed(mapped);
+        if (score > bestScore) { bestScore = score; best = mapped; }
+        // Also try reassembling multi-line records.
         const colCount = inferColumnCount(text, sep, rows);
         if (colCount > 0) {
-          rows = normalizeRecords(text, sep, colCount);
-          importParsedRows = mapImportRows(rows);
-          showImportPreview();
+          const nRows = normalizeRecords(text, sep, colCount);
+          const nMapped = mapImportRows(nRows);
+          const nScore = scoreParsed(nMapped);
+          if (nScore > bestScore) { bestScore = nScore; best = nMapped; }
         }
+      }
+      importParsedRows = best || [];
+      importCatOverrides = {};
+      showImportPreview();
+      if (bestScore <= 0 && importParsedRows.length > 0) {
+        const diag = diagnoseImport(text);
+        const st = document.getElementById('importStatus');
+        if (st) st.innerHTML = '<span style="color:var(--danger);">No usable transactions found.</span> <span style="color:var(--text-secondary);font-size:12px;">' + diag + ' Try the "Paste from statement" option below for manual control.</span>';
       }
     } catch (err) {
       console.error(err);
@@ -5334,6 +5349,35 @@ function readCSVFile(file) {
   reader.onerror = function() { showImportError('Failed to read file'); };
   reader.readAsText(file);
 }
+
+function scoreParsed(mapped) {
+  let dates = 0, complete = 0;
+  for (const r of mapped) {
+    if (!parseImportDate(r.date)) continue;
+    dates++;
+    const a = parseImportAmount(r);
+    if (a.amount > 0 && (r.description || '').trim().length > 0) complete++;
+  }
+  return dates * 10 + complete * 100;
+}
+
+function diagnoseImport(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+  const msg = [];
+  if (lines.length === 0) return 'The file appears empty.';
+  const first = lines[0].toLowerCase();
+  if (/(description|amount|debit|credit|balance|date)/.test(first)) msg.push('It looks like the file has a header row.');
+  const hasTab = lines.some(l => l.indexOf('\t') >= 0);
+  const hasComma = lines.some(l => l.indexOf(',') >= 0);
+  if (hasTab && !hasComma) msg.push('It appears tab-separated.');
+  else if (hasComma && !hasTab) msg.push('It appears comma-separated.');
+  else msg.push('The separator could not be determined reliably.');
+  // Check the first field's shape
+  const cells = lines[0].split(/\t|,|;|\s{2,}/).map(x => x.trim()).filter(Boolean);
+  if (cells.length > 0 && !/^\d/.test(cells[0])) msg.push('Column 1 is not a number/date, so it may not align with a Date column.');
+  return msg.join(' ');
+}
+
 
 function inferColumnCount(text, sep, rows) {
   // Prefer the header row's field count for cleanly parsed rows.
