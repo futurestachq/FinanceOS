@@ -3536,6 +3536,75 @@ function exportData() {
 }
 window.exportData = exportData;
 
+function csvEsc(v) {
+  if (v === null || v === undefined) return '';
+  return '"' + String(v).replace(/"/g, '""') + '"';
+}
+
+function exportReportData() {
+  const lines = [];
+  const stamp = new Date().toISOString().split('T')[0];
+
+  lines.push('FINANCEOS FULL DATA EXPORT');
+  lines.push('Exported,' + stamp);
+  lines.push('Profile name,' + csvEsc(state.profile && state.profile.name ? state.profile.name : ''));
+  lines.push('Profile email,' + csvEsc(state.profile && state.profile.email ? state.profile.email : ''));
+  lines.push('');
+
+  lines.push('[TRANSACTIONS]');
+  lines.push('Date,Type,Category,Description,Amount,Payment Method,Tags,Notes');
+  (state.transactions || []).forEach(t => {
+    lines.push([t.date, t.type, t.category, csvEsc(t.description || ''), t.amount, csvEsc(t.payment || ''), csvEsc((t.tags || []).join(';')), csvEsc(t.notes || '')].join(','));
+  });
+  lines.push('');
+
+  lines.push('[ACCOUNTS]');
+  lines.push('Name,Balance');
+  (state.accounts || []).forEach(a => {
+    lines.push([csvEsc(a.name || ''), a.balance].join(','));
+  });
+  lines.push('');
+
+  lines.push('[BUDGETS]');
+  lines.push('Category,Monthly Limit');
+  Object.entries(state.budgets || {}).forEach(([cat, limit]) => {
+    lines.push([csvEsc(cat), limit].join(','));
+  });
+  lines.push('');
+
+  lines.push('[SUBSCRIPTIONS]');
+  lines.push('Name,Cost,Cycle,Renewal Date,Category,Status,Notes');
+  (state.subscriptions || []).forEach(s => {
+    lines.push([csvEsc(s.name || ''), s.cost, csvEsc(s.cycle || ''), s.renewal || '', csvEsc(s.category || ''), csvEsc(s.status || ''), csvEsc(s.notes || '')].join(','));
+  });
+  lines.push('');
+
+  lines.push('[SAVINGS GOALS]');
+  lines.push('Name,Target,Current Saved,Target Date,Priority');
+  (state.goals || []).forEach(g => {
+    lines.push([csvEsc(g.name || ''), g.target, g.current, g.date || '', csvEsc(g.priority || '')].join(','));
+  });
+  lines.push('');
+
+  lines.push('[UPCOMING & RECURRING FINANCIAL EVENTS]');
+  lines.push('Title,Type,Amount,Date,Status,Category');
+  (state.financialEvents || []).forEach(e => {
+    lines.push([csvEsc(e.title || ''), csvEsc(e.type || ''), e.amount, e.date || '', csvEsc(e.status || ''), csvEsc(e.category || '')].join(','));
+  });
+  lines.push('');
+
+  const csv = lines.join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'financeos-full-export-' + stamp + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('All data exported to CSV');
+}
+window.exportReportData = exportReportData;
+
 function recordBackup() {
   const now = new Date().toISOString();
   localStorage.setItem('finance_os_last_backup', now);
