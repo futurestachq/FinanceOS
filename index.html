@@ -1566,8 +1566,17 @@
       <!-- Settings -->
       <div class="page" id="page-settings">
 
+        <div class="settings-tabs" id="settingsTabs">
+          <button class="settings-tab active" data-sel="account" onclick="switchSettingsTab('account')">Account</button>
+          <button class="settings-tab" data-sel="appearance" onclick="switchSettingsTab('appearance')">Appearance</button>
+          <button class="settings-tab" data-sel="sync" onclick="switchSettingsTab('sync')">Sync</button>
+          <button class="settings-tab" data-sel="security" onclick="switchSettingsTab('security')">Security</button>
+          <button class="settings-tab" data-sel="data" onclick="switchSettingsTab('data')">Data</button>
+          <button class="settings-tab" data-sel="about" onclick="switchSettingsTab('about')">About</button>
+        </div>
+
         <!-- Profile -->
-        <div class="settings-card" style="margin-bottom:20px;">
+        <div class="settings-card" style="margin-bottom:20px;" data-settings-section="account">
           <div class="settings-title">Profile</div>
           <div class="settings-desc" style="margin-bottom:16px;">Personalize your experience. This information stays on your device.</div>
           <div class="form-row">
@@ -1608,7 +1617,7 @@
         </div>
 
         <!-- Account & Security -->
-        <div class="settings-card" style="margin-bottom:20px;">
+        <div class="settings-card" style="margin-bottom:20px;" data-settings-section="account">
           <div class="settings-title">Account &amp; Security</div>
           <div class="settings-desc" style="margin-bottom:16px;">Manage your email verification and password.</div>
 
@@ -1637,7 +1646,7 @@
         </div>
 
         <!-- Appearance -->
-        <div class="settings-card" style="margin-bottom:20px;">
+        <div class="settings-card" style="margin-bottom:20px;" data-settings-section="appearance">
           <div class="settings-title">Appearance</div>
           <div class="toggle-row">
             <div>
@@ -1649,7 +1658,7 @@
         </div>
 
         <!-- Google Calendar Connection -->
-        <div class="settings-card" style="margin-bottom:20px;">
+        <div class="settings-card" style="margin-bottom:20px;" data-settings-section="sync">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;">
             <div>
               <div class="settings-title" style="margin-bottom:4px;">Google Calendar</div>
@@ -1693,7 +1702,7 @@
         </div>
 
         <!-- Sync Settings -->
-        <div class="settings-card" style="margin-bottom:20px;">
+        <div class="settings-card" style="margin-bottom:20px;" data-settings-section="sync">
           <div class="settings-title">Automatic synchronization</div>
           <div class="settings-desc" style="margin-bottom:16px;">Choose which financial events are automatically synced to Google Calendar.</div>
           <div class="toggle-row">
@@ -1727,7 +1736,7 @@
         </div>
 
         <!-- Reminder Settings -->
-        <div class="settings-card" style="margin-bottom:20px;">
+        <div class="settings-card" style="margin-bottom:20px;" data-settings-section="appearance">
           <div class="settings-title">Default reminder</div>
           <div class="settings-desc" style="margin-bottom:16px;">When should we remind you before a financial event? Individual events can override this.</div>
           <div class="toggle-row">
@@ -1743,7 +1752,7 @@
         </div>
 
         <!-- Notification Settings -->
-        <div class="settings-card" style="margin-bottom:20px;">
+        <div class="settings-card" style="margin-bottom:20px;" data-settings-section="appearance">
           <div class="settings-title">Notifications</div>
           <div class="toggle-row">
             <div>
@@ -1782,7 +1791,7 @@
         </div>
 
         <!-- Recurring Income Events -->
-        <div class="settings-card">
+        <div class="settings-card" data-settings-section="sync">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
             <div>
               <div class="settings-title">Recurring income events</div>
@@ -1794,7 +1803,7 @@
         </div>
 
         <!-- Security -->
-        <div class="settings-card" style="margin-bottom:20px;">
+        <div class="settings-card" style="margin-bottom:20px;" data-settings-section="security">
           <div class="settings-title">Security</div>
           <div class="toggle-row">
             <div>
@@ -1824,7 +1833,7 @@
         </div>
 
         <!-- Auto-Categorization Rules -->
-        <div class="settings-card" style="margin-bottom:20px;">
+        <div class="settings-card" style="margin-bottom:20px;" data-settings-section="data">
           <div class="settings-title">Auto-categorization rules</div>
           <div class="settings-desc" style="margin-bottom:16px;">
             Create keyword rules so transactions auto-fill category as you type.
@@ -1857,7 +1866,7 @@
         </div>
 
         <!-- Data Management -->
-        <div class="settings-card" style="margin-bottom:20px;">
+        <div class="settings-card" style="margin-bottom:20px;" data-settings-section="data">
           <div class="settings-title">Data management</div>
           <div class="settings-desc" style="margin-bottom:16px;">
             <span id="dataStorageDesc">Your data is stored in your browser and synced to the cloud when signed in.</span>
@@ -1895,7 +1904,7 @@
         </div>
 
         <!-- About -->
-        <div class="settings-card">
+        <div class="settings-card" data-settings-section="about">
           <div class="settings-title">About</div>
           <div class="settings-row">
             <div class="settings-label">Application</div>

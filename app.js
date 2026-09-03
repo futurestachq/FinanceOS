@@ -175,6 +175,7 @@ function ensureStateDefaults() {
   };
   if (typeof state.settings.browserNotifs !== 'boolean') state.settings.browserNotifs = false;
   if (!state.settings.pinLock) state.settings.pinLock = { enabled: false, pinHash: null };
+  if (!state.settings.activeSettingsTab) state.settings.activeSettingsTab = 'account';
   if (!state.shownNotifIds) state.shownNotifIds = [];
   // Ensure postedDates arrays exist for auto-posting recurring items
   state.subscriptions.forEach(s => { if (!s.postedDates) s.postedDates = []; });
@@ -4484,12 +4485,25 @@ function renderSettings() {
       ? 'Your data is synced to the cloud and also cached locally in your browser.'
       : 'Your data is stored locally in your browser. Sign in to enable cloud sync.';
   }
+  switchSettingsTab(state.settings.activeSettingsTab || 'account');
 }
 
 function setToggleState(id, value) { const el = document.getElementById(id); if (el) el.classList.toggle('on', !!value); }
 function toggleSetting(key, el) { state.settings[key] = !state.settings[key]; el.classList.toggle('on', state.settings[key]); saveData(); }
 function changeDefaultReminder() { state.settings.defaultReminder = parseInt(document.getElementById('defaultReminder').value); saveData(); }
 function changeNotifWindow() { state.settings.notifWindow = parseInt(document.getElementById('notifWindow').value); saveData(); }
+
+function switchSettingsTab(section) {
+  state.settings.activeSettingsTab = section;
+  saveData();
+  const tabs = document.querySelectorAll('.settings-tab');
+  tabs.forEach(t => t.classList.toggle('active', t.dataset.sel === section));
+  document.querySelectorAll('[data-settings-section]').forEach(card => {
+    card.style.display = card.dataset.settingsSection === section ? '' : 'none';
+  });
+}
+window.switchSettingsTab = switchSettingsTab;
+
 
 function renderAutoRules() {
   const container = document.getElementById('autoRulesList');
