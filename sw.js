@@ -1,4 +1,4 @@
-const CACHE_NAME = 'financeos-v18';
+const CACHE_NAME = 'financeos-v19';
 const APP_SHELL = [
   './index.html',
   './styles.css',

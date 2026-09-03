@@ -2781,3 +2781,13 @@
   vertical-align: top;
 }
 .import-table tr:last-child td { border-bottom: none; }
+
+.import-cat-select {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 3px 6px;
+  font-size: 12px;
+  max-width: 140px;
+}

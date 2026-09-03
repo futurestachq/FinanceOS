@@ -5119,10 +5119,12 @@ window.importJSON = importJSON;
 let importParsedRows = [];
 let importParseFlag = { hasDescriptions: true, headerFound: false };
 let importCsvHeaderArr = [];
+let importCatOverrides = {};
 
 function openImportModal() {
   importParsedRows = [];
   importCsvHeaderArr = [];
+  importCatOverrides = {};
   populateAccountSelect('importAccount', false);
   const sel = document.getElementById('importAccount');
   if (sel && sel.options.length > 0) sel.selectedIndex = 0;
@@ -5518,15 +5520,20 @@ function showImportPreview() {
   let accepted = 0;
   let dateIssues = 0;
   let amountIssues = 0;
-  const rowsHtml = preview.map(rec => {
+  const rowsHtml = preview.map((rec, rIdx) => {
     const dateStr = parseImportDate(rec.date);
     const { amount, type } = parseImportAmount(rec);
     if (!dateStr) { dateIssues++; return ''; }
     if (amount <= 0) { amountIssues++; return ''; }
     accepted++;
     const desc = rec.description || (rec[Object.keys(rec)[0]] || '');
-    const cat = autoCategory(desc);
-    return '<tr><td>' + dateStr + '</td><td>' + escapeHtml(desc) + '</td><td>' + (type === 'income' ? '+' : '') + fmt(amount) + '</td><td>' + (type === 'income' ? 'Income' : 'Expense') + '</td><td>' + escapeHtml(cat) + '</td></tr>';
+    const cat = importCatOverrides[rIdx] || autoCategory(desc);
+    const cats = type === 'income' ? incomeCategories
+      : type === 'giving' ? givingCategories
+      : type === 'transfer' ? transferCategories : expenseCategories;
+    const origIndex = rIdx;
+    const opts = cats.map(c => '<option value="' + escapeHtml(c) + '"' + (c === cat ? ' selected' : '') + '>' + escapeHtml(c) + '</option>').join('');
+    return '<tr><td>' + dateStr + '</td><td>' + escapeHtml(desc) + '</td><td>' + (type === 'income' ? '+' : '') + fmt(amount) + '</td><td>' + (type === 'income' ? 'Income' : 'Expense') + '</td><td><select data-import-cat="' + origIndex + '" class="import-cat-select">' + opts + '</select></td></tr>';
   }).join('');
 
   const head = '<tr><th style="text-align:left;">Date</th><th style="text-align:left;">Description</th><th style="text-align:right;">Amount</th><th>Type</th><th style="text-align:left;">Category</th></tr>';
@@ -5556,14 +5563,15 @@ function confirmImportTxns() {
   const existing = new Set((state.transactions).map(t => {
     return t.date + '|' + (t.description || '') + '|' + t.amount;
   }));
-  for (const rec of importParsedRows) {
+  for (let i = 0; i < importParsedRows.length; i++) {
+    const rec = importParsedRows[i];
     const dateStr = parseImportDate(rec.date);
     const { amount, type } = parseImportAmount(rec);
     if (!dateStr || amount <= 0 || !type) { skipped++; continue; }
     const description = (rec.description || String(rec.date || '')).trim();
     const key = dateStr + '|' + description + '|' + amount;
     if (existing.has(key)) { skipped++; continue; }
-    const category = autoCategory(description);
+    const category = importCatOverrides[i] || autoCategory(description);
     if (!description) { skipped++; continue; }
     state.transactions.push({ id: uid(), date: dateStr, amount, type, category, description, payment: '', accountId, tags: [], notes: '' });
     existing.add(key);
@@ -6298,6 +6306,10 @@ document.addEventListener('click', (e) => {
 document.addEventListener('change', (e) => {
   if (e.target.id === 'createEventReminder') {
     document.getElementById('createEventCustomReminder').style.display = e.target.value === 'custom' ? 'block' : 'none';
+  }
+  const catSelect = e.target.closest && e.target.closest('[data-import-cat]');
+  if (catSelect) {
+    importCatOverrides[catSelect.dataset.importCat] = catSelect.value;
   }
 });
 
