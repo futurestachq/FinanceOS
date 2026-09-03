@@ -5281,16 +5281,19 @@ function mapImportRows(rows) {
     startIdx = 0;
   }
 
+  const hasMappedCols = colMap && Object.keys(colMap).some(k => colMap[k] >= 0);
+
   const mapped = [];
   for (let r = startIdx; r < rows.length; r++) {
     const row = rows[r];
-    let rec = {};
-    if (colMap) {
+    let rec;
+    if (hasMappedCols) {
+      rec = {};
       Object.entries(colMap).forEach(([field, idx]) => {
         if (idx >= 0 && idx < row.length) rec[field] = row[idx];
       });
     } else {
-      rec = { date: row[0] || '', description: row[1] || '', amount: row[2] || '' };
+      rec = { date: row[0] || '', description: row[1] || '', amount: row[2] || '', type: row[3] || '' };
     }
     mapped.push(rec);
   }
@@ -5300,38 +5303,48 @@ function mapImportRows(rows) {
 function mapColumnsToFields(header) {
   const map = {};
   const norm = header.map(h => String(h || '').toLowerCase().trim());
-  const find = (names) => {
+  const matches = (haystack, needle) => {
+    const h = ' ' + haystack + ' ';
+    return h.includes(needle);
+  };
+  const findExact = (names) => {
     let idx = -1;
     names.forEach(n => {
-      const i = norm.findIndex(h => h.includes(n));
+      const i = norm.findIndex(h => h === n || matches(h, ' ' + n + ' ') || matches(h, n));
       if (i >= 0 && (idx < 0 || i < idx)) idx = i;
     });
     return idx;
   };
-  map.date = find(['date', 'posted', 'transaction date', 'time']);
-  map.amount = find(['amount', 'amt', 'value']);
-  map.description = find(['description', 'desc', 'memo', 'narration', 'details', 'payee', 'particulars', 'reference']);
-  map.type = find(['type']);
-  map.category = find(['category']);
-  if (map.amount < 0) {
-    const debit = find(['debit', 'withdrawal', 'money out', 'withdrawals']);
-    const credit = find(['credit', 'deposit', 'money in', 'deposits']);
-    if (map.amount < 0) {
-      map.debit = debit;
-      map.credit = credit;
-    }
+
+  map.date = findExact(['date', 'posted', 'transaction date', 'value date', 'txndate', 'time']);
+  map.description = findExact(['description', 'desc', 'memo', 'narration', 'details', 'payee', 'particulars', 'reference', 'transaction note']);
+  map.type = findExact(['type', 'debit or credit']);
+
+  const debitIdx = findExact(['debit', 'withdrawal', 'money out', 'withdrawals', 'withdrawn', 'debits']);
+  const creditIdx = findExact(['credit', 'deposit', 'money in', 'deposits', 'paid in']);
+
+  if (debitIdx >= 0 && creditIdx >= 0 && creditIdx !== debitIdx) {
+    map.debit = debitIdx;
+    map.credit = creditIdx;
+  } else {
+    const amountIdx = findExact(['amount', 'amt', 'transaction amount']);
+    if (amountIdx >= 0) map.amount = amountIdx;
+    else if (debitIdx >= 0 && creditIdx >= 0) { map.debit = debitIdx; map.credit = creditIdx; }
   }
+
+  map.category = findExact(['category']);
   return map;
 }
 
 function inferColumns(firstRow) {
-  const f = firstRow.map(x => String(x || '').toLowerCase());
+  const f = firstRow.map(x => String(x || '').toLowerCase().trim());
+  const hasWord = (v, n) => (' ' + v + ' ').includes(n);
   const map = {};
   f.forEach((v, i) => {
-    if (v.includes('date') || v.includes('posted')) map.date = i;
-    else if (v.includes('amount') || v.includes('amt') || v.includes('value')) map.amount = i;
+    if (hasWord(v, 'date') || hasWord(v, 'posted') || v.includes('date')) map.date = i;
+    else if (hasWord(v, 'amount') || v.includes('amt') || v === 'amount') map.amount = i;
     else if (v.includes('description') || v.includes('memo') || v.includes('narration') || v.includes('details') || v.includes('payee')) map.description = i;
-    else if (v.includes('type')) map.type = i;
+    else if (v === 'type' || v.includes('type')) map.type = i;
     else if (v.includes('category')) map.category = i;
     else if (v.includes('debit') || v.includes('withdrawal')) map.debit = i;
     else if (v.includes('credit') || v.includes('deposit')) map.credit = i;
@@ -5341,16 +5354,23 @@ function inferColumns(firstRow) {
 
 function detectDateFormat(sample) {
   if (!Array.isArray(importParsedRows)) importParsedRows = [];
+  const dates = [];
   for (const row of importParsedRows) {
     const d = String(row.date || '').trim();
     if (!d) continue;
     if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(d)) return 'YMD';
-    if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(d)) {
-      const parts = d.split(/[-/]/);
-      return parseInt(parts[0], 10) > 12 ? 'DMY' : 'MDY';
-    }
+    const m = d.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+    if (m) dates.push(m);
   }
-  return null;
+  if (dates.length === 0) return null;
+
+  // If the first field ever exceeds 12 it cannot be a month -> definitely DMY
+  if (dates.some(m => parseInt(m[1], 10) > 12)) return 'DMY';
+  // Otherwise the format is ambiguous (day could be <=12). Nigerian bank
+  // exports use DD/MM/YYYY, so default to DMY unless a US-style (MDY) file
+  // is explicitly indicated by a format > 13 in the second field.
+  if (dates.some(m => parseInt(m[2], 10) > 12)) return 'MDY';
+  return 'DMY';
 }
 
 function parseImportDate(val) {
@@ -5446,17 +5466,20 @@ function showImportPreview() {
   const statusEl = document.getElementById('importStatus');
   if (statusEl) statusEl.innerHTML = '';
   if (importParsedRows.length === 0) { showImportError('No transactions found in file.'); return; }
-  const fmt = document.getElementById('importDateFormat').value;
-  if (fmt === 'auto') {
+  const dateFmt = document.getElementById('importDateFormat').value;
+  if (dateFmt === 'auto') {
     const detected = detectDateFormat();
     if (detected) document.getElementById('importDateFormat').value = detected;
   }
   const preview = importParsedRows.slice(0, 50);
   let accepted = 0;
+  let dateIssues = 0;
+  let amountIssues = 0;
   const rowsHtml = preview.map(rec => {
     const dateStr = parseImportDate(rec.date);
     const { amount, type } = parseImportAmount(rec);
-    if (!dateStr || amount <= 0) return '';
+    if (!dateStr) { dateIssues++; return ''; }
+    if (amount <= 0) { amountIssues++; return ''; }
     accepted++;
     const desc = rec.description || (rec[Object.keys(rec)[0]] || '');
     const cat = autoCategory(desc);
@@ -5469,6 +5492,19 @@ function showImportPreview() {
   document.getElementById('importPreviewWrap').style.display = 'block';
   document.getElementById('importStats').textContent = importParsedRows.length + ' rows parsed';
   document.getElementById('importConfirmBtn').disabled = accepted === 0;
+
+  if (accepted === 0) {
+    let reason = '';
+    if (dateIssues > 0) reason = 'No valid dates were found. Try changing the Date format above (MM/DD vs DD/MM).';
+    else if (amountIssues > 0) reason = 'No valid amounts were found. Make sure there is an Amount, Debit or Credit column.';
+    else reason = 'No rows recognized. Check that the file has Date, Description and Amount columns.';
+    if (statusEl) statusEl.innerHTML = '<span style="color:var(--danger);">' + reason + '</span>';
+  } else if (dateIssues > 0 || amountIssues > 0) {
+    let note = 'Importable rows shown. ';
+    if (dateIssues > 0) note += dateIssues + ' row(s) skipped (unreadable dates). ';
+    if (amountIssues > 0) note += amountIssues + ' row(s) skipped (no valid amount). ';
+    if (statusEl) statusEl.innerHTML = '<span style="color:var(--amber-accent);">' + note + '</span>';
+  }
 }
 
 function confirmImportTxns() {
