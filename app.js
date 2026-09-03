@@ -5164,9 +5164,18 @@ function readCSVFile(file) {
     try {
       const text = e.target.result;
       const sep = detectDelimiter(text);
-      const rows = parseDelimited(text, sep);
+      let rows = parseDelimited(text, sep);
       importParsedRows = mapImportRows(rows);
       showImportPreview();
+      const validDates = importParsedRows.reduce((n, r) => n + (parseImportDate(r.date) ? 1 : 0), 0);
+      if (validDates === 0 && importParsedRows.length > 0) {
+        const colCount = inferColumnCount(text, sep, rows);
+        if (colCount > 0) {
+          rows = normalizeRecords(text, sep, colCount);
+          importParsedRows = mapImportRows(rows);
+          showImportPreview();
+        }
+      }
     } catch (err) {
       console.error(err);
       showImportError('Could not parse CSV file.');
@@ -5174,6 +5183,34 @@ function readCSVFile(file) {
   };
   reader.onerror = function() { showImportError('Failed to read file'); };
   reader.readAsText(file);
+}
+
+function inferColumnCount(text, sep, rows) {
+  // Prefer the header row's field count for cleanly parsed rows.
+  for (const r of rows) {
+    if (r.length >= 3) {
+      const joined = r.join(' ').toLowerCase();
+      const keys = ['date', 'description', 'memo', 'amount', 'debit', 'credit', 'balance', 'narration', 'details', 'reference'];
+      if (keys.filter(k => joined.includes(k)).length >= 2) return r.length;
+    }
+  }
+  // Otherwise derive the count from the position offset between fields
+  // that look like dates (e.g. Opay's '03 Aug 2026 15:33:14' recurring).
+  const flat = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean).join(sep).split(sep).map(f => f.trim());
+  const dateIdx = [];
+  for (let i = 0; i < Math.min(flat.length, 120); i++) {
+    if (/^\d{1,2}[-/.\s]?[A-Za-z]{3,9}[-/.\s]/i.test(flat[i]) || /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(flat[i]) || /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}/.test(flat[i])) dateIdx.push(i);
+  }
+  if (dateIdx.length >= 2) {
+    const diffs = [];
+    for (let i = 1; i < dateIdx.length; i++) diffs.push(dateIdx[i] - dateIdx[i - 1]);
+    const diffsFreq = {};
+    diffs.forEach(d => { diffsFreq[d] = (diffsFreq[d] || 0) + 1; });
+    let best = null, bestCount = 0;
+    Object.entries(diffsFreq).forEach(([d, c]) => { if (c > bestCount) { bestCount = c; best = parseInt(d, 10); } });
+    if (best >= 3) return best;
+  }
+  return 0;
 }
 
 function readOFXFile(file) {
@@ -5201,7 +5238,27 @@ function detectDelimiter(text) {
   const semicolon = (firstLine.match(/;/g) || []).length;
   if (tab > comma && tab > semicolon) return '\t';
   if (semicolon > comma) return ';';
+  if (comma > 0) return ',';
+  // No commas/tabs/semicolons: could be a multi-space aligned fixed-width
+  // export. Splitting on 2+ spaces yields 3+ columns and no cell contains a
+  // 'DD Mon YYYY' or numeric date with a leading number+space pattern that
+  // would be a false split (e.g. a time "15:33:14" is a single token).
+  const spaceCols = firstLine.split(/ {2,}/).filter(Boolean);
+  if (spaceCols.length >= 3) return '  ';
   return ',';
+}
+
+// Some bank exports dump many records onto a single line instead of one
+// per line. Reassemble a flat delimited stream into records of `colCount`
+// fields each so the date/description/amount still land in the right column.
+function normalizeRecords(text, sep, colCount) {
+  const flat = text.split(/\r?\n/).map(l => l.trim()).filter(Boolean).join(sep);
+  const fields = flat.split(sep).map(f => f.trim());
+  const out = [];
+  for (let i = 0; i < fields.length; i += colCount) {
+    out.push(fields.slice(i, i + colCount));
+  }
+  return out;
 }
 
 function parseDelimited(text, sep) {
@@ -5214,7 +5271,8 @@ function parseDelimited(text, sep) {
   return rows;
 }
 
-function splitCSVLine(line, sep) {
+function splitCSVLine(line, sep, trim = true) {
+  if (sep === '  ') return line.split(/ {2,}/).filter(Boolean).map(f => f.trim());
   const out = [];
   let cur = '';
   let inQuotes = false;
@@ -5232,7 +5290,7 @@ function splitCSVLine(line, sep) {
     }
   }
   out.push(cur);
-  return out;
+  return trim ? out.map(f => f.trim()) : out;
 }
 
 function parseOFX(text) {
