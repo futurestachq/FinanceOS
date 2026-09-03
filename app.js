@@ -5316,8 +5316,12 @@ function mapColumnsToFields(header) {
     return idx;
   };
 
-  map.date = findExact(['date', 'posted', 'transaction date', 'value date', 'txndate', 'time']);
-  map.description = findExact(['description', 'desc', 'memo', 'narration', 'details', 'payee', 'particulars', 'reference', 'transaction note']);
+  map.date = findExact(['transaction date', 'date', 'posted', 'value date', 'txndate', 'time']);
+  // Prefer a true description column; only treat Reference/Particulars as
+  // the description when no dedicated description column exists.
+  const descIdx = findExact(['description', 'desc', 'details', 'narration', 'memo', 'transaction note', 'payee', 'particulars']);
+  if (descIdx >= 0) map.description = descIdx;
+  else map.description = findExact(['reference', 'ref', 'details']);
   map.type = findExact(['type', 'debit or credit']);
 
   const debitIdx = findExact(['debit', 'withdrawal', 'money out', 'withdrawals', 'withdrawn', 'debits']);
@@ -5373,27 +5377,66 @@ function detectDateFormat(sample) {
   return 'DMY';
 }
 
+const IMPORT_MONTHS = { jan:'01', feb:'02', mar:'03', apr:'04', may:'05', jun:'06', jul:'07', aug:'08', sep:'09', oct:'10', nov:'11', dec:'12' };
+
+function monthNameToNum(name) {
+  const n = String(name || '').toLowerCase().replace(/[^a-z]/g, '').substring(0, 3);
+  return IMPORT_MONTHS[n] || null;
+}
+
 function parseImportDate(val) {
-  const d = String(val || '').trim();
-  if (!d) return '';
+  const raw = String(val || '').trim();
+  if (!raw) return '';
   const fmt = document.getElementById('importDateFormat').value;
-  let dateStr = '';
-  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(d)) {
-    dateStr = d.replace(/\//g, '-');
-  } else {
-    const m = d.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
-    if (m) {
-      let dd, mm, yyyy;
-      if (fmt === 'YMD') { yyyy = m[1]; mm = m[2]; dd = m[3]; }
-      else if (fmt === 'DMY') { dd = m[1]; mm = m[2]; yyyy = m[3]; }
-      else { mm = m[1]; dd = m[2]; yyyy = m[3]; }
-      if (parseInt(yyyy, 10) < 100) yyyy = '20' + yyyy;
-      dateStr = yyyy + '-' + String(mm).padStart(2, '0') + '-' + String(dd).padStart(2, '0');
+
+  // 1) ISO/YYYY-MM-DD or numeric with a leading 4-digit year
+  let m = raw.match(/^(\d{4})[-/.](\d{1,2})[-/.](\d{1,2})\b/);
+  if (m) return validDateStr(m[1], m[2], m[3]);
+
+  // 2) Month-name dates: 03-Aug-2026, 03-Aug-26, 03 Aug 2026, Aug 03, 2026, 03-Aug
+  m = raw.match(/^(\d{1,2})[-\s.,]?([A-Za-z]{3,9})[-\s.,]?(\d{2,4})?\b/);
+  if (m) {
+    const day = m[1];
+    const mon = monthNameToNum(m[2]);
+    const dayNum = parseInt(day, 10);
+    if (mon && dayNum >= 1 && dayNum <= 31) {
+      let yy = m[3];
+      if (!yy) {
+        // No year given. Prefer current year if the date is recent, else last year.
+        const now = new Date();
+        const thisYr = now.getFullYear();
+        const candidate = thisYr + '-' + mon + '-' + String(dayNum).padStart(2, '0');
+        const d = new Date(candidate);
+        yy = String((d <= now || now.getMonth() === d.getMonth()) ? thisYr : thisYr - 1);
+        const s = validDateStr(yy, mon, String(dayNum).padStart(2, '0'));
+        if (s) return s;
+      } else {
+        if (parseInt(yy, 10) < 100) yy = (parseInt(yy, 10) < 70 ? '20' : '19') + yy;
+        return validDateStr(yy, mon, String(dayNum).padStart(2, '0'));
+      }
     }
   }
-  const t = new Date(dateStr);
+
+  // 3) Numeric DD/MM/YYYY or MM/DD/YYYY with a trailing/short year
+  m = raw.match(/^(\d{1,2})[-/. ]+(\d{1,2})[-/. ]+(\d{2,4})\b/);
+  if (m) {
+    let dd, mm, yyyy;
+    if (fmt === 'YMD') { yyyy = m[1]; mm = m[2]; dd = m[3]; }
+    else if (fmt === 'DMY') { dd = m[1]; mm = m[2]; yyyy = m[3]; }
+    else if (fmt === 'MDY') { mm = m[1]; dd = m[2]; yyyy = m[3]; }
+    else { dd = m[1]; mm = m[2]; yyyy = m[3]; }
+    const parsed = validDateStr(yyyy, mm, dd);
+    if (parsed) return parsed;
+  }
+  return '';
+}
+
+function validDateStr(yy, mm, dd) {
+  if (parseInt(yy, 10) < 100) yy = (parseInt(yy, 10) < 70 ? '20' : '19') + yy;
+  const s = String(yy) + '-' + String(mm).padStart(2, '0') + '-' + String(dd).padStart(2, '0');
+  const t = new Date(s);
   if (isNaN(t.getTime())) return '';
-  return dateStr;
+  return s;
 }
 
 function autoCategory(description) {
