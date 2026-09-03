@@ -2708,3 +2708,20 @@
   .topbar-month { order: 3; margin-top: 10px; width: 100%; justify-content: center; }
   .topbar { flex-wrap: wrap; }
 }
+
+.import-table th {
+  position: sticky;
+  top: 0;
+  background: var(--card);
+  border-bottom: 1px solid var(--border-strong);
+  padding: 7px 10px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+.import-table td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text);
+  vertical-align: top;
+}
+.import-table tr:last-child td { border-bottom: none; }

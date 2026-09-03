@@ -5087,6 +5087,396 @@ function importJSON(event) {
 }
 window.importJSON = importJSON;
 
+let importParsedRows = [];
+let importParseFlag = { hasDescriptions: true, headerFound: false };
+let importCsvHeaderArr = [];
+
+function openImportModal() {
+  importParsedRows = [];
+  importCsvHeaderArr = [];
+  populateAccountSelect('importAccount', false);
+  const sel = document.getElementById('importAccount');
+  if (sel && sel.options.length > 0) sel.selectedIndex = 0;
+  document.getElementById('importPreviewWrap').style.display = 'none';
+  document.getElementById('importPreviewHead').innerHTML = '';
+  document.getElementById('importPreviewBody').innerHTML = '';
+  document.getElementById('importFileLabel').textContent = 'No file chosen';
+  document.getElementById('importStatus').innerHTML = '';
+  document.getElementById('importConfirmBtn').disabled = true;
+  document.getElementById('importModalOverlay').classList.add('active');
+}
+window.openImportModal = openImportModal;
+
+function closeImportModal() {
+  document.getElementById('importModalOverlay').classList.remove('active');
+  document.getElementById('importTxFile').value = '';
+}
+window.closeImportModal = closeImportModal;
+
+function handleImportFile(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  document.getElementById('importFileLabel').textContent = file.name;
+  const name = file.name.toLowerCase();
+  if (name.endsWith('.ofx') || name.endsWith('.qfx')) {
+    readOFXFile(file);
+  } else {
+    readCSVFile(file);
+  }
+  event.target.value = '';
+}
+window.handleImportFile = handleImportFile;
+
+function readCSVFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const text = e.target.result;
+      const sep = detectDelimiter(text);
+      const rows = parseDelimited(text, sep);
+      importParsedRows = mapImportRows(rows);
+      showImportPreview();
+    } catch (err) {
+      console.error(err);
+      showImportError('Could not parse CSV file.');
+    }
+  };
+  reader.onerror = function() { showImportError('Failed to read file'); };
+  reader.readAsText(file);
+}
+
+function readOFXFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const rows = parseOFX(e.target.result);
+      if (rows.length === 0) { showImportError('Could not parse OFX file.'); return; }
+      importParsedRows = rows;
+      importCsvHeaderArr = [];
+      showImportPreview();
+    } catch (err) {
+      console.error(err);
+      showImportError('Could not parse OFX file.');
+    }
+  };
+  reader.onerror = function() { showImportError('Failed to read file'); };
+  reader.readAsText(file);
+}
+
+function detectDelimiter(text) {
+  const firstLine = text.split(/\r?\n/).find(l => l.trim() !== '') || '';
+  const comma = (firstLine.match(/,/g) || []).length;
+  const tab = (firstLine.match(/\t/g) || []).length;
+  const semicolon = (firstLine.match(/;/g) || []).length;
+  if (tab > comma && tab > semicolon) return '\t';
+  if (semicolon > comma) return ';';
+  return ',';
+}
+
+function parseDelimited(text, sep) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim() !== '');
+  const rows = [];
+  for (const line of lines) {
+    const fields = splitCSVLine(line, sep);
+    rows.push(fields.map(f => f.trim()));
+  }
+  return rows;
+}
+
+function splitCSVLine(line, sep) {
+  const out = [];
+  let cur = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const c = line[i];
+    if (inQuotes) {
+      if (c === '"') {
+        if (line[i+1] === '"') { cur += '"'; i++; }
+        else inQuotes = false;
+      } else cur += c;
+    } else {
+      if (c === '"') inQuotes = true;
+      else if (c === sep) { out.push(cur); cur = ''; }
+      else cur += c;
+    }
+  }
+  out.push(cur);
+  return out;
+}
+
+function parseOFX(text) {
+  const stmts = text.match(/<STMTTRN>[\s\S]*?<\/STMTTRN>/g) || [];
+  if (stmts.length === 0) return [];
+  const rows = [];
+  for (const s of stmts) {
+    const get = (tag) => {
+      const m = s.match(new RegExp('<' + tag + '>([\\s\\S]*?)<\\/' + tag + '>'));
+      return m ? m[1].trim() : '';
+    };
+    const date = get('DTPOSTED') || get('DTUSER');
+    const memo = (get('MEMO') || get('NAME') || '').trim();
+    const amtRaw = (get('TRNAMT') || '').trim();
+    if (!date || !amtRaw) continue;
+    let dateStr = date.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3');
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) dateStr = '';
+    const amount = parseFloat(amtRaw);
+    if (isNaN(amount)) continue;
+    rows.push({ date: dateStr, description: memo, amount: Math.abs(amount), type: amount < 0 ? 'expense' : 'income' });
+  }
+  return rows;
+}
+
+function detectHeaderRow(rows) {
+  const keywords = ['date', 'description', 'memo', 'amount', 'transaction', 'details', 'narration', 'debit', 'credit', 'balance', 'payee', 'type'];
+  for (let i = 0; i < Math.min(rows.length, 5); i++) {
+    const joined = rows[i].join(' ').toLowerCase();
+    const score = keywords.filter(k => joined.includes(k)).length;
+    if (score >= 2) return i;
+  }
+  return -1;
+}
+
+function mapImportRows(rows) {
+  if (rows.length === 0) return [];
+  importCsvHeaderArr = rows[0];
+  let startIdx = 0;
+  const headerIdx = detectHeaderRow(rows);
+  let colMap = null;
+
+  if (headerIdx >= 0) {
+    const header = rows[headerIdx];
+    colMap = mapColumnsToFields(header);
+    startIdx = headerIdx + 1;
+  } else {
+    colMap = inferColumns(rows[0]);
+    startIdx = 0;
+  }
+
+  const mapped = [];
+  for (let r = startIdx; r < rows.length; r++) {
+    const row = rows[r];
+    let rec = {};
+    if (colMap) {
+      Object.entries(colMap).forEach(([field, idx]) => {
+        if (idx >= 0 && idx < row.length) rec[field] = row[idx];
+      });
+    } else {
+      rec = { date: row[0] || '', description: row[1] || '', amount: row[2] || '' };
+    }
+    mapped.push(rec);
+  }
+  return mapped;
+}
+
+function mapColumnsToFields(header) {
+  const map = {};
+  const norm = header.map(h => String(h || '').toLowerCase().trim());
+  const find = (names) => {
+    let idx = -1;
+    names.forEach(n => {
+      const i = norm.findIndex(h => h.includes(n));
+      if (i >= 0 && (idx < 0 || i < idx)) idx = i;
+    });
+    return idx;
+  };
+  map.date = find(['date', 'posted', 'transaction date', 'time']);
+  map.amount = find(['amount', 'amt', 'value']);
+  map.description = find(['description', 'desc', 'memo', 'narration', 'details', 'payee', 'particulars', 'reference']);
+  map.type = find(['type']);
+  map.category = find(['category']);
+  if (map.amount < 0) {
+    const debit = find(['debit', 'withdrawal', 'money out', 'withdrawals']);
+    const credit = find(['credit', 'deposit', 'money in', 'deposits']);
+    if (map.amount < 0) {
+      map.debit = debit;
+      map.credit = credit;
+    }
+  }
+  return map;
+}
+
+function inferColumns(firstRow) {
+  const f = firstRow.map(x => String(x || '').toLowerCase());
+  const map = {};
+  f.forEach((v, i) => {
+    if (v.includes('date') || v.includes('posted')) map.date = i;
+    else if (v.includes('amount') || v.includes('amt') || v.includes('value')) map.amount = i;
+    else if (v.includes('description') || v.includes('memo') || v.includes('narration') || v.includes('details') || v.includes('payee')) map.description = i;
+    else if (v.includes('type')) map.type = i;
+    else if (v.includes('category')) map.category = i;
+    else if (v.includes('debit') || v.includes('withdrawal')) map.debit = i;
+    else if (v.includes('credit') || v.includes('deposit')) map.credit = i;
+  });
+  return map;
+}
+
+function detectDateFormat(sample) {
+  if (!Array.isArray(importParsedRows)) importParsedRows = [];
+  for (const row of importParsedRows) {
+    const d = String(row.date || '').trim();
+    if (!d) continue;
+    if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(d)) return 'YMD';
+    if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(d)) {
+      const parts = d.split(/[-/]/);
+      return parseInt(parts[0], 10) > 12 ? 'DMY' : 'MDY';
+    }
+  }
+  return null;
+}
+
+function parseImportDate(val) {
+  const d = String(val || '').trim();
+  if (!d) return '';
+  const fmt = document.getElementById('importDateFormat').value;
+  let dateStr = '';
+  if (/^\d{4}[-/]\d{1,2}[-/]\d{1,2}$/.test(d)) {
+    dateStr = d.replace(/\//g, '-');
+  } else {
+    const m = d.match(/^(\d{1,2})[-/.](\d{1,2})[-/.](\d{2,4})$/);
+    if (m) {
+      let dd, mm, yyyy;
+      if (fmt === 'YMD') { yyyy = m[1]; mm = m[2]; dd = m[3]; }
+      else if (fmt === 'DMY') { dd = m[1]; mm = m[2]; yyyy = m[3]; }
+      else { mm = m[1]; dd = m[2]; yyyy = m[3]; }
+      if (parseInt(yyyy, 10) < 100) yyyy = '20' + yyyy;
+      dateStr = yyyy + '-' + String(mm).padStart(2, '0') + '-' + String(dd).padStart(2, '0');
+    }
+  }
+  const t = new Date(dateStr);
+  if (isNaN(t.getTime())) return '';
+  return dateStr;
+}
+
+function autoCategory(description) {
+  const s = String(description || '').toLowerCase();
+  const rules = [
+    ['Transportation', ['uber', 'bolt', 'taxi', 'fuel', 'petrol', 'diesel', 'transport', 'bus', 'parking', 'fare']],
+    ['Food', ['restaurant', 'café', 'cafe', 'food', 'grocer', 'market', 'kfc', 'mcdonald', 'shoprite', 'chicken', 'supermarket']],
+    ['Utilities', ['electric', 'water', 'power', 'electricity', 'utility', 'cable', 'dstv', 'gotv', 'bill']],
+    ['Internet', ['internet', 'data', 'wifi', 'spectranet', 'spectranet', 'airtel', 'mtn', 'glo', '9mobile']],
+    ['Rent', ['rent', 'lease', 'landlord']],
+    ['Subscriptions', ['netflix', 'spotify', 'apple', 'google', 'subscription', 'youtube']],
+    ['Health', ['hospital', 'pharmacy', 'doctor', 'clinic', 'drug', 'medical']],
+    ['Shopping', ['amazon', 'jiji', 'jumia', 'kongakonga', 'shopping', 'store', 'konga']],
+    ['Entertainment', ['cinema', 'movie', 'concert', 'game', 'playstation', 'steam']],
+    ['Education', ['school', 'tuition', 'book', 'course', 'library']],
+    ['Giving', ['offering', 'tithe', 'donation', 'church', 'charity']],
+    ['Business', ['supplier', 'stock', 'inventory', 'business']]
+  ];
+  for (const [cat, keys] of rules) {
+    if (keys.some(k => s.includes(k))) return cat;
+  }
+  return 'Miscellaneous';
+}
+
+function parseImportAmount(rec) {
+  let amount = 0;
+  let isExpense = null;
+  const amtStr = String(rec.amount || '').replace(/[₦$,]/g, '').trim();
+  if (amtStr !== '') {
+    const n = parseFloat(amtStr);
+    if (!isNaN(n)) {
+      amount = Math.abs(n);
+      if (n < 0) isExpense = true;
+    }
+  }
+  if (typeof rec.debit !== 'undefined' && rec.debit !== null && rec.debit !== '') {
+    const d = String(rec.debit).replace(/[₦$,]/g, '').trim();
+    if (d !== '' && !isNaN(parseFloat(d))) { amount = Math.abs(parseFloat(d)); isExpense = true; }
+  } else if (typeof rec.credit !== 'undefined' && rec.credit !== null && rec.credit !== '') {
+    const c = String(rec.credit).replace(/[₦$,]/g, '').trim();
+    if (c !== '' && !isNaN(parseFloat(c))) { amount = Math.abs(parseFloat(c)); isExpense = false; }
+  }
+  let type = rec.type ? String(rec.type).trim().toLowerCase() : '';
+  if (type.includes('expense') || type.includes('debit') || type.includes('withdrawal') || type.includes('payment') || type.includes('spent')) {
+    if (isExpense === null) isExpense = true;
+  } else if (type.includes('income') || type.includes('credit') || type.includes('deposit') || type.includes('receive')) {
+    if (isExpense === null) isExpense = false;
+  }
+  const desc = String(rec.description || '').toLowerCase();
+  const incomeHints = ['salary', 'deposit', 'wages', 'wage', 'income', 'payroll', 'transfer in', 'credit', 'refund', 'payout', 'reimburse', 'received'];
+  const expenseHints = ['purchase', 'payment', 'debit', 'withdrawal', 'fee', 'charge', 'bought', 'paid'];
+  if (isExpense === null) {
+    if (incomeHints.some(h => desc.includes(h))) isExpense = false;
+    else if (expenseHints.some(h => desc.includes(h))) isExpense = true;
+    else isExpense = true;
+  }
+  if (isExpense === true) return { amount, type: 'expense' };
+  if (isExpense === false) return { amount, type: 'income' };
+  return { amount, type: null };
+}
+
+function showImportError(msg) {
+  const el = document.getElementById('importStatus');
+  if (el) { el.innerHTML = '<span style="color:var(--danger);">' + msg + '</span>'; }
+  document.getElementById('importPreviewWrap').style.display = 'none';
+  document.getElementById('importConfirmBtn').disabled = true;
+}
+
+function showImportPreview() {
+  const statusEl = document.getElementById('importStatus');
+  if (statusEl) statusEl.innerHTML = '';
+  if (importParsedRows.length === 0) { showImportError('No transactions found in file.'); return; }
+  const fmt = document.getElementById('importDateFormat').value;
+  if (fmt === 'auto') {
+    const detected = detectDateFormat();
+    if (detected) document.getElementById('importDateFormat').value = detected;
+  }
+  const preview = importParsedRows.slice(0, 50);
+  let accepted = 0;
+  const rowsHtml = preview.map(rec => {
+    const dateStr = parseImportDate(rec.date);
+    const { amount, type } = parseImportAmount(rec);
+    if (!dateStr || amount <= 0) return '';
+    accepted++;
+    const desc = rec.description || (rec[Object.keys(rec)[0]] || '');
+    const cat = autoCategory(desc);
+    return '<tr><td>' + dateStr + '</td><td>' + escapeHtml(desc) + '</td><td>' + (type === 'income' ? '+' : '') + fmt(amount) + '</td><td>' + (type === 'income' ? 'Income' : 'Expense') + '</td><td>' + escapeHtml(cat) + '</td></tr>';
+  }).join('');
+
+  const head = '<tr><th style="text-align:left;">Date</th><th style="text-align:left;">Description</th><th style="text-align:right;">Amount</th><th>Type</th><th style="text-align:left;">Category</th></tr>';
+  document.getElementById('importPreviewHead').innerHTML = head;
+  document.getElementById('importPreviewBody').innerHTML = rowsHtml;
+  document.getElementById('importPreviewWrap').style.display = 'block';
+  document.getElementById('importStats').textContent = importParsedRows.length + ' rows parsed';
+  document.getElementById('importConfirmBtn').disabled = accepted === 0;
+}
+
+function confirmImportTxns() {
+  const accountId = document.getElementById('importAccount').value || null;
+  let added = 0, skipped = 0;
+  const existing = new Set((state.transactions).map(t => {
+    return t.date + '|' + (t.description || '') + '|' + t.amount;
+  }));
+  for (const rec of importParsedRows) {
+    const dateStr = parseImportDate(rec.date);
+    const { amount, type } = parseImportAmount(rec);
+    if (!dateStr || amount <= 0 || !type) { skipped++; continue; }
+    const description = (rec.description || String(rec.date || '')).trim();
+    const key = dateStr + '|' + description + '|' + amount;
+    if (existing.has(key)) { skipped++; continue; }
+    const category = autoCategory(description);
+    if (!description) { skipped++; continue; }
+    state.transactions.push({ id: uid(), date: dateStr, amount, type, category, description, payment: '', accountId, tags: [], notes: '' });
+    existing.add(key);
+    added++;
+  }
+  ensureStateDefaults();
+  saveData();
+  closeImportModal();
+  if (added === 0) { showToast('No new transactions to import'); return; }
+  showToast(added + ' transaction' + (added === 1 ? '' : 's') + ' imported' + (skipped > 0 ? ' (' + skipped + ' skipped)' : ''));
+  renderTransactions();
+  if (currentPage && renderDashboard) renderDashboard();
+}
+window.confirmImportTxns = confirmImportTxns;
+
+function escapeHtml(s) {
+  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+window.escapeHtml = escapeHtml;
+
+
 function confirmImport(data) {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
