@@ -450,6 +450,7 @@ function continueAsGuest() {
     ensureStateDefaults();
     autoPostRecurring();
     checkAndShowBrowserNotifications();
+    checkBudgetBreachNotifs();
     if (!state.hasOnboarded) {
       startOnboardingIfNeeded();
     } else {
@@ -556,6 +557,7 @@ auth.onAuthStateChanged(user => {
       // Pre-initialize GIS token client so Connect button works immediately
       if (isGoogleSignedIn()) initGcalTokenClient();
       checkAndShowBrowserNotifications();
+      checkBudgetBreachNotifs();
       if (!state.hasOnboarded) {
         startOnboardingIfNeeded();
       } else {
@@ -4016,6 +4018,23 @@ function dismissNotif(id) { const el = document.getElementById(id); if (el) el.s
 function collectNotifAlertData() {
   const alerts = [];
   if (!state.settings.notifications) return alerts;
+
+  // Budget alerts (current view month)
+  const mk = viewMonthKey();
+  if (state.budgets && Object.keys(state.budgets).length > 0) {
+    Object.entries(state.budgets).forEach(([cat, limit]) => {
+      if (!limit) return;
+      const spent = getMonthTransactions(mk).filter(t => t.type === 'expense' && t.category === cat).reduce((s, t) => s + t.amount, 0);
+      const pct = (spent / limit) * 100;
+      if (spent > limit) {
+        alerts.push({ kind: 'budget', title: cat + ' budget exceeded', meta: fmt(spent) + ' of ' + fmt(limit), amount: '+' + Math.round(pct) + '%', type: 'expense', level: 'over' });
+      } else if (pct >= 80) {
+        alerts.push({ kind: 'budget', title: cat + ' budget at risk', meta: fmt(spent) + ' of ' + fmt(limit), amount: Math.round(pct) + '%', type: 'expense', level: 'warning' });
+      }
+    });
+  }
+
+  // Upcoming financial events/reminders
   const win = state.settings.notifWindow || 7;
   const today = new Date(); today.setHours(0,0,0,0);
   const events = state.financialEvents.filter(e => {
@@ -4024,17 +4043,18 @@ function collectNotifAlertData() {
     const diff = Math.ceil((ed - today) / 86400000);
     return diff >= 0 && diff <= win;
   });
-  if (events.length === 0) return alerts;
-  const dueToday = events.filter(e => e.status === 'due-today');
-  const dueTomorrow = events.filter(e => { const ed = new Date(e.date); ed.setHours(0,0,0,0); return Math.ceil((ed - today) / 86400000) === 1; });
-  dueToday.forEach(e => alerts.push({ title: e.title, meta: 'Due today', amount: (e.type === 'income' ? '+' : '-') + fmt(e.amount), type: e.type }));
-  dueTomorrow.forEach(e => alerts.push({ title: e.title, meta: 'Due tomorrow', amount: (e.type === 'income' ? '+' : '-') + fmt(e.amount), type: e.type }));
-  events.filter(e => e.status !== 'due-today').forEach(e => {
-    const ed = new Date(e.date); ed.setHours(0,0,0,0);
-    const diff = Math.ceil((ed - today) / 86400000);
-    const day = diff === 0 ? 'Due today' : diff === 1 ? 'Due tomorrow' : 'In ' + diff + ' days';
-    alerts.push({ title: e.title, meta: day, amount: (e.type === 'income' ? '+' : '-') + fmt(e.amount), type: e.type });
-  });
+  if (events.length > 0) {
+    const dueToday = events.filter(e => e.status === 'due-today');
+    const dueTomorrow = events.filter(e => { const ed = new Date(e.date); ed.setHours(0,0,0,0); return Math.ceil((ed - today) / 86400000) === 1; });
+    dueToday.forEach(e => alerts.push({ kind: 'event', title: e.title, meta: 'Due today', amount: (e.type === 'income' ? '+' : '-') + fmt(e.amount), type: e.type }));
+    dueTomorrow.forEach(e => alerts.push({ kind: 'event', title: e.title, meta: 'Due tomorrow', amount: (e.type === 'income' ? '+' : '-') + fmt(e.amount), type: e.type }));
+    events.filter(e => e.status !== 'due-today').forEach(e => {
+      const ed = new Date(e.date); ed.setHours(0,0,0,0);
+      const diff = Math.ceil((ed - today) / 86400000);
+      const day = diff === 0 ? 'Due today' : diff === 1 ? 'Due tomorrow' : 'In ' + diff + ' days';
+      alerts.push({ kind: 'event', title: e.title, meta: day, amount: (e.type === 'income' ? '+' : '-') + fmt(e.amount), type: e.type });
+    });
+  }
   return alerts;
 }
 
@@ -4068,9 +4088,22 @@ function renderNotifDropdown() {
     return;
   }
   const bellIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>';
+  const alertIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>';
   body.innerHTML = alerts.map((a, i) => {
-    const color = a.type === 'income' ? 'var(--green-accent)' : 'var(--red-accent)';
-    return '<div class="notif-dropdown-item" id="nbi-' + i + '"><div class="notif-dropdown-icon">' + bellIcon + '</div><div><strong>' + a.title + '</strong> <span style="color:' + color + '">' + a.amount + '</span><br><span style="color:var(--text-secondary)">' + a.meta + '</span></div></div>';
+    let icon = bellIcon;
+    let iconColor = 'var(--accent)';
+    let amountColor = 'var(--text)';
+    if (a.kind === 'budget') {
+      icon = alertIcon;
+      iconColor = a.level === 'over' ? 'var(--red-accent)' : 'var(--amber-accent)';
+      amountColor = a.level === 'over' ? 'var(--red-accent)' : 'var(--amber-accent)';
+    } else if (a.type === 'income') {
+      amountColor = 'var(--green-accent)';
+    } else if (a.type === 'expense') {
+      amountColor = 'var(--red-accent)';
+    }
+    const iconStyle = a.kind === 'budget' ? ' style="color:' + iconColor + '"' : '';
+    return '<div class="notif-dropdown-item" id="nbi-' + i + '"><div class="notif-dropdown-icon"' + iconStyle + '>' + icon + '</div><div><strong>' + a.title + '</strong> <span style="color:' + amountColor + '">' + a.amount + '</span><br><span style="color:var(--text-secondary)">' + a.meta + '</span></div></div>';
   }).join('');
 }
 
@@ -4815,6 +4848,7 @@ function requestBrowserNotifPermission() {
   if (Notification.permission === 'granted') {
     renderBrowserNotifUI();
     checkAndShowBrowserNotifications();
+    checkBudgetBreachNotifs();
     return;
   }
   if (Notification.permission === 'denied') {
@@ -4827,6 +4861,7 @@ function requestBrowserNotifPermission() {
     if (permission === 'granted') {
       showToast('Notifications enabled');
       checkAndShowBrowserNotifications();
+      checkBudgetBreachNotifs();
     } else if (permission === 'denied') {
       showToast('Notifications blocked');
     }
@@ -4948,6 +4983,36 @@ function showBrowserNotification(title, body, tag) {
   }
 }
 window.showBrowserNotification = showBrowserNotification;
+
+function checkBudgetBreachNotifs() {
+  if (!canShowBrowserNotif()) return;
+  if (!state.budgets || Object.keys(state.budgets).length === 0) return;
+  const mk = viewMonthKey();
+  if (!state.shownBudgetNotifIds) state.shownBudgetNotifIds = [];
+
+  const breached = [];
+  Object.entries(state.budgets).forEach(([cat, limit]) => {
+    if (!limit) return;
+    const spent = getMonthTransactions(mk).filter(t => t.type === 'expense' && t.category === cat).reduce((s, t) => s + t.amount, 0);
+    if (spent > limit) breached.push({ cat, spent, limit, over: Math.round((spent / limit - 1) * 100) });
+  });
+
+  if (breached.length === 0) return;
+  let newShown = [];
+  breached.forEach(b => {
+    const notifId = 'budget_' + b.cat + '_' + mk;
+    if (state.shownBudgetNotifIds.includes(notifId)) return;
+    const title = b.cat + ' budget exceeded';
+    const body = 'You\'ve spent ' + fmt(b.spent) + ' of ' + fmt(b.limit) + ' (' + b.over + '% over budget) this month.';
+    showBrowserNotification(title, body, notifId);
+    newShown.push(notifId);
+  });
+  if (newShown.length > 0) {
+    state.shownBudgetNotifIds = [...state.shownBudgetNotifIds, ...newShown].slice(-200);
+    saveData();
+  }
+}
+window.checkBudgetBreachNotifs = checkBudgetBreachNotifs;
 
 function clearOldNotificationIds() {
   // Clean up shownNotifIds that reference dates in the past (older than 30 days)
@@ -5666,6 +5731,7 @@ function finishOnboarding() {
   ensureStateDefaults();
   autoPostRecurring();
   checkAndShowBrowserNotifications();
+  checkBudgetBreachNotifs();
   saveData();
   document.getElementById('onboardingOverlay').classList.remove('active');
   navigate('dashboard');
@@ -5855,6 +5921,7 @@ if (typeof document !== 'undefined') {
     if (!document.hidden && state && state.hasOnboarded) {
       autoPostRecurring();
       checkAndShowBrowserNotifications();
+      checkBudgetBreachNotifs();
     }
   });
 }
