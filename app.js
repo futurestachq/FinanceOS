@@ -4938,7 +4938,7 @@ function deleteIncomeEvent(id) {
 // ============ GOOGLE CALENDAR OAUTH & API ============
 
 const GCALENDAR_SCOPE = 'https://www.googleapis.com/auth/calendar';
-const GCAL_CLIENT_ID = '109256546553-s672aeg8ubkuba2dn7ifrd4g8hkt0kbm.apps.googleusercontent.com';
+const GCAL_CLIENT_ID = '957373863035-nlg49kjpm94d6j9uunrin9fta444l3ib.apps.googleusercontent.com';
 let gcalTokenClient = null;
 
 function isGoogleSignedIn() {
