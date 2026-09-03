@@ -5133,6 +5133,13 @@ function openImportModal() {
   document.getElementById('importPreviewBody').innerHTML = '';
   document.getElementById('importFileLabel').textContent = 'No file chosen';
   document.getElementById('importStatus').innerHTML = '';
+  const pasteText = document.getElementById('importPasteText');
+  if (pasteText) pasteText.value = '';
+  const pasteColsWrap = document.getElementById('importPasteColsWrap');
+  if (pasteColsWrap) pasteColsWrap.style.display = 'none';
+  const pasteSt = document.getElementById('importPasteStatus');
+  if (pasteSt) pasteSt.innerHTML = '';
+  window.__pasteRecords = null;
   document.getElementById('importConfirmBtn').disabled = true;
   document.getElementById('importModalOverlay').classList.add('active');
 }
@@ -5143,6 +5150,149 @@ function closeImportModal() {
   document.getElementById('importTxFile').value = '';
 }
 window.closeImportModal = closeImportModal;
+
+function getPasteTextOptions() {
+  const sepSel = document.getElementById('importPasteSep').value;
+  const hasHeader = document.getElementById('importPasteHeader').value === 'yes';
+  const text = (document.getElementById('importPasteText').value || '').replace(/\r/g, '');
+  let sep = sepSel;
+  if (sep === 'auto') sep = detectDelimiter(text);
+  return { text, sep, hasHeader };
+}
+
+// Split pasted text into logical records, handling records that wrap
+// across physical lines (Opay, etc.). Returns an array of field arrays.
+function splitPasteRecords(text, sep) {
+  const lines = text.split(/\n/).map(l => l.replace(/\s+$/, '')).filter(l => l.trim() !== '');
+  const allRows = [];
+  for (const line of lines) {
+    const fields = splitCSVLine(line, sep, false).map(f => f.trim());
+    allRows.push(fields);
+  }
+  // If it looks like one giant line of many records, reassemble.
+  const cc = inferColumnCount(text, sep, allRows);
+  if (cc > 0) {
+    const flat = [];
+    for (const r of allRows) for (const f of r) flat.push(f);
+    const out = [];
+    for (let i = 0; i < flat.length && flat.length - i >= cc; i += cc) out.push(flat.slice(i, i + cc));
+    // Only use reassembly if it clearly yields more complete records.
+    const originalIsMulti = allRows.some(r => r.length >= 2 && looksLikeRecordStart(r[0]));
+    const reused = out.filter(r => looksLikeRecordStart(r[0]) && r.length >= 3).length;
+    if (reused >= 2 || (originalIsMulti && allRows.length <= 2 && out.length >= 2)) return out;
+  }
+  return allRows;
+}
+
+function looksLikeRecordStart(v) {
+  const s = String(v || '').trim();
+  return /^\d{4}[-/]\d{1,2}[-/]\d{1,2}/.test(s) || /^\d{1,2}[-/.]\d{1,2}[-/.]\d{2,4}/.test(s) || /^\d{1,2}[-/.\s]?[A-Za-z]{3,9}[-/.\s]\d{2,4}/i.test(s);
+}
+
+// Build a "header" label array for the detected columns. Prefers the
+// actual header row; otherwise labels them by position.
+function pasteHeader(row0, records, hasHeader) {
+  if (hasHeader && records.length > 0) return records[0];
+  return row0.map((_, i) => 'Column ' + (i + 1));
+}
+
+function parsePastedRows() {
+  const opts = getPasteTextOptions();
+  const statusEl = document.getElementById('importPasteStatus');
+  const colsWrap = document.getElementById('importPasteColsWrap');
+  statusEl.innerHTML = '';
+  if (!opts.text.trim()) { statusEl.innerHTML = '<span style="color:var(--danger);">Paste some text first.</span>'; return; }
+  const records = splitPasteRecords(opts.text, opts.sep);
+  if (records.length === 0) { statusEl.innerHTML = '<span style="color:var(--danger);">Could not read any rows from the pasted text.</span>'; return; }
+  const header = pasteHeader(records[0], records, opts.hasHeader);
+  if (!opts.hasHeader && records.length > 0) records.unshift(header); // ensure header row exists for mapping
+  const dataStart = opts.hasHeader ? 1 : 1;
+  const colCount = records[0] && records[0].length || 0;
+
+  // Build column-mapping dropdowns.
+  const fieldDefs = [
+    ['date', 'Date'],
+    ['description', 'Description'],
+    ['amount', 'Amount'],
+    ['debit', 'Debit (optional)'],
+    ['credit', 'Credit (optional)'],
+    ['type', 'Type (optional)']
+  ];
+  const optsHtml = [];
+  for (let i = 0; i < colCount; i++) optsHtml.push('<option value="' + i + '">' + escapeHtml(String(header[i] || 'Column ' + (i + 1))).slice(0, 24) + '</option>');
+  const options = '<option value="-1">(none)</option>' + optsHtml.join('');
+
+  // Heuristic guesses by matching header label text.
+  const guess = (names) => {
+    for (let i = 0; i < header.length; i++) {
+      const h = String(header[i] || '').toLowerCase().trim();
+      if (names.some(n => h === n || h.includes(n))) return i;
+    }
+    return -1;
+  };
+  const guesses = {
+    date: guess(['date', 'txn', 'posted', 'time']),
+    description: guess(['description', 'desc', 'details', 'narration', 'memo', 'payee', 'particulars']),
+    amount: guess(['amount', 'amt', 'transaction amount']),
+    debit: guess(['debit', 'withdrawal', 'money out']),
+    credit: guess(['credit', 'deposit', 'money in']),
+    type: guess(['type'])
+  };
+  // Fallbacks by position for headerless Opay-style (date,date,description,debit,credit,balance...)
+  if (guesses.date < 0 && colCount >= 2) guesses.date = 0;
+  if (guesses.description < 0 && colCount >= 3) guesses.description = 2;
+  if (guesses.date < 0) guesses.date = 0;
+
+  let maps = '';
+  for (const [field, label] of fieldDefs) {
+    maps += '<div style="display:flex;align-items:center;margin-bottom:6px;">' +
+      '<span style="width:110px;font-size:12px;color:var(--text-secondary);">' + label + ':</span>' +
+      '<select class="form-input import-col-map" data-field="' + field + '" style="flex:1;padding:4px;font-size:12px;">' +
+      options.replace('selected', '') + '</select></div>';
+  }
+  colsWrap.style.display = 'block';
+  document.getElementById('importPasteCols').innerHTML = maps;
+
+  // Apply guessed selections.
+  const selEls = document.querySelectorAll('.import-col-map');
+  selEls.forEach(el => { el.value = String(guesses[el.dataset.field] !== undefined && guesses[el.dataset.field] != null ? guesses[el.dataset.field] : -1); el.selectedIndex = el.value === '-1' ? 0 : (parseInt(el.value, 10) + 1); });
+  document.getElementById('importPasteCols').dataset.colCount = colCount;
+  document.getElementById('importPasteCols').dataset.dataStart = dataStart;
+  window.__pasteRecords = records; // cache for loadPastedPreview
+  statusEl.innerHTML = '<span style="color:var(--accent);">Read ' + records.length + ' row(s), ' + colCount + ' column(s). Set any mis-mapped columns, then load into preview.</span>';
+}
+
+function loadPastedPreview() {
+  const opts = getPasteTextOptions();
+  const records = window.__pasteRecords || splitPasteRecords(opts.text, opts.sep);
+  if (records.length === 0) { showImportError('No rows to load. Paste text and click Read rows first.'); return; }
+  const header = records[0];
+  const colsEl = document.getElementById('importPasteCols');
+  const dataStart = parseInt(colsEl.dataset.dataStart, 10) || 1;
+  const colCount = parseInt(colsEl.dataset.colCount, 10) || (header && header.length) || 0;
+  const mapping = {};
+  document.querySelectorAll('.import-col-map').forEach(el => { mapping[el.dataset.field] = parseInt(el.value, 10); });
+
+  const parsed = [];
+  for (let r = dataStart; r < records.length; r++) {
+    const row = records[r];
+    if (!row || row.length === 0) continue;
+    const rec = {};
+    for (const field of ['date', 'description', 'amount', 'debit', 'credit', 'type']) {
+      const idx = mapping[field];
+      if (idx !== undefined && idx >= 0 && idx < row.length) rec[field] = row[idx];
+    }
+    if (!rec.date && rec.amount) continue; // no date or amount -> skip
+    parsed.push(rec);
+  }
+  importParsedRows = parsed;
+  importCatOverrides = {};
+  showImportPreview();
+  const st = document.getElementById('importPasteStatus');
+  if (st) st.innerHTML = '<span style="color:var(--accent);">Loaded ' + parsed.length + ' row(s) into the preview below.</span>';
+}
+window.parsePastedRows = parsePastedRows;
+window.loadPastedPreview = loadPastedPreview;
 
 function handleImportFile(event) {
   const file = event.target.files[0];

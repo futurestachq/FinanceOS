@@ -2145,6 +2145,42 @@
         </select>
       </div>
 
+      <details id="importPasteSection" style="margin-top:14px;border:1px solid var(--border);border-radius:8px;padding:12px;">
+        <summary style="cursor:pointer;font-weight:600;font-size:13px;color:var(--text);">Paste from statement (manual mapping)</summary>
+        <div style="margin-top:10px;font-size:12px;color:var(--text-secondary);line-height:1.5;">
+          If auto-import fails, copy the rows from your statement and paste them here, then tell the app which column is which.
+        </div>
+        <div class="form-group" style="margin-top:10px;">
+          <label class="form-label" for="importPasteText" style="font-size:13px;">Paste your rows here</label>
+          <textarea id="importPasteText" rows="5" style="width:100%;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:12px;font-family:monospace;resize:vertical;" placeholder="Paste transaction rows copied from your bank statement..."></textarea>
+        </div>
+        <div class="form-row">
+          <div class="form-group" style="margin-right:10px;">
+            <label class="form-label" style="font-size:13px;">Separator</label>
+            <select class="form-input" id="importPasteSep" style="padding:5px;">
+              <option value="auto">Auto-detect</option>
+              <option value="\t">Tab</option>
+              <option value=",">Comma</option>
+              <option value=";">Semicolon</option>
+              <option value="  ">Space (2+)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label" style="font-size:13px;">Has header row?</label>
+            <select class="form-input" id="importPasteHeader" style="padding:5px;">
+              <option value="yes">Yes</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-sm" onclick="parsePastedRows()">Read rows</button>
+        <div id="importPasteColsWrap" style="display:none;margin-top:12px;">
+          <div id="importPasteCols"></div>
+          <button class="btn btn-sm btn-primary" onclick="loadPastedPreview()" style="margin-top:10px;">Load into preview</button>
+        </div>
+        <div id="importPasteStatus" style="font-size:12px;margin-top:8px;color:var(--text-secondary);"></div>
+      </details>
+
       <div id="importStatus" style="font-size:13px;margin-bottom:8px;"></div>
 
       <div id="importPreviewWrap" style="display:none;">
