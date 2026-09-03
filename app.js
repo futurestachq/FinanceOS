@@ -1261,9 +1261,10 @@ function renderDashboard() {
   renderDashboardBudgets();
   renderDashboardRenewals();
   renderDashboardRecent();
-  renderAIInsights();
+   renderAIInsights();
   renderDashboardUpcoming();
   renderDashboardNotifications();
+  renderNotifBell();
   applyDashboardLayout();
   updateDashEmpty();
 }
@@ -3861,6 +3862,79 @@ function renderDashboardNotifications() {
 }
 
 function dismissNotif(id) { const el = document.getElementById(id); if (el) el.style.display = 'none'; }
+
+// ============ NOTIFICATION BELL ============
+
+function collectNotifAlertData() {
+  const alerts = [];
+  if (!state.settings.notifications) return alerts;
+  const win = state.settings.notifWindow || 7;
+  const today = new Date(); today.setHours(0,0,0,0);
+  const events = state.financialEvents.filter(e => {
+    if (e.status === 'completed' || e.status === 'cancelled') return false;
+    const ed = new Date(e.date); ed.setHours(0,0,0,0);
+    const diff = Math.ceil((ed - today) / 86400000);
+    return diff >= 0 && diff <= win;
+  });
+  if (events.length === 0) return alerts;
+  const dueToday = events.filter(e => e.status === 'due-today');
+  const dueTomorrow = events.filter(e => { const ed = new Date(e.date); ed.setHours(0,0,0,0); return Math.ceil((ed - today) / 86400000) === 1; });
+  dueToday.forEach(e => alerts.push({ title: e.title, meta: 'Due today', amount: (e.type === 'income' ? '+' : '-') + fmt(e.amount), type: e.type }));
+  dueTomorrow.forEach(e => alerts.push({ title: e.title, meta: 'Due tomorrow', amount: (e.type === 'income' ? '+' : '-') + fmt(e.amount), type: e.type }));
+  events.filter(e => e.status !== 'due-today').forEach(e => {
+    const ed = new Date(e.date); ed.setHours(0,0,0,0);
+    const diff = Math.ceil((ed - today) / 86400000);
+    const day = diff === 0 ? 'Due today' : diff === 1 ? 'Due tomorrow' : 'In ' + diff + ' days';
+    alerts.push({ title: e.title, meta: day, amount: (e.type === 'income' ? '+' : '-') + fmt(e.amount), type: e.type });
+  });
+  return alerts;
+}
+
+function renderNotifBell() {
+  const badge = document.getElementById('notifBadge');
+  if (!badge) return;
+  const alerts = collectNotifAlertData();
+  if (alerts.length > 0) {
+    badge.style.display = 'block';
+    badge.textContent = alerts.length > 9 ? '9+' : alerts.length;
+  } else {
+    badge.style.display = 'none';
+  }
+}
+
+function toggleNotifDropdown(event) {
+  if (event && event.stopPropagation) event.stopPropagation();
+  const dd = document.getElementById('notifDropdown');
+  if (!dd) return;
+  const opening = dd.style.display !== 'block';
+  dd.style.display = opening ? 'block' : 'none';
+  if (opening) renderNotifDropdown();
+}
+
+function renderNotifDropdown() {
+  const body = document.getElementById('notifDropdownBody');
+  if (!body) return;
+  const alerts = collectNotifAlertData();
+  if (alerts.length === 0) {
+    body.innerHTML = '<div class="notif-dropdown-empty">You\'re all caught up. No upcoming alerts.</div>';
+    return;
+  }
+  const bellIcon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>';
+  body.innerHTML = alerts.map((a, i) => {
+    const color = a.type === 'income' ? 'var(--green-accent)' : 'var(--red-accent)';
+    return '<div class="notif-dropdown-item" id="nbi-' + i + '"><div class="notif-dropdown-icon">' + bellIcon + '</div><div><strong>' + a.title + '</strong> <span style="color:' + color + '">' + a.amount + '</span><br><span style="color:var(--text-secondary)">' + a.meta + '</span></div></div>';
+  }).join('');
+}
+
+// Close bell dropdown when clicking outside
+document.addEventListener('click', (e) => {
+  const wrap = document.querySelector('.notif-bell-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    const dd = document.getElementById('notifDropdown');
+    if (dd && dd.style.display === 'block') dd.style.display = 'none';
+  }
+});
+window.toggleNotifDropdown = toggleNotifDropdown;
 
 // ============ FINANCIAL CALENDAR ============
 
