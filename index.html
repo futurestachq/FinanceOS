@@ -1606,6 +1606,35 @@
           </div>
         </div>
 
+        <!-- Account & Security -->
+        <div class="settings-card" style="margin-bottom:20px;">
+          <div class="settings-title">Account &amp; Security</div>
+          <div class="settings-desc" style="margin-bottom:16px;">Manage your email verification and password.</div>
+
+          <div class="toggle-row" style="margin-bottom:16px;">
+            <div>
+              <div class="toggle-label">Email verification</div>
+              <div class="toggle-desc" id="emailVerifyDesc">Check your inbox to verify your email address.</div>
+            </div>
+            <button class="btn btn-sm" onclick="sendVerificationEmail()" id="verifyEmailBtn">Verify email</button>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">New password</label>
+              <input type="password" class="form-input" id="newPassword" placeholder="New password (min 6 characters)">
+            </div>
+            <div class="form-group">
+              <label class="form-label">Current password</label>
+              <input type="password" class="form-input" id="currentPassword" placeholder="Current password">
+            </div>
+          </div>
+          <div style="margin-top:16px;">
+            <button class="btn btn-primary" onclick="changePassword()">Change password</button>
+            <button class="btn btn-sm" style="margin-left:8px;" onclick="resetPasswordFromSettings()">Reset via email</button>
+          </div>
+        </div>
+
         <!-- Appearance -->
         <div class="settings-card" style="margin-bottom:20px;">
           <div class="settings-title">Appearance</div>

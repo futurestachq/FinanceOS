@@ -314,6 +314,71 @@ function sendPasswordReset() {
     .catch(e => { showToast(e.message); });
 }
 
+function resetPasswordFromSettings() {
+  if (!currentUser || !currentUser.email) { showToast('No email on this account'); return; }
+  auth.sendPasswordResetEmail(currentUser.email)
+    .then(() => { showToast('Password reset email sent to ' + currentUser.email); })
+    .catch(e => { showToast(e.message); });
+}
+
+function sendVerificationEmail() {
+  if (!currentUser) { showToast('Please sign in first'); return; }
+  currentUser.sendEmailVerification()
+    .then(() => { showToast('Verification email sent. Check your inbox.'); })
+    .catch(e => { showToast(e.message); });
+}
+
+function changePassword() {
+  if (!currentUser) { showToast('Please sign in first'); return; }
+  const currentPass = document.getElementById('currentPassword').value;
+  const newPass = document.getElementById('newPassword').value;
+  if (!currentPass) { showToast('Enter your current password'); return; }
+  if (!newPass) { showToast('Enter a new password'); return; }
+  if (newPass.length < 6) { showToast('New password must be at least 6 characters'); return; }
+
+  // Re-authenticate with current password since updatePassword requires recent login
+  const cred = firebase.auth.EmailAuthProvider.credential(currentUser.email, currentPass);
+  currentUser.reauthenticateWithCredential(cred)
+    .then(() => currentUser.updatePassword(newPass))
+    .then(() => {
+      document.getElementById('currentPassword').value = '';
+      document.getElementById('newPassword').value = '';
+      showToast('Password updated successfully');
+    })
+    .catch(e => {
+      if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
+        showToast('Current password is incorrect');
+      } else {
+        showToast(e.message);
+      }
+    });
+}
+
+function renderAccountSecurity() {
+  const desc = document.getElementById('emailVerifyDesc');
+  const btn = document.getElementById('verifyEmailBtn');
+  if (!desc || !btn) return;
+  if (currentUser) {
+    if (currentUser.emailVerified) {
+      desc.textContent = 'Your email address is verified.';
+      btn.style.display = 'none';
+    } else if (currentUser.providerData && currentUser.providerData.some(p => p.providerId === 'google.com')) {
+      desc.textContent = 'Signed in with Google.';
+      btn.style.display = 'none';
+    } else {
+      desc.textContent = 'Check your inbox to verify your email address.';
+      btn.style.display = 'inline';
+    }
+  } else {
+    desc.textContent = 'Sign in to manage your account.';
+    btn.style.display = 'none';
+  }
+}
+window.sendVerificationEmail = sendVerificationEmail;
+window.changePassword = changePassword;
+window.resetPasswordFromSettings = resetPasswordFromSettings;
+window.renderAccountSecurity = renderAccountSecurity;
+
 function signInWithEmail() {
   const email = document.getElementById('signInEmail').value.trim();
   const password = document.getElementById('signInPassword').value;
@@ -329,7 +394,14 @@ function signUpWithEmail() {
   if (!email || !password) { showToast('Enter email and password'); return; }
   if (password.length < 6) { showToast('Password must be at least 6 characters'); return; }
   if (password !== confirmPassword) { showToast('Passwords do not match'); return; }
-  auth.createUserWithEmailAndPassword(email, password).catch(e => { showToast(e.message); console.error(e); });
+  auth.createUserWithEmailAndPassword(email, password)
+    .then((userCred) => {
+      if (userCred && userCred.user) {
+        setTimeout(() => userCred.user.sendEmailVerification().catch(() => {}), 800);
+      }
+      showToast('Account created! A verification email has been sent.');
+    })
+    .catch(e => { showToast(e.message); console.error(e); });
 }
 window.signUpWithEmail = signUpWithEmail;
 
@@ -465,6 +537,7 @@ auth.onAuthStateChanged(user => {
     document.getElementById('authFormContainer').style.display = 'none';
     hideAuthModal();
     updateUserProfileUI();
+    renderAccountSecurity();
     loadData().then(() => {
       // Auto-populate profile from Google if empty
       if (!state.profile) state.profile = {};
@@ -4327,6 +4400,8 @@ function renderSettings() {
     document.getElementById('profileCurrency').value = state.profile.currency || '₦';
     document.getElementById('profileMonthStart').value = state.profile.monthStart || 1;
   }
+  // Account & Security
+  renderAccountSecurity();
   // Dark mode toggle
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
   setToggleState('toggleDarkMode', isDark);
