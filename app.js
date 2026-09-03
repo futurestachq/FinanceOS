@@ -315,41 +315,44 @@ function sendPasswordReset() {
 }
 
 function resetPasswordFromSettings() {
-  if (!currentUser || !currentUser.email) { showToast('No email on this account'); return; }
+  if (!currentUser || !currentUser.email) { showToast('No email on this account', 'error'); return; }
+  showToast('Sending reset link...');
   auth.sendPasswordResetEmail(currentUser.email)
-    .then(() => { showToast('Password reset email sent to ' + currentUser.email); })
-    .catch(e => { showToast(e.message); });
+    .then(() => { showToast('Reset link sent to ' + currentUser.email, 'success'); })
+    .catch(e => { showToast(e.message, 'error'); });
 }
 
 function sendVerificationEmail() {
-  if (!currentUser) { showToast('Please sign in first'); return; }
+  if (!currentUser) { showToast('Please sign in first', 'error'); return; }
+  showToast('Sending verification email...');
   currentUser.sendEmailVerification()
-    .then(() => { showToast('Verification email sent. Check your inbox.'); })
-    .catch(e => { showToast(e.message); });
+    .then(() => { showToast('Verification email sent. Check your inbox.', 'success'); })
+    .catch(e => { showToast(e.message, 'error'); });
 }
 
 function changePassword() {
-  if (!currentUser) { showToast('Please sign in first'); return; }
+  if (!currentUser) { showToast('Please sign in first', 'error'); return; }
   const currentPass = document.getElementById('currentPassword').value;
   const newPass = document.getElementById('newPassword').value;
-  if (!currentPass) { showToast('Enter your current password'); return; }
-  if (!newPass) { showToast('Enter a new password'); return; }
-  if (newPass.length < 6) { showToast('New password must be at least 6 characters'); return; }
+  if (!currentPass) { showToast('Enter your current password', 'error'); return; }
+  if (!newPass) { showToast('Enter a new password', 'error'); return; }
+  if (newPass.length < 6) { showToast('New password must be at least 6 characters', 'error'); return; }
 
   // Re-authenticate with current password since updatePassword requires recent login
+  showToast('Updating password...');
   const cred = firebase.auth.EmailAuthProvider.credential(currentUser.email, currentPass);
   currentUser.reauthenticateWithCredential(cred)
     .then(() => currentUser.updatePassword(newPass))
     .then(() => {
       document.getElementById('currentPassword').value = '';
       document.getElementById('newPassword').value = '';
-      showToast('Password updated successfully');
+      showToast('Password updated successfully', 'success');
     })
     .catch(e => {
       if (e.code === 'auth/wrong-password' || e.code === 'auth/invalid-credential') {
-        showToast('Current password is incorrect');
+        showToast('Current password is incorrect', 'error');
       } else {
-        showToast(e.message);
+        showToast(e.message, 'error');
       }
     });
 }
@@ -3703,12 +3706,15 @@ function updateLastBackupUI() {
 }
 
 // Toast
-function showToast(msg) {
+let _toastTimer = null;
+function showToast(msg, type) {
   const toast = document.getElementById('toast');
+  if (!toast) return;
+  if (_toastTimer) clearTimeout(_toastTimer);
   toast.textContent = msg;
-  toast.className = 'toast show';
+  toast.className = 'toast show' + (type === 'error' ? ' toast-error' : type === 'success' ? ' toast-success' : '');
   toast.onclick = null;
-  setTimeout(() => toast.classList.remove('show'), 2500);
+  _toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
 }
 
 let undoTimer = null;
