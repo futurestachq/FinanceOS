@@ -4816,13 +4816,16 @@ function resetPin() {
 }
 
 function checkPinAutoLock() {
-  const pinLock = state.settings.pinLock || {};
-  if (!pinLock.enabled) return;
-  const inactive = Date.now() - lastActivity;
-  const lockAfter = 5 * 60 * 1000; // 5 minutes
-  if (inactive > lockAfter && document.getElementById('pinOverlay').style.display !== 'flex') {
-    showPinOverlay();
-  }
+  try {
+    if (typeof state === 'undefined' || !state || typeof state.settings !== 'object' || typeof lastActivity === 'undefined') return;
+    const pinLock = state.settings.pinLock || {};
+    if (!pinLock.enabled) return;
+    const inactive = Date.now() - lastActivity;
+    const lockAfter = 5 * 60 * 1000; // 5 minutes
+    if (inactive > lockAfter && document.getElementById('pinOverlay') && document.getElementById('pinOverlay').style.display !== 'flex') {
+      showPinOverlay();
+    }
+  } catch (e) { /* background timer must never crash the app */ }
 }
 
 // Track activity for auto-lock
