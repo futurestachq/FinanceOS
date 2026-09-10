@@ -476,6 +476,7 @@ function showAuthForm() {
   document.querySelector('.app').style.display = 'none';
   document.getElementById('landingPage').style.display = 'none';
   document.getElementById('authFormContainer').style.display = 'block';
+  hideFloatingInstall();
 }
 
 function showAuthModal() {
@@ -485,6 +486,20 @@ function showAuthModal() {
 
 function hideAuthModal() {
   document.getElementById('authOverlay').classList.remove('active');
+}
+
+function showInstallModal() {
+  document.getElementById('installModalOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+function closeInstallModal() {
+  document.getElementById('installModalOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+function hideFloatingInstall() {
+  var btn = document.getElementById('floatingInstallBtn');
+  if (btn) btn.classList.add('hidden');
+  closeInstallModal();
 }
 
 function updateUserProfileUI() {
@@ -948,6 +963,7 @@ function expandGroupForPage(page) {
 }
 
 function navigate(page) {
+  hideFloatingInstall();
   if (page === 'insights') page = 'analytics';
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   const pageEl = document.getElementById('page-' + page);
@@ -4635,6 +4651,7 @@ let setupPinEntry = '';
 let setupPinConfirm = '';
 let setupPinMode = 'setup'; // 'setup' or 'change'
 let lastActivity = Date.now();
+let deferredInstallPrompt = null;
 
 function hashPin(pin) {
   // Iterated hash with salt — better than single-pass but still client-side only
@@ -6876,6 +6893,28 @@ if (typeof document !== 'undefined') {
       var suffixEl = el.querySelector('.accent');
       var suffix = suffixEl ? suffixEl.outerHTML : '';
       el.innerHTML = target.toLocaleString() + suffix;
+    });
+  }
+
+  // PWA install prompt
+  window.addEventListener('beforeinstallprompt', function(e) {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+  });
+  var installBtn = document.getElementById('floatingInstallBtn');
+  if (installBtn) {
+    installBtn.addEventListener('click', function(e) {
+      if (deferredInstallPrompt) {
+        e.preventDefault();
+        e.stopPropagation();
+        deferredInstallPrompt.prompt();
+        deferredInstallPrompt.userChoice.then(function(choice) {
+          if (choice.outcome === 'accepted') closeInstallModal();
+          deferredInstallPrompt = null;
+        });
+      } else {
+        showInstallModal();
+      }
     });
   }
 })();

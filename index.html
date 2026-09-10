@@ -386,6 +386,85 @@
         <a href="#" onclick="showAuthForm();return false;">Sign In</a>
       </div>
     </footer>
+
+    <!-- Floating PWA Install Button -->
+    <button class="floating-install-btn" id="floatingInstallBtn">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Install FinanceOS
+    </button>
+
+    <!-- Install Modal -->
+    <div class="install-modal-overlay" id="installModalOverlay" onclick="if(event.target===this)closeInstallModal()">
+      <div class="install-modal">
+        <button class="install-modal-close" onclick="closeInstallModal()">&times;</button>
+        <h3>Install FinanceOS</h3>
+        <p>Add FinanceOS to your home screen for the best experience.</p>
+
+        <div class="install-platform">
+          <div class="install-platform-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+            iPhone &amp; iPad
+          </div>
+          <div class="install-step">
+            <div class="install-step-num">1</div>
+            <div class="install-step-desc">Tap the share button
+              <svg class="install-step-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              at the bottom of Safari
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="install-step-num">2</div>
+            <div class="install-step-desc">Scroll down and tap <strong>Add to Home Screen</strong></div>
+          </div>
+          <div class="install-step">
+            <div class="install-step-num">3</div>
+            <div class="install-step-desc">Tap <strong>Add</strong> to confirm</div>
+          </div>
+        </div>
+
+        <div class="install-platform">
+          <div class="install-platform-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M17.523 2l-5.023 8.66L7.477 2H2l8 13.84L2 22h5.477l5.023-8.66L17.523 22H22l-8-13.84L22 2h-4.477z" opacity="0"/></svg>
+            Android
+          </div>
+          <div class="install-step">
+            <div class="install-step-num">1</div>
+            <div class="install-step-desc">Tap the menu button
+              <svg class="install-step-icon" width="16" height="16" viewBox="0 0 24 24" fill="var(--text-secondary)"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+              in Chrome
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="install-step-num">2</div>
+            <div class="install-step-desc">Tap <strong>Install app</strong> or <strong>Add to Home Screen</strong></div>
+          </div>
+          <div class="install-step">
+            <div class="install-step-num">3</div>
+            <div class="install-step-desc">Tap <strong>Install</strong> to confirm</div>
+          </div>
+        </div>
+
+        <div class="install-platform">
+          <div class="install-platform-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+            Desktop &mdash; Chrome or Edge
+          </div>
+          <div class="install-step">
+            <div class="install-step-num">1</div>
+            <div class="install-step-desc">Click the install icon
+              <svg class="install-step-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              in the address bar
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="install-step-num">2</div>
+            <div class="install-step-desc">Click <strong>Install</strong> in the pop-up</div>
+          </div>
+        </div>
+
+        <div class="install-footer">FinanceOS works offline once installed</div>
+      </div>
+    </div>
   </div>
 
 <!-- ===== AUTH FORM (hidden by default) ===== -->
