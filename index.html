@@ -25,367 +25,738 @@
 
   <div class="landing-page" id="landingPage">
 
+    <style>
+    #product,#features,#plan,#build,#security,#how-it-works,#faq,#cta{scroll-margin-top:80px}
+    .fqlp-nav-link{font-size:14px;font-weight:600;color:var(--text-secondary);text-decoration:none;padding:8px 12px;border-radius:8px;transition:color .2s,background .2s;white-space:nowrap}
+    .fqlp-nav-link:hover{color:var(--text);background:var(--card)}
+    .fqlp-nav-right{display:flex;align-items:center;gap:8px}
+    .fqlp-hamburger{display:none;background:none;border:1.5px solid var(--border-strong);border-radius:10px;padding:9px;cursor:pointer;color:var(--text);flex-shrink:0}
+    .fqlp-hamburger svg{width:20px;height:20px;display:block}
+    .fqlp-mobile-menu{display:none}
+    .fqlp-mobile-menu.open{display:flex;flex-direction:column;gap:4px;padding:12px 24px 20px;border-bottom:1px solid var(--border);background:rgba(247,248,246,0.98);backdrop-filter:blur(12px)}
+    [data-theme="dark"] .fqlp-mobile-menu.open{background:rgba(20,24,22,0.98)}
+    .fqlp-mobile-menu a{font-size:15px;font-weight:600;color:var(--text);text-decoration:none;padding:12px 0;border-bottom:1px solid var(--border);transition:color .2s}
+    .fqlp-mobile-menu a:hover{color:var(--accent)}
+    .fqlp-mobile-menu .fqlp-nav-btns{display:flex;gap:8px;padding-top:12px}
+    @media(max-width:980px){.fqlp-nav-links{display:none!important}.fqlp-hamburger{display:block}}
+    @media(min-width:981px){.fqlp-mobile-menu{display:none!important}}
+    .fqlp-hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--green-light);color:var(--green-accent);border:1px solid var(--green-border);font-size:11px;font-weight:700;letter-spacing:1.2px;padding:7px 14px;border-radius:24px;margin-bottom:20px;text-transform:uppercase}
+    .fqlp-hero-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+    .fqlp-metric-tile{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--bg)}
+    .fqlp-metric-label{font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
+    .fqlp-metric-value{font-size:16px;font-weight:800;color:var(--text);margin-top:2px}
+    .fqlp-chart-card{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;background:var(--card)}
+    .fqlp-card-head{display:flex;justify-content:space-between;align-items:center;font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px}
+    .fqlp-card-pill{font-size:10px;color:var(--text-secondary);background:var(--bg);border:1px solid var(--border);padding:3px 8px;border-radius:12px;font-weight:600}
+    .fqlp-bars{display:flex;align-items:flex-end;gap:4px;height:80px;padding:0 4px}
+    .fqlp-bar-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+    .fqlp-bar-pair{display:flex;gap:2px;align-items:flex-end;flex:1;width:100%}
+    .fqlp-bar{flex:1;border-radius:3px;min-height:4px}
+    .fqlp-bar-label{font-size:9px;color:var(--text-tertiary);margin-top:4px;font-weight:500}
+    .fqlp-legend{display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text-secondary);font-weight:600}
+    .fqlp-legend i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle}
+    .fqlp-budget-item{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--card)}
+    .fqlp-budget-head{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px}
+    .fqlp-budget-head span:last-child{color:var(--text-secondary)}
+    .fqlp-progress{height:6px;border-radius:6px;background:var(--progress-bg);overflow:hidden}
+    .fqlp-progress-fill{height:100%;border-radius:6px;transition:width .6s ease}
+    .fqlp-goal-card{border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px;background:linear-gradient(135deg,var(--bg),var(--card))}
+    .fqlp-upcoming{border:1px solid var(--border);border-radius:10px;padding:12px;background:var(--card)}
+    .fqlp-upcoming-head{font-size:10px;text-transform:uppercase;letter-spacing:.6px;color:var(--text-secondary);font-weight:600;margin-bottom:8px}
+    .fqlp-event-item{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border);font-size:12px;color:var(--text);font-weight:500}
+    .fqlp-event-item:last-child{border-bottom:none}
+    .fqlp-event-date{color:var(--text-secondary);font-size:11px}
+    .fqlp-event-amt{font-weight:700}
+    .fqlp-trust-strip{max-width:1200px;margin:0 auto;padding:48px 24px;display:grid;grid-template-columns:repeat(4,1fr);gap:24px;border-bottom:1px solid var(--border)}
+    .fqlp-trust-item{display:flex;gap:12px;align-items:flex-start}
+    .fqlp-trust-item svg{width:20px;height:20px;color:var(--accent);flex-shrink:0;margin-top:2px}
+    .fqlp-trust-item strong{display:block;font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+    .fqlp-trust-item span{font-size:13px;color:var(--text-secondary);line-height:1.5}
+    .fqlp-feature-row{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center;max-width:1200px;margin:0 auto;padding:100px 24px}
+    .fqlp-feature-row.reversed .fqlp-feature-text{order:2}
+    .fqlp-feature-row.reversed .fqlp-feature-visual{order:1}
+    .fqlp-feature-row h2{font-size:40px;font-weight:800;line-height:1.1;letter-spacing:-1.5px;color:var(--text);margin:0 0 16px 0}
+    .fqlp-feature-row h2 em{font-style:italic;color:var(--accent);font-weight:700}
+    .fqlp-feature-row p{font-size:17px;color:var(--text-secondary);line-height:1.6;max-width:460px}
+    .fqlp-visual-card{border-radius:16px;border:1px solid var(--border);background:var(--card);box-shadow:0 24px 60px rgba(0,0,0,0.08);overflow:hidden;position:relative}
+    .fqlp-bal-label{font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+    .fqlp-bal-val{font-size:28px;font-weight:800;color:var(--text);letter-spacing:-.5px}
+    .fqlp-bal-val span{font-size:16px;color:var(--text-secondary);font-weight:500}
+    .fqlp-mini-tx{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:12px}
+    .fqlp-mini-tx:last-child{border-bottom:none}
+    .fqlp-mini-tx-icon{width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0}
+    .fqlp-mini-tx-info{min-width:0;flex:1}
+    .fqlp-mini-tx-name{font-weight:600;color:var(--text);font-size:12px}
+    .fqlp-mini-tx-meta{font-size:10px;color:var(--text-secondary)}
+    .fqlp-mini-tx-amt{font-weight:700;flex-shrink:0;font-size:12px}
+    .fqlp-cat-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+    .fqlp-cat-chip{font-size:10px;font-weight:600;padding:5px 10px;border-radius:20px;border:1px solid var(--border);color:var(--text-secondary);background:var(--bg)}
+    .fqlp-donut{width:120px;height:120px;border-radius:50%;position:relative;flex-shrink:0}
+    .fqlp-donut::after{content:'';position:absolute;inset:22px;background:var(--card);border-radius:50%}
+    .fqlp-donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2}
+    .fqlp-donut-center strong{font-size:16px;font-weight:800;color:var(--text)}
+    .fqlp-donut-center small{font-size:9px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:.5px}
+    .fqlp-insight-cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:14px}
+    .fqlp-insight{border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg)}
+    .fqlp-insight-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--text-secondary);margin-bottom:4px}
+    .fqlp-insight-val{font-size:18px;font-weight:800;color:var(--text)}
+    .fqlp-insight-note{font-size:10px;color:var(--text-secondary);margin-top:2px}
+    .fqlp-plan-band{max-width:1200px;margin:0 auto;padding:100px 24px;background:linear-gradient(135deg,var(--light-green),var(--bg) 50%,var(--amber-light));border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+    .fqlp-plan-inner{display:grid;grid-template-columns:1fr 1fr;gap:64px;align-items:center}
+    .fqlp-plan-inner h2{font-size:40px;font-weight:800;line-height:1.1;letter-spacing:-1.5px;color:var(--text);margin:0 0 16px 0}
+    .fqlp-plan-inner h2 em{font-style:italic;color:var(--accent);font-weight:700}
+    .fqlp-plan-inner p{font-size:17px;color:var(--text-secondary);line-height:1.6;max-width:460px}
+    .fqlp-timeline{position:relative;padding-left:24px}
+    .fqlp-timeline::before{content:'';position:absolute;left:7px;top:8px;bottom:8px;width:2px;background:var(--border-strong);border-radius:2px}
+    .fqlp-timeline-item{position:relative;padding:12px 0 12px 20px;font-size:13px}
+    .fqlp-timeline-item::before{content:'';position:absolute;left:-20px;top:16px;width:10px;height:10px;border-radius:50%;border:2px solid var(--accent);background:var(--card)}
+    .fqlp-timeline-item.income::before{background:var(--green-accent);border-color:var(--green-accent)}
+    .fqlp-timeline-item.expense::before{background:var(--red-accent);border-color:var(--red-accent)}
+    .fqlp-timeline-item.saving::before{background:var(--amber-accent);border-color:var(--amber-accent)}
+    .fqlp-timeline-item.bill::before{background:var(--blue-accent);border-color:var(--blue-accent)}
+    .fqlp-tl-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px}
+    .fqlp-tl-name{font-weight:700;color:var(--text)}
+    .fqlp-tl-amt{font-weight:700}
+    .fqlp-tl-date{font-size:11px;color:var(--text-secondary);font-weight:500}
+    .fqlp-account-card{border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--card);transition:transform .2s,box-shadow .2s}
+    .fqlp-account-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+    .fqlp-account-icon{width:36px;height:36px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;margin-bottom:10px}
+    .fqlp-account-name{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+    .fqlp-account-type{font-size:11px;color:var(--text-secondary);margin-bottom:8px}
+    .fqlp-account-balance{font-size:18px;font-weight:800;color:var(--text)}
+    .fqlp-sub-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)}
+    .fqlp-sub-item:last-child{border-bottom:none}
+    .fqlp-sub-icon{width:36px;height:36px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;flex-shrink:0}
+    .fqlp-sub-info{flex:1;min-width:0}
+    .fqlp-sub-name{font-size:13px;font-weight:600;color:var(--text)}
+    .fqlp-sub-freq{font-size:11px;color:var(--text-secondary)}
+    .fqlp-sub-amt{font-size:14px;font-weight:700;color:var(--text)}
+    .fqlp-sub-total{display:flex;justify-content:space-between;align-items:center;padding:14px 0 0;margin-top:8px;border-top:2px solid var(--border-strong);font-weight:800;font-size:14px;color:var(--text)}
+    .fqlp-ana-bar-group{flex:1;display:flex;flex-direction:column;align-items:center;height:100%}
+    .fqlp-ana-bars-inner{flex:1;display:flex;gap:2px;align-items:flex-end;width:100%}
+    .fqlp-ana-bar{flex:1;border-radius:3px;min-height:3px}
+    .fqlp-ana-bar-label{font-size:9px;color:var(--text-tertiary);margin-top:4px}
+    .fqlp-chat{border:1px solid var(--border);border-radius:16px;padding:20px;background:var(--card);box-shadow:0 24px 60px rgba(0,0,0,0.08)}
+    .fqlp-chat-msg{margin-bottom:12px;max-width:85%}
+    .fqlp-chat-msg.user{margin-left:auto}
+    .fqlp-chat-bubble{padding:10px 14px;border-radius:14px;font-size:13px;line-height:1.5}
+    .fqlp-chat-msg.user .fqlp-chat-bubble{background:var(--text);color:var(--bg);border-bottom-right-radius:4px}
+    .fqlp-chat-msg.ai .fqlp-chat-bubble{background:var(--bg);color:var(--text);border:1px solid var(--border);border-bottom-left-radius:4px}
+    .fqlp-chat-label{font-size:10px;font-weight:600;color:var(--text-secondary);margin-bottom:4px}
+    .fqlp-chat-input{display:flex;gap:8px;margin-top:14px;padding:10px 14px;border:1px solid var(--border);border-radius:12px;background:var(--bg);font-size:13px;color:var(--text-secondary);align-items:center}
+    .fqlp-chat-input span{flex:1}
+    .fqlp-chat-input i{width:28px;height:28px;border-radius:8px;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-style:normal;font-size:14px}
+    .fqlp-tabs-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:24px;justify-content:center}
+    .fqlp-tab-btn{padding:8px 18px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--card);color:var(--text-secondary);transition:all .2s;font-family:inherit}
+    .fqlp-tab-btn.active{background:var(--text);color:var(--bg);border-color:var(--text)}
+    .fqlp-tab-btn:hover:not(.active){background:var(--bg);border-color:var(--border-strong)}
+    .fqlp-tab-panel{display:none;border-radius:16px;border:1px solid var(--border);background:var(--card);box-shadow:0 24px 60px rgba(0,0,0,0.08);overflow:hidden}
+    .fqlp-tab-panel.active{display:block}
+    .fqlp-phones{display:flex;gap:24px;justify-content:center;align-items:flex-start}
+    .fqlp-phone{width:240px;border-radius:24px;border:2px solid var(--border-strong);background:var(--card);box-shadow:0 20px 50px rgba(0,0,0,0.1);overflow:hidden;position:relative;padding-top:24px}
+    .fqlp-phone-notch{width:80px;height:6px;border-radius:4px;background:var(--border-strong);margin:0 auto 12px}
+    .fqlp-phone-screen{padding:12px 14px}
+    .fqlp-phone-title{font-size:11px;font-weight:700;color:var(--text);text-align:center;margin-bottom:8px}
+    .fqlp-phone-content{border-radius:10px;border:1px solid var(--border);padding:10px;background:var(--bg);font-size:11px;color:var(--text-secondary)}
+    .fqlp-faq{max-width:760px;margin:0 auto}
+    .fqlp-faq-item{border-bottom:1px solid var(--border)}
+    .fqlp-faq-q{display:flex;justify-content:space-between;align-items:center;padding:20px 0;cursor:pointer;user-select:none}
+    .fqlp-faq-q h4{font-size:16px;font-weight:700;color:var(--text);margin:0;transition:color .2s}
+    .fqlp-faq-q:hover h4{color:var(--accent)}
+    .fqlp-faq-arrow{width:20px;height:20px;color:var(--text-secondary);transition:transform .3s ease;flex-shrink:0}
+    .fqlp-faq-item.open .fqlp-faq-arrow{transform:rotate(180deg)}
+    .fqlp-faq-a{max-height:0;overflow:hidden;transition:max-height .3s ease,padding .3s ease}
+    .fqlp-faq-item.open .fqlp-faq-a{max-height:300px;padding-bottom:20px}
+    .fqlp-faq-a p{font-size:15px;color:var(--text-secondary);line-height:1.6;margin:0}
+    .fqlp-footer-cols{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;max-width:1200px;margin:0 auto;padding:40px 24px;border-top:1px solid var(--border)}
+    .fqlp-footer-brand{font-size:16px;font-weight:700;color:var(--text);margin-bottom:8px;display:flex;align-items:center;gap:8px}
+    .fqlp-footer-brand img{width:28px;height:28px;border-radius:8px}
+    .fqlp-footer-tagline{font-size:14px;color:var(--text-secondary);line-height:1.5;margin-bottom:16px}
+    .fqlp-footer-col h5{font-size:12px;font-weight:700;color:var(--text);text-transform:uppercase;letter-spacing:1px;margin:0 0 12px 0}
+    .fqlp-footer-col a{display:block;font-size:14px;color:var(--text-secondary);text-decoration:none;padding:4px 0;transition:color .2s}
+    .fqlp-footer-col a:hover{color:var(--text)}
+    .fqlp-footer-bottom{display:flex;justify-content:space-between;align-items:center;max-width:1200px;margin:0 auto;padding:20px 24px;border-top:1px solid var(--border);font-size:13px;color:var(--text-tertiary)}
+    @media(max-width:980px){.fqlp-hero{grid-template-columns:1fr!important;gap:40px!important}.fqlp-hero h1{font-size:36px!important}.fqlp-trust-strip{grid-template-columns:1fr 1fr!important}.fqlp-feature-row{grid-template-columns:1fr!important;gap:40px!important;padding:60px 24px!important}.fqlp-feature-row.reversed .fqlp-feature-text,.fqlp-feature-row.reversed .fqlp-feature-visual{order:unset}.fqlp-plan-inner{grid-template-columns:1fr!important;gap:40px!important}.fqlp-plan-band{padding:60px 24px!important}.fqlp-phones{flex-direction:column;align-items:center}.fqlp-footer-cols{grid-template-columns:1fr 1fr!important;gap:24px!important}.fqlp-hero-metrics{grid-template-columns:1fr 1fr!important}}
+    @media(max-width:600px){.fqlp-trust-strip{grid-template-columns:1fr!important}.fqlp-hero h1{font-size:30px!important}.fqlp-footer-cols{grid-template-columns:1fr!important}.fqlp-phones .fqlp-phone{width:200px!important}}
+    </style>
+
     <!-- Navbar -->
-    <nav class="fqlp-nav">
+    <nav class="fqlp-nav" id="fqlpNav">
       <div class="fqlp-nav-inner">
-        <div class="fqlp-nav-logo">
-          <img src="icon-192.svg" alt="FinanceOS">
-          FinanceOS
+        <a href="#" class="fqlp-nav-logo"><img src="icon-192.svg" alt="FinanceOS">FinanceOS</a>
+        <div class="fqlp-nav-links" id="fqlpNavLinks">
+          <a href="#product" class="fqlp-nav-link">Product</a>
+          <a href="#features" class="fqlp-nav-link">Features</a>
+          <a href="#how-it-works" class="fqlp-nav-link">How it works</a>
+          <a href="#security" class="fqlp-nav-link">Security</a>
+          <a href="#faq" class="fqlp-nav-link">FAQ</a>
         </div>
-        <div class="fqlp-nav-links">
-          <button onclick="showAuthForm()" class="fqlp-nav-btn ghost">Sign In</button>
-          <button onclick="showAuthForm()" class="fqlp-nav-btn primary">Get Started</button>
+        <div class="fqlp-nav-right">
+          <button onclick="showAuthForm()" class="fqlp-nav-btn ghost">Log in</button>
+          <button onclick="showAuthForm()" class="fqlp-nav-btn primary">Get started</button>
+          <button class="fqlp-hamburger" onclick="document.getElementById('fqlpMobileMenu').classList.toggle('open')" aria-label="Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+          </button>
         </div>
       </div>
     </nav>
+    <div class="fqlp-mobile-menu" id="fqlpMobileMenu">
+      <a href="#product" onclick="document.getElementById('fqlpMobileMenu').classList.remove('open')">Product</a>
+      <a href="#features" onclick="document.getElementById('fqlpMobileMenu').classList.remove('open')">Features</a>
+      <a href="#how-it-works" onclick="document.getElementById('fqlpMobileMenu').classList.remove('open')">How it works</a>
+      <a href="#security" onclick="document.getElementById('fqlpMobileMenu').classList.remove('open')">Security</a>
+      <a href="#faq" onclick="document.getElementById('fqlpMobileMenu').classList.remove('open')">FAQ</a>
+      <div class="fqlp-nav-btns">
+        <button onclick="showAuthForm()" class="fqlp-nav-btn ghost" style="flex:1">Log in</button>
+        <button onclick="showAuthForm()" class="fqlp-nav-btn primary" style="flex:1">Get started</button>
+      </div>
+    </div>
 
     <!-- Hero -->
     <section class="fqlp-hero">
       <div class="fqlp-reveal">
-        <p class="fqlp-hero-label">Financial operating system</p>
-        <h1>
-          Know where every<br>
-          naira goes — <em class="fqlp-reveal fqlp-d2">in real time.</em>
-        </h1>
-        <p>
-          Track budgets, hit savings goals, and never miss a bill. Your money, finally organized.
-        </p>
-        <div class="fqlp-hero-btns">
-          <button onclick="showAuthForm()" class="fqlp-btn filled">
-            Get started
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg>
-          </button>
-          <button onclick="continueAsGuest()" class="fqlp-btn outline" id="guestBtnLanding">Try as Guest</button>
+        <div class="fqlp-hero-eyebrow">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/></svg>
+          YOUR MONEY, FINALLY IN ONE CLEAR PICTURE.
         </div>
-        <div class="fqlp-trust">
-          <span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4L7 17M17 7l1.4-1.4"/><circle cx="12" cy="12" r="4"/></svg>
-            Smart AI insights
-          </span>
-          <span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-            Secure sync
-          </span>
-          <span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-            Privacy first
-          </span>
+        <h1>Know your money.<br>Plan what's next.<br><em class="fqlp-reveal fqlp-d2">Build what matters.</em></h1>
+        <p>FinanceOS brings your accounts, spending, budgets, subscriptions, savings goals, and upcoming financial plans into one simple view.</p>
+        <div class="fqlp-hero-btns">
+          <button onclick="showAuthForm()" class="fqlp-btn filled">Get started <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg></button>
+          <a href="#how-it-works" class="fqlp-btn outline">See how it works</a>
         </div>
       </div>
-
       <div class="fqlp-mockup-wrap fqlp-reveal fqlp-d1">
         <div class="fqlp-mockup">
           <div class="fqlp-mockup-header">
-            <div style="display:flex;align-items:center;gap:10px;">
-              <div class="fqlp-mockup-dots">
-                <span style="background:var(--danger);"></span>
-                <span style="background:var(--warning);"></span>
-                <span style="background:var(--success);"></span>
-              </div>
-              <span class="fqlp-mockup-title">
-                <img src="icon-192.svg" style="width:18px;height:18px;border-radius:4px;">
-                Dashboard
-              </span>
+            <div style="display:flex;align-items:center;gap:10px">
+              <div class="fqlp-mockup-dots"><span style="background:var(--danger)"></span><span style="background:var(--warning)"></span><span style="background:var(--success)"></span></div>
+              <span class="fqlp-mockup-title"><img src="icon-192.svg" style="width:18px;height:18px;border-radius:4px">Dashboard</span>
             </div>
             <div class="fqlp-mockup-live"><i></i> Live</div>
           </div>
           <div class="fqlp-mockup-body">
-            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;">
-              <div>
-                <div class="fqlp-mockup-balance-label">Total Balance</div>
-                <div class="fqlp-mockup-balance-val">₦1,245,000<span>.00</span></div>
-                <div style="display:flex;align-items:center;gap:6px;margin-top:6px;">
-                  <span style="background:var(--green-light);color:var(--green-accent);font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;">+12.4%</span>
-                  <span style="font-size:12px;color:var(--text-secondary);">vs last month</span>
-                </div>
-              </div>
+            <div class="fqlp-hero-metrics">
+              <div class="fqlp-metric-tile"><div class="fqlp-metric-label">Total Balance</div><div class="fqlp-metric-value">&#8358;1,240,500</div></div>
+              <div class="fqlp-metric-tile"><div class="fqlp-metric-label" style="color:var(--green-accent)">Income</div><div class="fqlp-metric-value" style="color:var(--green-accent)">&#8358;450,000</div></div>
+              <div class="fqlp-metric-tile"><div class="fqlp-metric-label" style="color:var(--red-accent)">Expenses</div><div class="fqlp-metric-value" style="color:var(--red-accent)">&#8358;286,400</div></div>
+              <div class="fqlp-metric-tile"><div class="fqlp-metric-label" style="color:var(--amber-accent)">Savings</div><div class="fqlp-metric-value" style="color:var(--amber-accent)">&#8358;163,600</div></div>
             </div>
-            <div class="fqlp-mockup-spark">
-              <i style="height:35%;opacity:0.35;"></i>
-              <i style="height:55%;opacity:0.45;"></i>
-              <i style="height:42%;opacity:0.30;"></i>
-              <i style="height:68%;opacity:0.50;"></i>
-              <i style="height:52%;opacity:0.40;"></i>
-              <i style="height:78%;opacity:0.55;"></i>
-              <i style="height:65%;opacity:0.48;"></i>
-              <i style="height:88%;opacity:0.60;"></i>
-              <i style="height:72%;opacity:0.50;"></i>
-              <i style="height:82%;opacity:0.58;"></i>
-              <i style="height:95%;opacity:0.70;"></i>
-              <i style="height:85%;opacity:0.62;"></i>
+            <div class="fqlp-chart-card">
+              <div class="fqlp-card-head"><span>Income vs Expenses</span><span class="fqlp-card-pill">This month</span></div>
+              <div class="fqlp-bars">
+                <div class="fqlp-bar-col"><div class="fqlp-bar-pair"><div class="fqlp-bar" style="height:50%;background:var(--green-accent)"></div><div class="fqlp-bar" style="height:35%;background:var(--red-accent)"></div></div><span class="fqlp-bar-label">Apr</span></div>
+                <div class="fqlp-bar-col"><div class="fqlp-bar-pair"><div class="fqlp-bar" style="height:65%;background:var(--green-accent)"></div><div class="fqlp-bar" style="height:48%;background:var(--red-accent)"></div></div><span class="fqlp-bar-label">May</span></div>
+                <div class="fqlp-bar-col"><div class="fqlp-bar-pair"><div class="fqlp-bar" style="height:55%;background:var(--green-accent)"></div><div class="fqlp-bar" style="height:42%;background:var(--red-accent)"></div></div><span class="fqlp-bar-label">Jun</span></div>
+                <div class="fqlp-bar-col"><div class="fqlp-bar-pair"><div class="fqlp-bar" style="height:72%;background:var(--green-accent)"></div><div class="fqlp-bar" style="height:55%;background:var(--red-accent)"></div></div><span class="fqlp-bar-label">Jul</span></div>
+                <div class="fqlp-bar-col"><div class="fqlp-bar-pair"><div class="fqlp-bar" style="height:80%;background:var(--green-accent)"></div><div class="fqlp-bar" style="height:50%;background:var(--red-accent)"></div></div><span class="fqlp-bar-label">Aug</span></div>
+                <div class="fqlp-bar-col"><div class="fqlp-bar-pair"><div class="fqlp-bar" style="height:88%;background:var(--green-accent)"></div><div class="fqlp-bar" style="height:58%;background:var(--red-accent)"></div></div><span class="fqlp-bar-label">Sep</span></div>
+              </div>
+              <div class="fqlp-legend"><span><i style="background:var(--green-accent)"></i>Income</span><span><i style="background:var(--red-accent)"></i>Expenses</span></div>
             </div>
-            <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:16px;">
-              <div style="font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:10px;font-weight:500;">Recent activity</div>
-              <div class="fqlp-mockup-tx">
-                <div class="fqlp-mockup-tx-icon up">↓</div>
-                <div style="min-width:0;">
-                  <div class="fqlp-mockup-tx-name">Salary deposit</div>
-                  <div class="fqlp-mockup-tx-meta">Bank transfer · just now</div>
-                </div>
-                <div class="fqlp-mockup-tx-amt" style="color:var(--green-accent);">+₦450,000</div>
-              </div>
-              <div class="fqlp-mockup-tx">
-                <div class="fqlp-mockup-tx-icon down">↑</div>
-                <div style="min-width:0;">
-                  <div class="fqlp-mockup-tx-name">Grocery run</div>
-                  <div class="fqlp-mockup-tx-meta">Card · 12m ago</div>
-                </div>
-                <div class="fqlp-mockup-tx-amt" style="color:var(--red-accent);">−₦24,500</div>
-              </div>
-              <div class="fqlp-mockup-tx">
-                <div class="fqlp-mockup-tx-icon down">↑</div>
-                <div style="min-width:0;">
-                  <div class="fqlp-mockup-tx-name">Netflix subscription</div>
-                  <div class="fqlp-mockup-tx-meta">Card · 41m ago</div>
-                </div>
-                <div class="fqlp-mockup-tx-amt" style="color:var(--red-accent);">−₦5,600</div>
-              </div>
+            <div style="display:grid;gap:8px;margin-bottom:12px">
+              <div class="fqlp-budget-item"><div class="fqlp-budget-head"><span>Food</span><span>&#8358;45K / &#8358;70K</span></div><div class="fqlp-progress"><div class="fqlp-progress-fill" style="width:64%;background:var(--green-accent)"></div></div></div>
+              <div class="fqlp-budget-item"><div class="fqlp-budget-head"><span>Transport</span><span>&#8358;28K / &#8358;40K</span></div><div class="fqlp-progress"><div class="fqlp-progress-fill" style="width:70%;background:var(--amber-accent)"></div></div></div>
+              <div class="fqlp-budget-item"><div class="fqlp-budget-head"><span>Entertainment</span><span>&#8358;12K / &#8358;25K</span></div><div class="fqlp-progress"><div class="fqlp-progress-fill" style="width:48%;background:var(--green-accent)"></div></div></div>
+            </div>
+            <div class="fqlp-goal-card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><span style="font-weight:700;font-size:13px;color:var(--text)">Emergency Fund</span><span style="font-size:12px;color:var(--text-secondary)">&#8358;320K / &#8358;500K</span></div>
+              <div class="fqlp-progress" style="height:8px"><div class="fqlp-progress-fill" style="width:64%;background:var(--amber-accent)"></div></div>
+              <div style="font-size:11px;color:var(--text-secondary);margin-top:6px">64% saved · added &#8358;50K this month</div>
+            </div>
+            <div class="fqlp-upcoming">
+              <div class="fqlp-upcoming-head">Upcoming</div>
+              <div class="fqlp-event-item"><span>Rent</span><span class="fqlp-event-date">Sep 15</span><span class="fqlp-event-amt">&#8358;150K</span></div>
+              <div class="fqlp-event-item"><span>Netflix</span><span class="fqlp-event-date">Sep 18</span><span class="fqlp-event-amt">&#8358;4.5K</span></div>
+              <div class="fqlp-event-item"><span>Savings</span><span class="fqlp-event-date">Sep 20</span><span class="fqlp-event-amt">&#8358;50K</span></div>
             </div>
           </div>
         </div>
-        <div class="fqlp-chip" style="top:-12px;left:-20px;">
-          <p>Budget left</p>
-          <p style="color:var(--green-accent);">₦128K</p>
+        <div class="fqlp-chip" style="top:-12px;left:-20px"><p>Budget left</p><p style="color:var(--green-accent)">&#8358;163.6K</p></div>
+        <div class="fqlp-chip" style="bottom:-14px;right:-16px"><p>Savings rate</p><p style="color:var(--amber-accent)">24%</p></div>
+      </div>
+    </section>
+
+    <!-- Trust Strip -->
+    <div class="fqlp-trust-strip fqlp-reveal">
+      <div class="fqlp-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg><div><strong>One place for your money</strong><span>Every account, wallet, and balance in a single view.</span></div></div>
+      <div class="fqlp-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><div><strong>Built around your financial goals</strong><span>Budgets, savings, and plans that keep you on track.</span></div></div>
+      <div class="fqlp-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><div><strong>Private by design</strong><span>Your financial data stays encrypted and under your control.</span></div></div>
+      <div class="fqlp-trust-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg><div><strong>Works across your financial life</strong><span>From daily spending to long-term wealth building.</span></div></div>
+    </div>
+
+    <!-- Problem -->
+    <section class="fqlp-feature-row" id="product">
+      <div class="fqlp-feature-text fqlp-reveal">
+        <p class="fqlp-section-label">Product</p>
+        <h2>Your money is everywhere. Your financial picture shouldn't be.</h2>
+        <p>Your salary comes into one account. Your subscriptions leave another. Savings sit somewhere else. Bills arrive at different times, and small expenses add up before you notice. FinanceOS brings it all together so you can see the complete picture.</p>
+      </div>
+      <div class="fqlp-feature-visual fqlp-reveal fqlp-d1" style="position:relative">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--text)"><div style="width:32px;height:32px;border-radius:8px;background:var(--light-green);display:flex;align-items:center;justify-content:center">&#127974;</div>Bank account</div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--text)"><div style="width:32px;height:32px;border-radius:8px;background:var(--amber-light);display:flex;align-items:center;justify-content:center">&#128179;</div>Wallet</div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--text)"><div style="width:32px;height:32px;border-radius:8px;background:var(--violet-light);display:flex;align-items:center;justify-content:center">&#128260;</div>Subscriptions</div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--text)"><div style="width:32px;height:32px;border-radius:8px;background:var(--red-light);display:flex;align-items:center;justify-content:center">&#128203;</div>Bills</div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--text)"><div style="width:32px;height:32px;border-radius:8px;background:var(--green-light);display:flex;align-items:center;justify-content:center">&#128059;</div>Savings</div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card);display:flex;align-items:center;gap:10px;font-size:13px;font-weight:600;color:var(--text)"><div style="width:32px;height:32px;border-radius:8px;background:var(--blue-light);display:flex;align-items:center;justify-content:center">&#127919;</div>Goals</div>
         </div>
-        <div class="fqlp-chip" style="bottom:-14px;right:-16px;">
-          <p>Savings rate</p>
-          <p style="color:var(--amber-accent);">24%</p>
+        <div style="text-align:center;margin-top:16px"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="19 12 12 19 5 12"/></svg></div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px;padding:16px;border:2px solid var(--accent);border-radius:14px;background:var(--light-green);font-weight:800;font-size:15px;color:var(--accent)"><img src="icon-192.svg" style="width:24px;height:24px;border-radius:6px">FinanceOS</div>
+      </div>
+    </section>
+
+    <!-- See -->
+    <section class="fqlp-feature-row reversed" id="features" style="border-top:1px solid var(--border)">
+      <div class="fqlp-feature-text fqlp-reveal">
+        <p class="fqlp-section-label">See</p>
+        <h2>See your entire financial life at a glance.</h2>
+        <p>Know how much you have, where it is, what came in, and what went out without piecing together information from different places.</p>
+      </div>
+      <div class="fqlp-feature-visual fqlp-reveal fqlp-d1">
+        <div class="fqlp-visual-card" style="padding:20px">
+          <div class="fqlp-bal-label">Total Balance</div>
+          <div class="fqlp-bal-val">&#8358;1,240,500<span>.00</span></div>
+          <div style="display:flex;gap:6px;margin-top:10px;margin-bottom:16px"><span style="background:var(--green-light);color:var(--green-accent);font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px">+12.4%</span><span style="font-size:11px;color:var(--text-secondary);display:flex;align-items:center">vs last month</span></div>
+          <div style="display:flex;gap:8px;margin-bottom:16px">
+            <div style="flex:1;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg)"><div style="font-size:9px;color:var(--green-accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Income</div><div style="font-size:14px;font-weight:800;color:var(--text)">&#8358;450,000</div></div>
+            <div style="flex:1;border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg)"><div style="font-size:9px;color:var(--red-accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Expenses</div><div style="font-size:14px;font-weight:800;color:var(--text)">&#8358;286,400</div></div>
+          </div>
+          <div style="font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;font-weight:600;margin-bottom:8px">Recent Transactions</div>
+          <div class="fqlp-mini-tx"><div class="fqlp-mini-tx-icon" style="background:var(--green-light);color:var(--green-accent)">&#8595;</div><div class="fqlp-mini-tx-info"><div class="fqlp-mini-tx-name">Salary deposit</div><div class="fqlp-mini-tx-meta">Bank transfer · today</div></div><div class="fqlp-mini-tx-amt" style="color:var(--green-accent)">+&#8358;450,000</div></div>
+          <div class="fqlp-mini-tx"><div class="fqlp-mini-tx-icon" style="background:var(--red-light);color:var(--red-accent)">&#8593;</div><div class="fqlp-mini-tx-info"><div class="fqlp-mini-tx-name">Grocery run</div><div class="fqlp-mini-tx-meta">Card · 2h ago</div></div><div class="fqlp-mini-tx-amt" style="color:var(--red-accent)">−&#8358;24,500</div></div>
+          <div class="fqlp-mini-tx"><div class="fqlp-mini-tx-icon" style="background:var(--red-light);color:var(--red-accent)">&#8593;</div><div class="fqlp-mini-tx-info"><div class="fqlp-mini-tx-name">Netflix</div><div class="fqlp-mini-tx-meta">Card · 5h ago</div></div><div class="fqlp-mini-tx-amt" style="color:var(--red-accent)">−&#8358;4,500</div></div>
+          <div class="fqlp-cat-chips"><span class="fqlp-cat-chip">Food &amp; Dining</span><span class="fqlp-cat-chip">Transport</span><span class="fqlp-cat-chip">Entertainment</span><span class="fqlp-cat-chip">Utilities</span><span class="fqlp-cat-chip">Health</span></div>
         </div>
       </div>
     </section>
 
-    <!-- Marquee -->
-    <div class="fqlp-marquee">
-      <div class="fqlp-marquee-track">
-        <span>Budget Tracking</span><span>·</span>
-        <span>Savings Goals</span><span>·</span>
-        <span>Bill Calendar</span><span>·</span>
-        <span>Multi-Account</span><span>·</span>
-        <span>Auto-Reports</span><span>·</span>
-        <span>Bank-Grade Security</span><span>·</span>
-        <span>Expense Analytics</span><span>·</span>
-        <span>PIN Protection</span><span>·</span>
-        <span>Budget Tracking</span><span>·</span>
-        <span>Savings Goals</span><span>·</span>
-        <span>Bill Calendar</span><span>·</span>
-        <span>Multi-Account</span><span>·</span>
-        <span>Auto-Reports</span><span>·</span>
-        <span>Bank-Grade Security</span><span>·</span>
-        <span>Expense Analytics</span><span>·</span>
-        <span>PIN Protection</span><span>·</span>
+    <!-- Understand -->
+    <section class="fqlp-feature-row" style="border-top:1px solid var(--border)">
+      <div class="fqlp-feature-text fqlp-reveal">
+        <p class="fqlp-section-label">Understand</p>
+        <h2>Turn transactions into understanding.</h2>
+        <p>Tracking your money is only useful when it helps you make better decisions. FinanceOS turns your financial activity into clear patterns and insights.</p>
+      </div>
+      <div class="fqlp-feature-visual fqlp-reveal fqlp-d1">
+        <div class="fqlp-visual-card" style="padding:20px">
+          <div style="display:flex;gap:20px;align-items:flex-start">
+            <div style="flex:1"><div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Income vs Expenses</div>
+              <div style="display:flex;align-items:flex-end;gap:5px;height:70px">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end"><div style="width:100%;height:55%;background:var(--green-accent);border-radius:3px"></div><div style="width:100%;height:35%;background:var(--red-accent);border-radius:3px;margin-top:2px"></div><span style="font-size:8px;color:var(--text-tertiary);margin-top:3px">Jul</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end"><div style="width:100%;height:65%;background:var(--green-accent);border-radius:3px"></div><div style="width:100%;height:42%;background:var(--red-accent);border-radius:3px;margin-top:2px"></div><span style="font-size:8px;color:var(--text-tertiary);margin-top:3px">Aug</span></div>
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end"><div style="width:100%;height:80%;background:var(--green-accent);border-radius:3px"></div><div style="width:100%;height:50%;background:var(--red-accent);border-radius:3px;margin-top:2px"></div><span style="font-size:8px;color:var(--text-tertiary);margin-top:3px">Sep</span></div>
+              </div>
+            </div>
+            <div style="flex-shrink:0"><div class="fqlp-donut" style="background:conic-gradient(var(--green-accent) 0 38%,var(--amber-accent) 38% 62%,var(--blue-accent) 62% 82%,var(--red-accent) 82% 100%)"><div class="fqlp-donut-center"><strong>&#8358;286K</strong><small>Spent</small></div></div></div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap">
+            <span style="font-size:10px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:4px"><i style="width:8px;height:8px;border-radius:2px;background:var(--green-accent);display:inline-block"></i>Food 38%</span>
+            <span style="font-size:10px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:4px"><i style="width:8px;height:8px;border-radius:2px;background:var(--amber-accent);display:inline-block"></i>Transport 24%</span>
+            <span style="font-size:10px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:4px"><i style="width:8px;height:8px;border-radius:2px;background:var(--blue-accent);display:inline-block"></i>Bills 20%</span>
+            <span style="font-size:10px;font-weight:600;color:var(--text-secondary);display:flex;align-items:center;gap:4px"><i style="width:8px;height:8px;border-radius:2px;background:var(--red-accent);display:inline-block"></i>Other 18%</span>
+          </div>
+          <div class="fqlp-insight-cards">
+            <div class="fqlp-insight"><div class="fqlp-insight-label">Savings Rate</div><div class="fqlp-insight-val" style="color:var(--green-accent)">36.3%</div><div class="fqlp-insight-note">↑ 4.2% vs last month</div></div>
+            <div class="fqlp-insight"><div class="fqlp-insight-label">Daily Spend</div><div class="fqlp-insight-val">&#8358;9,547</div><div class="fqlp-insight-note">Below your &#8358;12K target</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Plan (highlight) -->
+    <div class="fqlp-plan-band" id="plan">
+      <div class="fqlp-plan-inner">
+        <div class="fqlp-feature-text fqlp-reveal">
+          <p class="fqlp-section-label">Plan</p>
+          <h2>Don't just track what happened. <em>Plan what's next.</em></h2>
+          <p>FinanceOS helps you see upcoming bills, subscriptions, recurring income, savings contributions, and other financial events before they happen.</p>
+        </div>
+        <div class="fqlp-feature-visual fqlp-reveal fqlp-d1">
+          <div class="fqlp-visual-card" style="padding:20px">
+            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:14px">September 2026</div>
+            <div class="fqlp-timeline">
+              <div class="fqlp-timeline-item income"><div class="fqlp-tl-head"><span class="fqlp-tl-name">Salary</span><span class="fqlp-tl-amt" style="color:var(--green-accent)">+&#8358;450,000</span></div><div class="fqlp-tl-date">Sep 1 · Monthly</div></div>
+              <div class="fqlp-timeline-item expense"><div class="fqlp-tl-head"><span class="fqlp-tl-name">Rent</span><span class="fqlp-tl-amt" style="color:var(--red-accent)">−&#8358;150,000</span></div><div class="fqlp-tl-date">Sep 15 · Monthly</div></div>
+              <div class="fqlp-timeline-item bill"><div class="fqlp-tl-head"><span class="fqlp-tl-name">Netflix</span><span class="fqlp-tl-amt" style="color:var(--red-accent)">−&#8358;4,500</span></div><div class="fqlp-tl-date">Sep 18 · Monthly</div></div>
+              <div class="fqlp-timeline-item bill"><div class="fqlp-tl-head"><span class="fqlp-tl-name">Internet</span><span class="fqlp-tl-amt" style="color:var(--red-accent)">−&#8358;20,000</span></div><div class="fqlp-tl-date">Sep 20 · Monthly</div></div>
+              <div class="fqlp-timeline-item saving"><div class="fqlp-tl-head"><span class="fqlp-tl-name">Emergency Fund</span><span class="fqlp-tl-amt" style="color:var(--amber-accent)">−&#8358;50,000</span></div><div class="fqlp-tl-date">Sep 25 · Monthly</div></div>
+              <div class="fqlp-timeline-item income"><div class="fqlp-tl-head"><span class="fqlp-tl-name">Side Project</span><span class="fqlp-tl-amt" style="color:var(--green-accent)">+&#8358;85,000</span></div><div class="fqlp-tl-date">Sep 28 · Monthly</div></div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
 
-    <!-- Stats -->
-    <section class="fqlp-stats" id="fqlpStats">
-      <div class="fqlp-stat-cell fqlp-reveal">
-        <div class="fqlp-stat-label">Track everything</div>
-        <div class="fqlp-stat-num" data-count="5"><span class="accent">+</span></div>
-        <div class="fqlp-stat-note">financial areas in one app</div>
+    <!-- Build -->
+    <section class="fqlp-feature-row reversed" id="build" style="border-top:1px solid var(--border)">
+      <div class="fqlp-feature-text fqlp-reveal">
+        <p class="fqlp-section-label">Build</p>
+        <h2>Give your money somewhere to go.</h2>
+        <p>Set goals, create budgets, track your progress, and turn your income into something bigger than a monthly balance.</p>
       </div>
-      <div class="fqlp-stat-cell fqlp-reveal fqlp-d1">
-        <div class="fqlp-stat-label">Multiple currencies</div>
-        <div class="fqlp-stat-num" data-count="8"><span class="accent"></span></div>
-        <div class="fqlp-stat-note">supported out of the box</div>
-      </div>
-      <div class="fqlp-stat-cell fqlp-reveal fqlp-d2">
-        <div class="fqlp-stat-label">100% private</div>
-        <div class="fqlp-stat-num" data-count="100"><span class="accent">%</span></div>
-        <div class="fqlp-stat-note">data stored on your device</div>
-      </div>
-      <div class="fqlp-stat-cell fqlp-reveal fqlp-d3">
-        <div class="fqlp-stat-label">Customizable dashboard</div>
-        <div class="fqlp-stat-num" data-count="9"><span class="accent"> widgets</span></div>
-        <div class="fqlp-stat-note">drag to arrange your dashboard</div>
-      </div>
-    </section>
-
-    <!-- Features -->
-    <section class="fqlp-section">
-      <div class="fqlp-reveal">
-        <p class="fqlp-section-label">Features</p>
-        <h2>
-          Everything you need to<br>
-          master your money.
-        </h2>
-        <p class="fqlp-section-sub">
-          No spreadsheets. No guesswork. Just a clear picture of your money, your goals, and your progress.
-        </p>
-      </div>
-      <div class="fqlp-features">
-        <div class="fqlp-feature fqlp-reveal fqlp-d1">
-          <div class="fqlp-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
-          </div>
-          <h3>Smart Budgets</h3>
-          <p>Set monthly limits for every spending category. Get instant alerts when you are close to overspending.</p>
+      <div class="fqlp-feature-visual fqlp-reveal fqlp-d1">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+          <div style="border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--card)"><div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Savings Goal</div><div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:4px">Emergency Fund</div><div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">&#8358;320K of &#8358;500K</div><div class="fqlp-progress" style="height:8px;margin-bottom:6px"><div class="fqlp-progress-fill" style="width:64%;background:var(--amber-accent)"></div></div><div style="font-size:11px;font-weight:700;color:var(--amber-accent)">64%</div></div>
+          <div style="border:1px solid var(--border);border-radius:12px;padding:16px;background:var(--card)"><div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px">Monthly Budget</div><div style="font-size:15px;font-weight:800;color:var(--text);margin-bottom:4px">&#8358;350,000</div><div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">&#8358;286K spent · &#8358;63.6K left</div><div class="fqlp-progress" style="height:8px;margin-bottom:6px"><div class="fqlp-progress-fill" style="width:81.7%;background:var(--green-accent)"></div></div><div style="font-size:11px;font-weight:700;color:var(--green-accent)">81.7% used</div></div>
         </div>
-        <div class="fqlp-feature fqlp-reveal fqlp-d2">
-          <div class="fqlp-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-          </div>
-          <h3>Savings Goals</h3>
-          <p>Create goals for anything — rent, a car, an emergency fund. Track contributions and watch your progress grow.</p>
-        </div>
-        <div class="fqlp-feature fqlp-reveal fqlp-d3">
-          <div class="fqlp-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-          </div>
-          <h3>Bill Calendar</h3>
-          <p>See all your bills, income, and subscriptions on one calendar. Never miss a due date again.</p>
-        </div>
-        <div class="fqlp-feature fqlp-reveal fqlp-d1">
-          <div class="fqlp-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>
-          </div>
-          <h3>Multi-Account</h3>
-          <p>Track multiple bank accounts, cash, and mobile wallets in one place. Transfers between accounts included.</p>
-        </div>
-        <div class="fqlp-feature fqlp-reveal fqlp-d2">
-          <div class="fqlp-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
-          </div>
-          <h3>Auto-Reports</h3>
-          <p>Monthly breakdowns, spending trends, and income reports — generated automatically from your transactions.</p>
-        </div>
-        <div class="fqlp-feature fqlp-reveal fqlp-d3">
-          <div class="fqlp-feature-icon">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-          </div>
-          <h3>Bank-Grade Security</h3>
-          <p>PIN lock, encrypted cloud sync, and your data stays yours. Export anytime. No tracking, no ads.</p>
+        <div style="border:1px solid var(--border);border-radius:12px;padding:14px;background:var(--card);margin-top:12px">
+          <div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Budget Breakdown</div>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><div style="flex:1;height:6px;border-radius:6px;background:var(--progress-bg);overflow:hidden"><div style="width:64%;height:100%;border-radius:6px;background:var(--accent)"></div></div><span style="font-size:10px;color:var(--text-secondary);min-width:40px;text-align:right">Food</span></div>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><div style="flex:1;height:6px;border-radius:6px;background:var(--progress-bg);overflow:hidden"><div style="width:70%;height:100%;border-radius:6px;background:var(--amber-accent)"></div></div><span style="font-size:10px;color:var(--text-secondary);min-width:40px;text-align:right">Transport</span></div>
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:6px"><div style="flex:1;height:6px;border-radius:6px;background:var(--progress-bg);overflow:hidden"><div style="width:48%;height:100%;border-radius:6px;background:var(--accent)"></div></div><span style="font-size:10px;color:var(--text-secondary);min-width:40px;text-align:right">Fun</span></div>
+          <div style="display:flex;gap:6px;align-items:center"><div style="flex:1;height:6px;border-radius:6px;background:var(--progress-bg);overflow:hidden"><div style="width:85%;height:100%;border-radius:6px;background:var(--red-accent)"></div></div><span style="font-size:10px;color:var(--text-secondary);min-width:40px;text-align:right">Bills</span></div>
         </div>
       </div>
     </section>
 
-    <!-- Steps -->
-    <section class="fqlp-section" style="border-top:1px solid var(--border);">
-      <div class="fqlp-reveal">
-        <p class="fqlp-section-label">How it works</p>
-        <h2>
-          Get started in under<br>
-          <em class="fqlp-reveal fqlp-d2">60 seconds.</em>
-        </h2>
+    <!-- Accounts -->
+    <section class="fqlp-feature-row" style="border-top:1px solid var(--border)">
+      <div class="fqlp-feature-text fqlp-reveal">
+        <p class="fqlp-section-label">Accounts</p>
+        <h2>All your accounts. One financial picture.</h2>
+        <p>Keep track of your bank accounts, wallets, and other sources of money without losing sight of the bigger picture.</p>
       </div>
-      <div class="fqlp-steps">
-        <div class="fqlp-step fqlp-reveal fqlp-d1">
-          <div class="fqlp-step-num">01</div>
-          <h3>Create your account</h3>
-          <p>Sign up with Google or email. Your data syncs securely to the cloud so you never lose it.</p>
+      <div class="fqlp-feature-visual fqlp-reveal fqlp-d1">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fqlp-account-card"><div class="fqlp-account-icon" style="background:var(--green-light);color:var(--green-accent)">GT</div><div class="fqlp-account-name">GTBank</div><div class="fqlp-account-type">Savings Account</div><div class="fqlp-account-balance">&#8358;850,000</div></div>
+          <div class="fqlp-account-card"><div class="fqlp-account-icon" style="background:var(--blue-light);color:var(--blue-accent)">AC</div><div class="fqlp-account-name">Access Bank</div><div class="fqlp-account-type">Current Account</div><div class="fqlp-account-balance">&#8358;240,000</div></div>
+          <div class="fqlp-account-card"><div class="fqlp-account-icon" style="background:var(--violet-light);color:var(--violet-accent)">$</div><div class="fqlp-account-name">Dollar Account</div><div class="fqlp-account-type">Foreign Currency</div><div class="fqlp-account-balance">$1,250</div></div>
+          <div class="fqlp-account-card"><div class="fqlp-account-icon" style="background:var(--amber-light);color:var(--amber-accent)">&#8358;</div><div class="fqlp-account-name">Cash</div><div class="fqlp-account-type">Physical Cash</div><div class="fqlp-account-balance">&#8358;35,000</div></div>
         </div>
-        <div class="fqlp-step fqlp-reveal fqlp-d2">
-          <div class="fqlp-step-num">02</div>
-          <h3>Add your accounts</h3>
-          <p>Set up your bank accounts, cash, and mobile money wallets. Add your starting balances.</p>
+      </div>
+    </section>
+
+    <!-- Subscriptions -->
+    <section class="fqlp-feature-row reversed" style="border-top:1px solid var(--border)">
+      <div class="fqlp-feature-text fqlp-reveal">
+        <p class="fqlp-section-label">Subscriptions</p>
+        <h2>Know what your money is already committed to.</h2>
+        <p>Recurring expenses can quietly consume your income. FinanceOS helps you see your subscriptions and recurring payments in one place.</p>
+      </div>
+      <div class="fqlp-feature-visual fqlp-reveal fqlp-d1">
+        <div class="fqlp-visual-card" style="padding:20px">
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Active Subscriptions</div>
+          <div class="fqlp-sub-item"><div class="fqlp-sub-icon" style="background:#E50914">N</div><div class="fqlp-sub-info"><div class="fqlp-sub-name">Netflix</div><div class="fqlp-sub-freq">Monthly · Premium</div></div><div class="fqlp-sub-amt">&#8358;4,500</div></div>
+          <div class="fqlp-sub-item"><div class="fqlp-sub-icon" style="background:#1DB954">S</div><div class="fqlp-sub-info"><div class="fqlp-sub-name">Spotify</div><div class="fqlp-sub-freq">Monthly · Family</div></div><div class="fqlp-sub-amt">&#8358;3,500</div></div>
+          <div class="fqlp-sub-item"><div class="fqlp-sub-icon" style="background:var(--blue-accent)">W</div><div class="fqlp-sub-info"><div class="fqlp-sub-name">Internet</div><div class="fqlp-sub-freq">Monthly · Swift</div></div><div class="fqlp-sub-amt">&#8358;20,000</div></div>
+          <div class="fqlp-sub-item"><div class="fqlp-sub-icon" style="background:var(--green-accent)">G</div><div class="fqlp-sub-info"><div class="fqlp-sub-name">Gym</div><div class="fqlp-sub-freq">Monthly · Fitness First</div></div><div class="fqlp-sub-amt">&#8358;15,000</div></div>
+          <div class="fqlp-sub-total"><span>Monthly Total</span><span style="color:var(--red-accent)">&#8358;43,000</span></div>
         </div>
-        <div class="fqlp-step fqlp-reveal fqlp-d3">
-          <div class="fqlp-step-num">03</div>
-          <h3>Track everything</h3>
-          <p>Log transactions, watch your budgets, and see your wealth grow week by week.</p>
+      </div>
+    </section>
+
+    <!-- Analytics -->
+    <section class="fqlp-feature-row" style="border-top:1px solid var(--border)">
+      <div class="fqlp-feature-text fqlp-reveal">
+        <p class="fqlp-section-label">Analytics</p>
+        <h2>Your money has patterns. FinanceOS helps you see them.</h2>
+        <p>Visualize your income trends, expense breakdowns, savings rate, and get actionable insights from your financial data.</p>
+      </div>
+      <div class="fqlp-feature-visual fqlp-reveal fqlp-d1">
+        <div class="fqlp-visual-card" style="padding:20px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
+            <div style="border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg)"><div style="font-size:9px;color:var(--green-accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Income</div><div style="font-size:16px;font-weight:800;color:var(--text)">&#8358;535K</div><div style="font-size:9px;color:var(--green-accent)">↑ 8.3%</div></div>
+            <div style="border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg)"><div style="font-size:9px;color:var(--red-accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Expenses</div><div style="font-size:16px;font-weight:800;color:var(--text)">&#8358;329K</div><div style="font-size:9px;color:var(--red-accent)">↑ 5.1%</div></div>
+            <div style="border:1px solid var(--border);border-radius:8px;padding:10px;background:var(--bg)"><div style="font-size:9px;color:var(--amber-accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Savings</div><div style="font-size:16px;font-weight:800;color:var(--text)">38.3%</div><div style="font-size:9px;color:var(--green-accent)">↑ 2.1%</div></div>
+          </div>
+          <div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Monthly Trend</div>
+          <div style="display:flex;align-items:flex-end;gap:6px;height:100px">
+            <div class="fqlp-ana-bar-group"><div class="fqlp-ana-bars-inner"><div class="fqlp-ana-bar" style="height:45%;background:var(--green-accent)"></div><div class="fqlp-ana-bar" style="height:35%;background:var(--red-accent)"></div></div><span class="fqlp-ana-bar-label">May</span></div>
+            <div class="fqlp-ana-bar-group"><div class="fqlp-ana-bars-inner"><div class="fqlp-ana-bar" style="height:55%;background:var(--green-accent)"></div><div class="fqlp-ana-bar" style="height:40%;background:var(--red-accent)"></div></div><span class="fqlp-ana-bar-label">Jun</span></div>
+            <div class="fqlp-ana-bar-group"><div class="fqlp-ana-bars-inner"><div class="fqlp-ana-bar" style="height:60%;background:var(--green-accent)"></div><div class="fqlp-ana-bar" style="height:45%;background:var(--red-accent)"></div></div><span class="fqlp-ana-bar-label">Jul</span></div>
+            <div class="fqlp-ana-bar-group"><div class="fqlp-ana-bars-inner"><div class="fqlp-ana-bar" style="height:72%;background:var(--green-accent)"></div><div class="fqlp-ana-bar" style="height:48%;background:var(--red-accent)"></div></div><span class="fqlp-ana-bar-label">Aug</span></div>
+            <div class="fqlp-ana-bar-group"><div class="fqlp-ana-bars-inner"><div class="fqlp-ana-bar" style="height:85%;background:var(--green-accent)"></div><div class="fqlp-ana-bar" style="height:55%;background:var(--red-accent)"></div></div><span class="fqlp-ana-bar-label">Sep</span></div>
+          </div>
+          <div class="fqlp-legend" style="margin-top:8px"><span><i style="background:var(--green-accent)"></i>Income</span><span><i style="background:var(--red-accent)"></i>Expenses</span></div>
+          <div class="fqlp-insight-cards" style="margin-top:12px">
+            <div class="fqlp-insight"><div class="fqlp-insight-label">Top Category</div><div class="fqlp-insight-val" style="font-size:14px">Food &amp; Dining</div><div class="fqlp-insight-note">38% of expenses</div></div>
+            <div class="fqlp-insight"><div class="fqlp-insight-label">Net Worth</div><div class="fqlp-insight-val" style="font-size:14px;color:var(--green-accent)">&#8358;1.24M</div><div class="fqlp-insight-note">↑ &#8358;134K this month</div></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- AI -->
+    <section class="fqlp-feature-row reversed" style="border-top:1px solid var(--border)">
+      <div class="fqlp-feature-text fqlp-reveal">
+        <p class="fqlp-section-label">AI Insights</p>
+        <h2>Better data. Better questions. Better decisions.</h2>
+        <p>FinanceOS can help you make sense of your financial activity, spot patterns, and surface useful insights without making your finances more complicated.</p>
+      </div>
+      <div class="fqlp-feature-visual fqlp-reveal fqlp-d1">
+        <div class="fqlp-chat">
+          <div class="fqlp-chat-label">FinanceOS AI</div>
+          <div class="fqlp-chat-msg user"><div class="fqlp-chat-bubble">How much did I spend on food last month?</div></div>
+          <div class="fqlp-chat-msg ai"><div class="fqlp-chat-bubble">You spent &#8358;108,400 on food and dining in August. That's &#8358;12,200 more than July, mainly from two restaurant outings on the 14th and 22nd.</div></div>
+          <div class="fqlp-chat-msg user"><div class="fqlp-chat-bubble">Am I on track for my emergency fund goal?</div></div>
+          <div class="fqlp-chat-msg ai"><div class="fqlp-chat-bubble">Yes. At your current &#8358;50K/month pace, you'll hit &#8358;500K by December. You're 4% ahead of schedule.</div></div>
+          <div class="fqlp-chat-input"><span>Ask about your finances...</span><i>&#8593;</i></div>
         </div>
       </div>
     </section>
 
     <!-- Security -->
-    <div class="fqlp-security">
-      <div class="fqlp-security-card fqlp-reveal">
-        <div>
-          <p class="fqlp-section-label">Security &amp; compliance</p>
-          <h2>
-            Your data is yours.<br>
-            <em class="fqlp-reveal fqlp-d2">Period.</em>
-          </h2>
-          <p>
-            We do not sell your data. We do not show ads. We do not track you across the web. Your financial life stays private.
-          </p>
-          <div class="fqlp-badge-grid">
-            <div class="fqlp-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
-              <span>Cloud encrypted</span>
-            </div>
-            <div class="fqlp-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
-              <span>PIN protected</span>
-            </div>
-            <div class="fqlp-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span>Export anytime</span>
-            </div>
-            <div class="fqlp-badge">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <span>No tracking</span>
-            </div>
-          </div>
-        </div>
-        <div style="display:flex;justify-content:center;align-items:center;">
-          <svg class="fqlp-vault" viewBox="0 0 240 240" fill="none" aria-hidden="true">
-            <circle cx="120" cy="120" r="110" stroke="var(--border-strong)" stroke-dasharray="4 10"/>
-            <circle cx="120" cy="120" r="80" stroke="var(--border)" stroke-dasharray="3 8"/>
-            <circle cx="120" cy="120" r="52" stroke="var(--border-strong)"/>
-            <g style="transform-origin:center; animation:spin 50s linear infinite;">
-              <line x1="120" y1="14" x2="120" y2="26" stroke="var(--accent)" stroke-width="1.5" transform="rotate(0 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(15 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(30 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(45 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(60 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--accent)" stroke-width="1.5" transform="rotate(75 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(90 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(105 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(120 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(135 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(150 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--accent)" stroke-width="1.5" transform="rotate(165 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(180 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(195 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(210 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(225 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(240 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--accent)" stroke-width="1.5" transform="rotate(255 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(270 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(285 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(300 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(315 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(330 120 120)"/>
-              <line x1="120" y1="14" x2="120" y2="20" stroke="var(--accent)" stroke-width="1.5" transform="rotate(345 120 120)"/>
-            </g>
-            <path d="M120 96l-46 18v42c0 34 19 58 46 70 27-12 46-36 46-70v-42l-46-18Z" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
-            <path d="M120 96l-46 18v42c0 34 19 58 46 70V96Z" fill="var(--bg)" opacity="0.6"/>
-            <circle cx="120" cy="156" r="12" stroke="var(--warning)" stroke-width="2"/>
-            <path d="M120 168v26M120 194l-10 8M120 194l10 8" stroke="var(--warning)" stroke-width="2" stroke-linecap="round"/>
-            <circle cx="120" cy="156" r="4" fill="var(--warning)"/>
-            <circle cx="120" cy="48" r="5" fill="var(--accent)"/>
-            <circle cx="262" cy="205" r="4" fill="var(--warning)"/>
-            <circle cx="58" cy="205" r="4" fill="var(--accent)" opacity="0.7"/>
-          </svg>
+    <section id="security" style="border-top:1px solid var(--border)">
+      <div class="fqlp-section fqlp-reveal" style="padding-bottom:60px">
+        <div style="max-width:1200px;margin:0 auto">
+          <p class="fqlp-section-label">Security</p>
+          <h2>Your financial data deserves to be treated with care.</h2>
+          <p class="fqlp-section-sub">FinanceOS is designed with privacy and security in mind, giving you control over your financial information while keeping your data available when you need it.</p>
         </div>
       </div>
-    </div>
+      <div class="fqlp-security fqlp-reveal fqlp-d1" style="margin-top:0">
+        <div class="fqlp-security-card">
+          <div>
+            <div class="fqlp-badge-grid" style="grid-template-columns:1fr 1fr">
+              <div class="fqlp-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>Secure authentication</span></div>
+              <div class="fqlp-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg><span>Encrypted connections</span></div>
+              <div class="fqlp-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span>Cloud synchronization</span></div>
+              <div class="fqlp-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span>Data export</span></div>
+              <div class="fqlp-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><circle cx="12" cy="16" r="1"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg><span>PIN protection</span></div>
+              <div class="fqlp-badge"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg><span>No tracking</span></div>
+            </div>
+          </div>
+          <div style="display:flex;justify-content:center;align-items:center">
+            <svg class="fqlp-vault" viewBox="0 0 240 240" fill="none" aria-hidden="true">
+              <circle cx="120" cy="120" r="110" stroke="var(--border-strong)" stroke-dasharray="4 10"/>
+              <circle cx="120" cy="120" r="80" stroke="var(--border)" stroke-dasharray="3 8"/>
+              <circle cx="120" cy="120" r="52" stroke="var(--border-strong)"/>
+              <g style="transform-origin:center;animation:spin 50s linear infinite">
+                <line x1="120" y1="14" x2="120" y2="26" stroke="var(--accent)" stroke-width="1.5" transform="rotate(0 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(30 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(60 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--accent)" stroke-width="1.5" transform="rotate(90 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(120 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(150 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--accent)" stroke-width="1.5" transform="rotate(180 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(210 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(240 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--accent)" stroke-width="1.5" transform="rotate(270 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(300 120 120)"/>
+                <line x1="120" y1="14" x2="120" y2="20" stroke="var(--border-strong)" stroke-width="1.5" transform="rotate(330 120 120)"/>
+              </g>
+              <path d="M120 96l-46 18v42c0 34 19 58 46 70 27-12 46-36 46-70v-42l-46-18Z" fill="var(--card)" stroke="var(--accent)" stroke-width="2"/>
+              <path d="M120 96l-46 18v42c0 34 19 58 46 70V96Z" fill="var(--bg)" opacity="0.6"/>
+              <circle cx="120" cy="156" r="12" stroke="var(--warning)" stroke-width="2"/>
+              <path d="M120 168v26M120 194l-10 8M120 194l10 8" stroke="var(--warning)" stroke-width="2" stroke-linecap="round"/>
+              <circle cx="120" cy="156" r="4" fill="var(--warning)"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- How it works -->
+    <section class="fqlp-section" id="how-it-works" style="border-top:1px solid var(--border)">
+      <div class="fqlp-reveal">
+        <p class="fqlp-section-label">How it works</p>
+        <h2>Start with clarity. Build from there.</h2>
+      </div>
+      <div class="fqlp-steps-grid">
+        <div class="fqlp-step fqlp-reveal fqlp-d1"><div class="fqlp-step-num">01</div><h3>Connect your financial life</h3><p>Add your bank accounts, wallets, and income sources. Set up your starting balances in under a minute.</p></div>
+        <div class="fqlp-step fqlp-reveal fqlp-d2"><div class="fqlp-step-num">02</div><h3>Understand your money</h3><p>See where your money goes, track your budgets, and discover patterns in your spending and income.</p></div>
+        <div class="fqlp-step fqlp-reveal fqlp-d3"><div class="fqlp-step-num">03</div><h3>Plan your next move</h3><p>Set savings goals, create budgets, and stay ahead of bills and subscriptions with a clear financial calendar.</p></div>
+      </div>
+    </section>
+
+    <!-- Product Showcase -->
+    <section class="fqlp-section" style="border-top:1px solid var(--border)">
+      <div class="fqlp-reveal" style="text-align:center">
+        <p class="fqlp-section-label">Showcase</p>
+        <h2>Everything you need. Nothing you don't.</h2>
+      </div>
+      <div class="fqlp-tabs-bar fqlp-reveal" id="fqlpTabsBar">
+        <button class="fqlp-tab-btn active" onclick="fqlpShowTab('tabDashboard',this)">Dashboard</button>
+        <button class="fqlp-tab-btn" onclick="fqlpShowTab('tabAccounts',this)">Accounts</button>
+        <button class="fqlp-tab-btn" onclick="fqlpShowTab('tabTransactions',this)">Transactions</button>
+        <button class="fqlp-tab-btn" onclick="fqlpShowTab('tabBudgets',this)">Budgets</button>
+        <button class="fqlp-tab-btn" onclick="fqlpShowTab('tabSubscriptions',this)">Subscriptions</button>
+        <button class="fqlp-tab-btn" onclick="fqlpShowTab('tabGoals',this)">Goals</button>
+        <button class="fqlp-tab-btn" onclick="fqlpShowTab('tabCalendar',this)">Calendar</button>
+        <button class="fqlp-tab-btn" onclick="fqlpShowTab('tabAnalytics',this)">Analytics</button>
+      </div>
+      <div class="fqlp-reveal fqlp-d1">
+        <div class="fqlp-tab-panel active" id="tabDashboard"><div style="padding:24px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+            <div style="border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--bg)"><div style="font-size:10px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Balance</div><div style="font-size:20px;font-weight:800;color:var(--text);margin-top:4px">&#8358;1.24M</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--bg)"><div style="font-size:10px;color:var(--green-accent);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Income</div><div style="font-size:20px;font-weight:800;color:var(--text);margin-top:4px">&#8358;450K</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--bg)"><div style="font-size:10px;color:var(--red-accent);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Expenses</div><div style="font-size:20px;font-weight:800;color:var(--text);margin-top:4px">&#8358;286K</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:14px;background:var(--bg)"><div style="font-size:10px;color:var(--amber-accent);font-weight:600;text-transform:uppercase;letter-spacing:.5px">Savings</div><div style="font-size:20px;font-weight:800;color:var(--text);margin-top:4px">&#8358;163K</div></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)">
+            <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">Recent Activity</div>
+            <div class="fqlp-mini-tx"><div class="fqlp-mini-tx-icon" style="background:var(--green-light);color:var(--green-accent)">&#8595;</div><div class="fqlp-mini-tx-info"><div class="fqlp-mini-tx-name">Salary</div><div class="fqlp-mini-tx-meta">Bank · today</div></div><div class="fqlp-mini-tx-amt" style="color:var(--green-accent)">+&#8358;450,000</div></div>
+            <div class="fqlp-mini-tx"><div class="fqlp-mini-tx-icon" style="background:var(--red-light);color:var(--red-accent)">&#8593;</div><div class="fqlp-mini-tx-info"><div class="fqlp-mini-tx-name">Groceries</div><div class="fqlp-mini-tx-meta">Card · 2h ago</div></div><div class="fqlp-mini-tx-amt" style="color:var(--red-accent)">−&#8358;24,500</div></div>
+            <div class="fqlp-mini-tx"><div class="fqlp-mini-tx-icon" style="background:var(--red-light);color:var(--red-accent)">&#8593;</div><div class="fqlp-mini-tx-info"><div class="fqlp-mini-tx-name">Netflix</div><div class="fqlp-mini-tx-meta">Card · 5h ago</div></div><div class="fqlp-mini-tx-amt" style="color:var(--red-accent)">−&#8358;4,500</div></div>
+          </div>
+        </div></div>
+        <div class="fqlp-tab-panel" id="tabAccounts"><div style="padding:24px">
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">GTBank</div><div style="font-size:10px;color:var(--text-secondary);margin-bottom:8px">Savings</div><div style="font-size:18px;font-weight:800;color:var(--text)">&#8358;850K</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">Access Bank</div><div style="font-size:10px;color:var(--text-secondary);margin-bottom:8px">Current</div><div style="font-size:18px;font-weight:800;color:var(--text)">&#8358;240K</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">Dollar Account</div><div style="font-size:10px;color:var(--text-secondary);margin-bottom:8px">Foreign</div><div style="font-size:18px;font-weight:800;color:var(--text)">$1,250</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px">Cash</div><div style="font-size:10px;color:var(--text-secondary);margin-bottom:8px">Physical</div><div style="font-size:18px;font-weight:800;color:var(--text)">&#8358;35K</div></div>
+          </div>
+        </div></div>
+        <div class="fqlp-tab-panel" id="tabTransactions"><div style="padding:24px">
+          <div style="font-size:11px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">This Month</div>
+          <div class="fqlp-mini-tx"><div class="fqlp-mini-tx-icon" style="background:var(--green-light);color:var(--green-accent)">&#8595;</div><div class="fqlp-mini-tx-info"><div class="fqlp-mini-tx-name">Salary deposit</div><div class="fqlp-mini-tx-meta">Sep 1 · Bank transfer</div></div><div class="fqlp-mini-tx-amt" style="color:var(--green-accent)">+&#8358;450,000</div></div>
+          <div class="fqlp-mini-tx"><div class="fqlp-mini-tx-icon" style="background:var(--red-light);color:var(--red-accent)">&#8593;</div><div class="fqlp-mini-tx-info"><div class="fqlp-mini-tx-name">Rent payment</div><div class="fqlp-mini-tx-meta">Sep 1 · Transfer</div></div><div class="fqlp-mini-tx-amt" style="color:var(--red-accent)">−&#8358;150,000</div></div>
+          <div class="fqlp-mini-tx"><div class="fqlp-mini-tx-icon" style="background:var(--red-light);color:var(--red-accent)">&#8593;</div><div class="fqlp-mini-tx-info"><div class="fqlp-mini-tx-name">Grocery run</div><div class="fqlp-mini-tx-meta">Sep 3 · Card</div></div><div class="fqlp-mini-tx-amt" style="color:var(--red-accent)">−&#8358;24,500</div></div>
+          <div class="fqlp-mini-tx"><div class="fqlp-mini-tx-icon" style="background:var(--green-light);color:var(--green-accent)">&#8595;</div><div class="fqlp-mini-tx-info"><div class="fqlp-mini-tx-name">Freelance payment</div><div class="fqlp-mini-tx-meta">Sep 8 · Bank transfer</div></div><div class="fqlp-mini-tx-amt" style="color:var(--green-accent)">+&#8358;85,000</div></div>
+        </div></div>
+        <div class="fqlp-tab-panel" id="tabBudgets"><div style="padding:24px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px"><span>Food &amp; Dining</span><span style="color:var(--text-secondary);font-weight:600">&#8358;45K / &#8358;70K</span></div><div class="fqlp-progress" style="height:8px;margin-bottom:6px"><div class="fqlp-progress-fill" style="width:64%;background:var(--green-accent)"></div></div><div style="font-size:10px;color:var(--green-accent);font-weight:600">&#8358;25K remaining</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px"><span>Transport</span><span style="color:var(--text-secondary);font-weight:600">&#8358;28K / &#8358;40K</span></div><div class="fqlp-progress" style="height:8px;margin-bottom:6px"><div class="fqlp-progress-fill" style="width:70%;background:var(--amber-accent)"></div></div><div style="font-size:10px;color:var(--amber-accent);font-weight:600">&#8358;12K remaining</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px"><span>Entertainment</span><span style="color:var(--text-secondary);font-weight:600">&#8358;12K / &#8358;25K</span></div><div class="fqlp-progress" style="height:8px;margin-bottom:6px"><div class="fqlp-progress-fill" style="width:48%;background:var(--green-accent)"></div></div><div style="font-size:10px;color:var(--green-accent);font-weight:600">&#8358;13K remaining</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="display:flex;justify-content:space-between;font-size:13px;font-weight:700;color:var(--text);margin-bottom:8px"><span>Bills &amp; Utilities</span><span style="color:var(--text-secondary);font-weight:600">&#8358;68K / &#8358;80K</span></div><div class="fqlp-progress" style="height:8px;margin-bottom:6px"><div class="fqlp-progress-fill" style="width:85%;background:var(--red-accent)"></div></div><div style="font-size:10px;color:var(--red-accent);font-weight:600">&#8358;12K remaining</div></div>
+          </div>
+        </div></div>
+        <div class="fqlp-tab-panel" id="tabSubscriptions"><div style="padding:24px">
+          <div class="fqlp-sub-item"><div class="fqlp-sub-icon" style="background:#E50914">N</div><div class="fqlp-sub-info"><div class="fqlp-sub-name">Netflix</div><div class="fqlp-sub-freq">Monthly</div></div><div class="fqlp-sub-amt">&#8358;4,500</div></div>
+          <div class="fqlp-sub-item"><div class="fqlp-sub-icon" style="background:#1DB954">S</div><div class="fqlp-sub-info"><div class="fqlp-sub-name">Spotify</div><div class="fqlp-sub-freq">Monthly</div></div><div class="fqlp-sub-amt">&#8358;3,500</div></div>
+          <div class="fqlp-sub-item"><div class="fqlp-sub-icon" style="background:var(--blue-accent)">W</div><div class="fqlp-sub-info"><div class="fqlp-sub-name">Internet</div><div class="fqlp-sub-freq">Monthly</div></div><div class="fqlp-sub-amt">&#8358;20,000</div></div>
+          <div class="fqlp-sub-item"><div class="fqlp-sub-icon" style="background:var(--green-accent)">G</div><div class="fqlp-sub-info"><div class="fqlp-sub-name">Gym</div><div class="fqlp-sub-freq">Monthly</div></div><div class="fqlp-sub-amt">&#8358;15,000</div></div>
+          <div class="fqlp-sub-total"><span>Monthly Total</span><span style="color:var(--red-accent)">&#8358;43,000</span></div>
+        </div></div>
+        <div class="fqlp-tab-panel" id="tabGoals"><div style="padding:24px">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Emergency Fund</div><div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">&#8358;320K of &#8358;500K</div><div class="fqlp-progress" style="height:8px;margin-bottom:6px"><div class="fqlp-progress-fill" style="width:64%;background:var(--amber-accent)"></div></div><div style="font-size:10px;color:var(--amber-accent);font-weight:700">64% complete</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">New Laptop</div><div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">&#8358;350K of &#8358;700K</div><div class="fqlp-progress" style="height:8px;margin-bottom:6px"><div class="fqlp-progress-fill" style="width:50%;background:var(--blue-accent)"></div></div><div style="font-size:10px;color:var(--blue-accent);font-weight:700">50% complete</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Vacation</div><div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">&#8358;180K of &#8358;400K</div><div class="fqlp-progress" style="height:8px;margin-bottom:6px"><div class="fqlp-progress-fill" style="width:45%;background:var(--violet-accent)"></div></div><div style="font-size:10px;color:var(--violet-accent);font-weight:700">45% complete</div></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)"><div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px">Car Fund</div><div style="font-size:12px;color:var(--text-secondary);margin-bottom:10px">&#8358;2.1M of &#8358;5M</div><div class="fqlp-progress" style="height:8px;margin-bottom:6px"><div class="fqlp-progress-fill" style="width:42%;background:var(--green-accent)"></div></div><div style="font-size:10px;color:var(--green-accent);font-weight:700">42% complete</div></div>
+          </div>
+        </div></div>
+        <div class="fqlp-tab-panel" id="tabCalendar"><div style="padding:24px">
+          <div style="font-size:13px;font-weight:700;color:var(--text);text-align:center;margin-bottom:12px">September 2026</div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-bottom:8px">
+            <span style="font-size:10px;font-weight:700;color:var(--text-tertiary)">Mon</span><span style="font-size:10px;font-weight:700;color:var(--text-tertiary)">Tue</span><span style="font-size:10px;font-weight:700;color:var(--text-tertiary)">Wed</span><span style="font-size:10px;font-weight:700;color:var(--text-tertiary)">Thu</span><span style="font-size:10px;font-weight:700;color:var(--text-tertiary)">Fri</span><span style="font-size:10px;font-weight:700;color:var(--text-tertiary)">Sat</span><span style="font-size:10px;font-weight:700;color:var(--text-tertiary)">Sun</span>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center">
+            <span style="font-size:11px;color:var(--text-tertiary);padding:6px"></span><span style="font-size:11px;color:var(--text-tertiary);padding:6px"></span><span style="font-size:11px;color:var(--text);padding:6px">1</span><span style="font-size:11px;color:var(--text);padding:6px">2</span><span style="font-size:11px;color:var(--text);padding:6px">3</span><span style="font-size:11px;color:var(--text);padding:6px">4</span><span style="font-size:11px;color:var(--text);padding:6px">5</span>
+            <span style="font-size:11px;color:var(--text);padding:6px">6</span><span style="font-size:11px;color:var(--text);padding:6px">7</span><span style="font-size:11px;color:var(--text);padding:6px">8</span><span style="font-size:11px;color:var(--text);padding:6px">9</span><span style="font-size:11px;color:var(--text);padding:6px">10</span><span style="font-size:11px;color:var(--text);padding:6px">11</span><span style="font-size:11px;color:var(--text);padding:6px">12</span>
+            <span style="font-size:11px;color:var(--text);padding:6px">13</span><span style="font-size:11px;color:var(--text);padding:6px">14</span><span style="font-size:11px;font-weight:700;padding:6px;border-radius:8px;background:var(--red-light);color:var(--red-accent)">15</span><span style="font-size:11px;color:var(--text);padding:6px">16</span><span style="font-size:11px;color:var(--text);padding:6px">17</span><span style="font-size:11px;font-weight:700;padding:6px;border-radius:8px;background:var(--red-light);color:var(--red-accent)">18</span><span style="font-size:11px;color:var(--text);padding:6px">19</span>
+            <span style="font-size:11px;font-weight:700;padding:6px;border-radius:8px;background:var(--amber-light);color:var(--amber-accent)">20</span><span style="font-size:11px;color:var(--text);padding:6px">21</span><span style="font-size:11px;color:var(--text);padding:6px">22</span><span style="font-size:11px;color:var(--text);padding:6px">23</span><span style="font-size:11px;color:var(--text);padding:6px">24</span><span style="font-size:11px;font-weight:700;padding:6px;border-radius:8px;background:var(--amber-light);color:var(--amber-accent)">25</span><span style="font-size:11px;color:var(--text);padding:6px">26</span>
+            <span style="font-size:11px;color:var(--text);padding:6px">27</span><span style="font-size:11px;font-weight:700;padding:6px;border-radius:8px;background:var(--green-light);color:var(--green-accent)">28</span><span style="font-size:11px;color:var(--text);padding:6px">29</span><span style="font-size:11px;color:var(--text);padding:6px">30</span><span style="font-size:11px;color:var(--text-tertiary);padding:6px"></span><span style="font-size:11px;color:var(--text-tertiary);padding:6px"></span><span style="font-size:11px;color:var(--text-tertiary);padding:6px"></span>
+          </div>
+          <div style="display:flex;gap:12px;justify-content:center;margin-top:12px">
+            <span style="font-size:9px;font-weight:600;display:flex;align-items:center;gap:4px"><i style="width:6px;height:6px;border-radius:50%;background:var(--red-accent);display:inline-block"></i>Bills</span>
+            <span style="font-size:9px;font-weight:600;display:flex;align-items:center;gap:4px"><i style="width:6px;height:6px;border-radius:50%;background:var(--amber-accent);display:inline-block"></i>Savings</span>
+            <span style="font-size:9px;font-weight:600;display:flex;align-items:center;gap:4px"><i style="width:6px;height:6px;border-radius:50%;background:var(--green-accent);display:inline-block"></i>Income</span>
+          </div>
+        </div></div>
+        <div class="fqlp-tab-panel" id="tabAnalytics"><div style="padding:24px">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:16px">
+            <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg)"><div style="font-size:9px;color:var(--green-accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Income</div><div style="font-size:18px;font-weight:800;color:var(--text)">&#8358;535K</div></div>
+            <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg)"><div style="font-size:9px;color:var(--red-accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Expenses</div><div style="font-size:18px;font-weight:800;color:var(--text)">&#8358;329K</div></div>
+            <div style="border:1px solid var(--border);border-radius:8px;padding:12px;background:var(--bg)"><div style="font-size:9px;color:var(--amber-accent);font-weight:700;text-transform:uppercase;letter-spacing:.5px">Savings</div><div style="font-size:18px;font-weight:800;color:var(--text)">38.3%</div></div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:16px;background:var(--bg)">
+            <div style="font-size:10px;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">12-Month Trend</div>
+            <div style="display:flex;align-items:flex-end;gap:4px;height:70px">
+              <div style="flex:1;height:30%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:40%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:35%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:50%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:45%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:55%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:60%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:65%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:72%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:80%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:85%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:92%;background:var(--accent);border-radius:2px"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:6px"><span style="font-size:9px;color:var(--text-tertiary)">Oct</span><span style="font-size:9px;color:var(--text-tertiary)">Sep</span></div>
+          </div>
+        </div></div>
+      </div>
+    </section>
+
+    <!-- Mobile -->
+    <section class="fqlp-section" style="border-top:1px solid var(--border)">
+      <div class="fqlp-reveal" style="text-align:center">
+        <p class="fqlp-section-label">Mobile</p>
+        <h2>Your finances, wherever you are.</h2>
+      </div>
+      <div class="fqlp-phones fqlp-reveal fqlp-d1">
+        <div class="fqlp-phone"><div class="fqlp-phone-notch"></div><div class="fqlp-phone-screen"><div class="fqlp-phone-title">Dashboard</div><div class="fqlp-phone-content">
+          <div style="font-size:9px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.4px;font-weight:600">Total Balance</div>
+          <div style="font-size:18px;font-weight:800;color:var(--text);margin:2px 0 8px">&#8358;1,240,500</div>
+          <div style="display:flex;gap:4px;margin-bottom:8px"><div style="flex:1;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--card)"><div style="font-size:8px;color:var(--green-accent);font-weight:700">Income</div><div style="font-size:11px;font-weight:700;color:var(--text)">&#8358;450K</div></div><div style="flex:1;border:1px solid var(--border);border-radius:6px;padding:6px;background:var(--card)"><div style="font-size:8px;color:var(--red-accent);font-weight:700">Expenses</div><div style="font-size:11px;font-weight:700;color:var(--text)">&#8358;286K</div></div></div>
+          <div style="display:flex;align-items:flex-end;gap:2px;height:30px"><div style="flex:1;height:45%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:60%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:55%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:72%;background:var(--green-accent);border-radius:2px"></div><div style="flex:1;height:80%;background:var(--accent);border-radius:2px"></div></div>
+        </div></div></div>
+        <div class="fqlp-phone"><div class="fqlp-phone-notch"></div><div class="fqlp-phone-screen"><div class="fqlp-phone-title">Budgets</div><div class="fqlp-phone-content">
+          <div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--text);margin-bottom:4px"><span>Food</span><span style="color:var(--text-secondary);font-weight:600">&#8358;45K/70K</span></div><div style="height:5px;border-radius:5px;background:var(--progress-bg);overflow:hidden"><div style="width:64%;height:100%;border-radius:5px;background:var(--green-accent)"></div></div></div>
+          <div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--text);margin-bottom:4px"><span>Transport</span><span style="color:var(--text-secondary);font-weight:600">&#8358;28K/40K</span></div><div style="height:5px;border-radius:5px;background:var(--progress-bg);overflow:hidden"><div style="width:70%;height:100%;border-radius:5px;background:var(--amber-accent)"></div></div></div>
+          <div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:10px;font-weight:700;color:var(--text);margin-bottom:4px"><span>Fun</span><span style="color:var(--text-secondary);font-weight:600">&#8358;12K/25K</span></div><div style="height:5px;border-radius:5px;background:var(--progress-bg);overflow:hidden"><div style="width:48%;height:100%;border-radius:5px;background:var(--green-accent)"></div></div></div>
+          <div style="border-top:1px solid var(--border);padding-top:6px;margin-top:4px;display:flex;justify-content:space-between;font-size:9px"><span style="color:var(--text-secondary)">Remaining</span><span style="font-weight:700;color:var(--green-accent)">&#8358;63,600</span></div>
+        </div></div></div>
+        <div class="fqlp-phone"><div class="fqlp-phone-notch"></div><div class="fqlp-phone-screen"><div class="fqlp-phone-title">Calendar</div><div class="fqlp-phone-content">
+          <div style="font-size:10px;font-weight:700;color:var(--text);margin-bottom:6px">Upcoming</div>
+          <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)"><div style="width:4px;height:24px;border-radius:2px;background:var(--red-accent)"></div><div><div style="font-size:10px;font-weight:700;color:var(--text)">Rent</div><div style="font-size:8px;color:var(--text-secondary)">Sep 15</div></div><div style="margin-left:auto;font-size:10px;font-weight:700;color:var(--red-accent)">&#8358;150K</div></div>
+          <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)"><div style="width:4px;height:24px;border-radius:2px;background:var(--red-accent)"></div><div><div style="font-size:10px;font-weight:700;color:var(--text)">Netflix</div><div style="font-size:8px;color:var(--text-secondary)">Sep 18</div></div><div style="margin-left:auto;font-size:10px;font-weight:700;color:var(--red-accent)">&#8358;4.5K</div></div>
+          <div style="display:flex;align-items:center;gap:6px;padding:5px 0;border-bottom:1px solid var(--border)"><div style="width:4px;height:24px;border-radius:2px;background:var(--amber-accent)"></div><div><div style="font-size:10px;font-weight:700;color:var(--text)">Savings</div><div style="font-size:8px;color:var(--text-secondary)">Sep 20</div></div><div style="margin-left:auto;font-size:10px;font-weight:700;color:var(--amber-accent)">&#8358;50K</div></div>
+          <div style="display:flex;align-items:center;gap:6px;padding:5px 0"><div style="width:4px;height:24px;border-radius:2px;background:var(--green-accent)"></div><div><div style="font-size:10px;font-weight:700;color:var(--text)">Salary</div><div style="font-size:8px;color:var(--text-secondary)">Sep 28</div></div><div style="margin-left:auto;font-size:10px;font-weight:700;color:var(--green-accent)">+&#8358;85K</div></div>
+        </div></div></div>
+      </div>
+    </section>
 
     <!-- CTA -->
-    <section class="fqlp-cta">
+    <section class="fqlp-cta" id="cta">
       <div class="fqlp-reveal">
-        <h2>
-          Stop wondering where<br>
-          your money went.
-        </h2>
-        <p>
-          Join thousands of people taking control of their finances with FinanceOS.
-        </p>
-        <button onclick="showAuthForm()" class="fqlp-btn filled" style="font-size:16px;padding:16px 36px;">
-          Get started
-        </button>
+        <h2>Stop wondering where your money went.</h2>
+        <p>Start knowing where it is, where it's going, and what you're building toward.</p>
+        <div style="display:flex;gap:14px;justify-content:center;flex-wrap:wrap">
+          <button onclick="showAuthForm()" class="fqlp-btn filled" style="font-size:16px;padding:16px 36px">Get started <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17L17 7"/><path d="M7 7h10v10"/></svg></button>
+          <button onclick="showAuthForm()" class="fqlp-btn outline" style="font-size:16px;padding:16px 36px">Log in</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- FAQ -->
+    <section class="fqlp-section" id="faq" style="border-top:1px solid var(--border)">
+      <div class="fqlp-reveal" style="text-align:center">
+        <p class="fqlp-section-label">FAQ</p>
+        <h2>Common questions</h2>
+      </div>
+      <div class="fqlp-faq fqlp-reveal fqlp-d1">
+        <div class="fqlp-faq-item" onclick="this.classList.toggle('open')">
+          <div class="fqlp-faq-q"><h4>What is FinanceOS?</h4><svg class="fqlp-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="fqlp-faq-a"><p>FinanceOS is a financial operating system that brings all your accounts, spending, budgets, subscriptions, savings goals, and upcoming financial events into one clear, organized view. It helps you understand your money and make better financial decisions.</p></div>
+        </div>
+        <div class="fqlp-faq-item" onclick="this.classList.toggle('open')">
+          <div class="fqlp-faq-q"><h4>Is FinanceOS a bank?</h4><svg class="fqlp-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="fqlp-faq-a"><p>No, FinanceOS is not a bank. It's a financial management tool that helps you track and organize your money across all your existing bank accounts, wallets, and other financial sources.</p></div>
+        </div>
+        <div class="fqlp-faq-item" onclick="this.classList.toggle('open')">
+          <div class="fqlp-faq-q"><h4>Can I manage multiple accounts?</h4><svg class="fqlp-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="fqlp-faq-a"><p>Yes. FinanceOS supports multiple bank accounts, mobile wallets, cash holdings, and even foreign currency accounts. You can see all your balances in one place and track transfers between them.</p></div>
+        </div>
+        <div class="fqlp-faq-item" onclick="this.classList.toggle('open')">
+          <div class="fqlp-faq-q"><h4>Can I track subscriptions?</h4><svg class="fqlp-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="fqlp-faq-a"><p>Absolutely. FinanceOS lets you log all your recurring payments and subscriptions so you can see exactly how much of your income is already committed each month. This makes it easy to spot subscriptions you may want to cancel.</p></div>
+        </div>
+        <div class="fqlp-faq-item" onclick="this.classList.toggle('open')">
+          <div class="fqlp-faq-q"><h4>Can I set savings goals?</h4><svg class="fqlp-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="fqlp-faq-a"><p>Yes. You can create multiple savings goals with target amounts and dates. FinanceOS tracks your contributions and shows your progress so you stay motivated and on track.</p></div>
+        </div>
+        <div class="fqlp-faq-item" onclick="this.classList.toggle('open')">
+          <div class="fqlp-faq-q"><h4>Can I use FinanceOS offline?</h4><svg class="fqlp-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="fqlp-faq-a"><p>FinanceOS is a progressive web app that can be installed on your home screen. Once installed, core parts of the app load from your device, and your data syncs to the cloud so it's available whenever you need it.</p></div>
+        </div>
+        <div class="fqlp-faq-item" onclick="this.classList.toggle('open')">
+          <div class="fqlp-faq-q"><h4>Is my financial data secure?</h4><svg class="fqlp-faq-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></div>
+          <div class="fqlp-faq-a"><p>Yes. FinanceOS uses encrypted cloud storage, PIN protection, and secure authentication. We never sell your data or show ads. Your financial information stays private and under your control. You can also export your data at any time.</p></div>
+        </div>
       </div>
     </section>
 
     <!-- Footer -->
-    <footer class="fqlp-footer">
-      <div class="fqlp-footer-left">
-        Built by <a href="https://github.com/futurestachq" target="_blank">FutureStac</a>
+    <footer class="fqlp-footer" style="flex-direction:column;align-items:stretch">
+      <div class="fqlp-footer-cols">
+        <div><div class="fqlp-footer-brand"><img src="icon-192.svg" alt="FinanceOS">FinanceOS</div><p class="fqlp-footer-tagline">Your money, finally in one clear picture.</p></div>
+        <div class="fqlp-footer-col"><h5>Product</h5><a href="#features">Features</a><a href="#how-it-works">How it works</a><a href="#security">Security</a><a href="#faq">FAQ</a></div>
+        <div class="fqlp-footer-col"><h5>Account</h5><a href="#" onclick="showAuthForm();return false">Log in</a><a href="#" onclick="showAuthForm();return false">Get started</a></div>
+        <div class="fqlp-footer-col"><h5>Legal</h5><a href="#">Privacy Policy</a><a href="#">Terms of Service</a></div>
       </div>
-      <div class="fqlp-footer-right">
-        <a href="#" onclick="showAuthForm();return false;">Sign In</a>
-      </div>
+      <div class="fqlp-footer-bottom"><span>&copy; 2026 FinanceOS. Built by <a href="https://github.com/futurestachq" target="_blank" style="color:var(--text);text-decoration:none;font-weight:600">FutureStac</a>.</span></div>
     </footer>
+
+    <script>
+    if(typeof fqlpShowTab==='undefined'){function fqlpShowTab(id,btn){var bar=document.getElementById('fqlpTabsBar');bar.parentElement.querySelectorAll('.fqlp-tab-panel').forEach(function(p){p.classList.remove('active')});document.getElementById(id).classList.add('active');bar.querySelectorAll('.fqlp-tab-btn').forEach(function(b){b.classList.remove('active')});btn.classList.add('active')}}
+    </script>
 
     <!-- Floating PWA Install Button -->
     <button class="floating-install-btn" id="floatingInstallBtn">

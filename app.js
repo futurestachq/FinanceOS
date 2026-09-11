@@ -6829,6 +6829,17 @@ if (typeof document !== 'undefined') {
     if (gbAuth) gbAuth.style.display = 'none';
   }
 
+  // Navbar scrolled state
+  var fqlpNav = document.getElementById('fqlpNav');
+  if (fqlpNav) {
+    function updateNavState() {
+      if (window.scrollY > 8) { fqlpNav.classList.add('scrolled'); }
+      else { fqlpNav.classList.remove('scrolled'); }
+    }
+    updateNavState();
+    window.addEventListener('scroll', updateNavState, { passive: true });
+  }
+
   // Scroll reveal
   var revealEls = document.querySelectorAll('.fqlp-reveal');
   if (window.IntersectionObserver) {
