@@ -48,6 +48,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 const db = firebase.firestore();
 let currentUser = null;
 const GUEST_MODE_ENABLED = false; // flip to true to re-enable guest mode
