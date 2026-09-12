@@ -182,7 +182,7 @@ let state = {
 
 function syncBalanceFromAccounts() {
   const computed = state.accounts.reduce((s, a) => s + (a.balance || 0), 0);
-  state.balance = computed;
+  state.balance = round2(computed);
 }
 
 function ensureStateDefaults() {
@@ -306,7 +306,27 @@ function resetState() {
   };
 }
 
+function normalizeMoney() {
+  // M1 safety net: re-round every stored amount to 2dp on each save so float
+  // dust from += / reduce chains can never accumulate in state, no matter
+  // which mutation path wrote it. No-op for already-clean values.
+  try {
+    state.balance = round2(state.balance || 0);
+    (state.accounts || []).forEach(a => { a.balance = round2(a.balance || 0); });
+    (state.transactions || []).forEach(t => { t.amount = round2(t.amount || 0); });
+    (state.subscriptions || []).forEach(s => { s.cost = round2(s.cost || 0); });
+    (state.goals || []).forEach(g => {
+      g.target = round2(g.target || 0); g.current = round2(g.current || 0);
+      (g.contributions || []).forEach(c => { c.amount = round2(c.amount || 0); });
+    });
+    (state.incomeEvents || []).forEach(e => { e.amount = round2(e.amount || 0); });
+    (state.financialEvents || []).forEach(e => { e.amount = round2(e.amount || 0); });
+    if (state.budgets) Object.keys(state.budgets).forEach(k => { state.budgets[k] = round2(state.budgets[k]); });
+  } catch (e) { console.error('normalizeMoney failed', e); }
+}
+
 function saveData() {
+  normalizeMoney();
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
   if (currentUser && !isGuest) {
     const cleanState = JSON.parse(JSON.stringify(state));
@@ -671,7 +691,7 @@ function seedData() {
 
   function d(day, month) {
     const dt = new Date(y, month !== undefined ? month : m, day);
-    return dt.toISOString().split('T')[0];
+    return toLocalDateStr(dt);
   }
 
   state.transactions = [
@@ -793,7 +813,7 @@ function seedData() {
   ];
 
   // Compute total balance from accounts so everything stays consistent
-  state.balance = state.accounts.reduce((s, a) => s + (a.balance || 0), 0);
+  state.balance = round2(state.accounts.reduce((s, a) => s + (a.balance || 0), 0));
 
   // Recurring income events
   const now0 = new Date();
@@ -810,29 +830,55 @@ function seedData() {
 function uid() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
 
 function addDays(date, days) {
-  const d = new Date(date);
+  const d = parseLocalDateStr(date);
   d.setDate(d.getDate() + days);
-  return d.toISOString().split('T')[0];
+  return toLocalDateStr(d);
 }
 
 // ============ HELPERS ============
+// M1: round to 2dp (kobo). All money entering state goes through this, and
+// saveData() re-normalizes, so binary float dust (0.1+0.2) can never
+// accumulate in balances/totals/budget comparisons.
+function round2(n) {
+  const v = Number(n);
+  if (!isFinite(v)) return 0;
+  return Math.round((v + Number.EPSILON) * 100) / 100;
+}
+// M2: local-calendar date helpers. Never use toISOString().split('T')[0] for
+// calendar days — it renders in UTC and shifts the day for UTC+/- zones.
+// parseLocalDateStr('YYYY-MM-DD') builds local midnight; toLocalDateStr
+// formats a Date back to YYYY-MM-DD from local components.
+function toLocalDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return y + '-' + m + '-' + day;
+}
+function parseLocalDateStr(s) {
+  if (s instanceof Date) return new Date(s.getTime());
+  if (typeof s === 'string') {
+    const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+    if (m) return new Date(+m[1], +m[2] - 1, +m[3]);
+  }
+  return new Date(s);
+}
 function fmt(n) {
   const symbol = (state.profile && state.profile.currency) || '₦';
   return symbol + Math.round(n).toLocaleString('en-US');
 }
 
 function fmtDate(dateStr) {
-  const d = new Date(dateStr);
+  const d = parseLocalDateStr(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
 function monthKey(dateStr) {
-  const d = new Date(dateStr);
+  const d = parseLocalDateStr(dateStr);
   return d.getFullYear() + '-' + d.getMonth();
 }
 
 function monthLabel(dateStr) {
-  const d = new Date(dateStr);
+  const d = parseLocalDateStr(dateStr);
   return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
 }
 
@@ -1338,7 +1384,7 @@ function editAccount(id) {
 
 function saveAccount() {
   const name = document.getElementById('accountName').value.trim();
-  const balance = parseFloat(document.getElementById('accountBalance').value) || 0;
+  const balance = round2(parseFloat(document.getElementById('accountBalance').value) || 0);
   if (!name) { showToast('Enter an account name'); return; }
   if (editingAccountId) {
     const idx = state.accounts.findIndex(a => a.id === editingAccountId);
@@ -2021,8 +2067,9 @@ function renderTransactions() {
   const dateRange = document.getElementById('txFilterDateRange').value;
   const dateFrom = document.getElementById('txDateFrom').value;
   const dateTo = document.getElementById('txDateTo').value;
-  const amountMin = parseFloat(document.getElementById('txAmountMin').value) || 0;
-  const amountMax = parseFloat(document.getElementById('txAmountMax').value) || Infinity;
+  const amountMin = round2(parseFloat(document.getElementById('txAmountMin').value) || 0);
+  const _amountMaxRaw = parseFloat(document.getElementById('txAmountMax').value) || Infinity;
+    const amountMax = _amountMaxRaw === Infinity ? Infinity : round2(_amountMaxRaw);
 
   let txs = [...state.transactions].sort((a,b) => new Date(b.date) - new Date(a.date));
   
@@ -3168,7 +3215,7 @@ function openModal(txId) {
   updateCategoryOptions('expense');
   populateAccountSelect('txAccount', false);
   document.getElementById('txAmount').value = '';
-  document.getElementById('txDate').value = new Date().toISOString().split('T')[0];
+  document.getElementById('txDate').value = toLocalDateStr(new Date());
   document.getElementById('txDescription').value = '';
   document.getElementById('txTags').value = '';
   document.getElementById('txNotes').value = '';
@@ -3250,7 +3297,7 @@ document.querySelectorAll('#typeSelector .type-btn').forEach(btn => {
 });
 
 function saveTransaction() {
-  const amount = parseFloat(document.getElementById('txAmount').value);
+  const amount = round2(parseFloat(document.getElementById('txAmount').value));
   if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
   const date = document.getElementById('txDate').value;
   if (!date) { showToast('Select a date'); return; }
@@ -3411,7 +3458,7 @@ function closeSubModal() {
 
 function saveSubscription() {
   const name = document.getElementById('subName').value;
-  const cost = parseFloat(document.getElementById('subCost').value);
+  const cost = round2(parseFloat(document.getElementById('subCost').value));
   if (!name || !cost) { showToast('Enter name and cost'); return; }
   const syncToGcal = document.getElementById('toggleSubGcal').classList.contains('on');
   const isActive = document.getElementById('toggleSubActive').classList.contains('on');
@@ -3551,7 +3598,7 @@ function deleteBudget(cat) {
 
 function saveBudget() {
   let cat = document.getElementById('budgetCategory').value;
-  const limit = parseFloat(document.getElementById('budgetLimit').value);
+  const limit = round2(parseFloat(document.getElementById('budgetLimit').value));
   if (!cat || !limit) { showToast('Enter category and limit'); return; }
 
   // Handle custom category
@@ -3617,8 +3664,8 @@ function closeGoalModal() { document.getElementById('goalModalOverlay').classLis
 
 function saveGoal() {
   const name = document.getElementById('goalName').value;
-  const target = parseFloat(document.getElementById('goalTarget').value);
-  const current = parseFloat(document.getElementById('goalCurrent').value) || 0;
+  const target = round2(parseFloat(document.getElementById('goalTarget').value));
+  const current = round2(parseFloat(document.getElementById('goalCurrent').value) || 0);
   const date = document.getElementById('goalDate').value || addDays(new Date(), 365);
   const priority = document.getElementById('goalPriority').value;
   if (!name || !target) { showToast('Enter name and target'); return; }
@@ -3667,7 +3714,7 @@ function onContribSourceChange() {
 }
 
 function saveContribution() {
-  const amount = parseFloat(document.getElementById('contribAmount').value);
+  const amount = round2(parseFloat(document.getElementById('contribAmount').value));
   if (!amount || amount <= 0) { showToast('Enter a valid amount'); return; }
   const sourceVal = document.getElementById('contribSource').value;
   if (!sourceVal) { showToast('Select a source for this contribution'); return; }
@@ -3692,7 +3739,7 @@ function saveContribution() {
     goal.current += amount;
     goal.contributions = goal.contributions || [];
     const now = new Date();
-    goal.contributions.push({ date: now.toISOString().split('T')[0], time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), timestamp: now.toISOString(), amount, sourceType, sourceId, sourceName });
+    goal.contributions.push({ date: toLocalDateStr(now), time: now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }), timestamp: now.toISOString(), amount, sourceType, sourceId, sourceName });
     saveData();
     showToast('Contribution added');
     closeContribModal();
@@ -3940,19 +3987,29 @@ function getFutureDates(startDateStr, frequency, count) {
   const today = new Date(); today.setHours(0,0,0,0);
   for (let i = 0; i < count; i++) {
     while (current < today) { current = advanceDate(current, frequency); }
-    dates.push(current.toISOString().split('T')[0]);
+    dates.push(toLocalDateStr(current));
     current = advanceDate(current, frequency);
   }
   return dates;
 }
 
 function advanceDate(date, frequency) {
-  const d = new Date(date);
+  // M2: parse as a LOCAL calendar day and clamp month/year advances to the
+  // last day of the target month. The old code (setMonth on a UTC-midnight
+  // Date) turned Jan 31 +1mo into Mar 3, silently skipping February's posting.
+  const src = parseLocalDateStr(date);
+  const d = new Date(src.getTime());
+  const clampToMonth = () => {
+    const y = d.getFullYear(), m = d.getMonth();
+    const dim = new Date(y, m + 1, 0).getDate();
+    if (d.getDate() > dim) d.setDate(dim);
+  };
   switch(frequency) {
     case 'weekly': d.setDate(d.getDate() + 7); break;
-    case 'monthly': d.setMonth(d.getMonth() + 1); break;
-    case 'quarterly': d.setMonth(d.getMonth() + 3); break;
-    case 'yearly': d.setFullYear(d.getFullYear() + 1); break;
+    case 'monthly': { const day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + 1); d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); break; }
+    case 'quarterly': { const day = d.getDate(); d.setDate(1); d.setMonth(d.getMonth() + 3); d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); break; }
+    case 'yearly': { const day = d.getDate(); d.setDate(1); d.setFullYear(d.getFullYear() + 1); d.setDate(Math.min(day, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate())); break; }
+    default: clampToMonth();
   }
   return d;
 }
@@ -3971,7 +4028,7 @@ function autoPostRecurring() {
     let safety = 0;
     while (safety < 50) {
       safety++;
-      const currentDate = new Date(sub.renewal);
+      const currentDate = parseLocalDateStr(sub.renewal);
       currentDate.setHours(0, 0, 0, 0);
       if (currentDate > today) break;
 
@@ -4000,7 +4057,7 @@ function autoPostRecurring() {
         postedNames.push(sub.name);
       }
       const nextDate = advanceDate(currentDate, sub.cycle);
-      const nextStr = nextDate.toISOString().split('T')[0];
+      const nextStr = toLocalDateStr(nextDate);
       if (nextStr === sub.renewal) break; // safeguard: no advancement
       sub.renewal = nextStr;
     }
@@ -4014,7 +4071,7 @@ function autoPostRecurring() {
     let safety = 0;
     while (safety < 50) {
       safety++;
-      const currentDate = new Date(inc.nextDate);
+      const currentDate = parseLocalDateStr(inc.nextDate);
       currentDate.setHours(0, 0, 0, 0);
       if (currentDate > today) break;
 
@@ -4043,7 +4100,7 @@ function autoPostRecurring() {
         postedNames.push(inc.name);
       }
       const nextDate = advanceDate(currentDate, inc.frequency);
-      const nextStr = nextDate.toISOString().split('T')[0];
+      const nextStr = toLocalDateStr(nextDate);
       if (nextStr === inc.nextDate) break; // safeguard: no advancement
       inc.nextDate = nextStr;
     }
@@ -4089,7 +4146,7 @@ function renderDashboardUpcoming() {
   const events = getUpcomingEvents(6);
   if (events.length === 0) { container.innerHTML = '<div class="empty-state">No upcoming financial events</div>'; return; }
   container.innerHTML = events.map(e => {
-    const d = new Date(e.date);
+    const d = parseLocalDateStr(e.date);
     const day = d.getDate();
     const month = d.toLocaleDateString('en-US', { month: 'short' });
     const colorClass = getEventTypeColor(e.type);
@@ -4338,8 +4395,8 @@ function calGetTitle() {
 
 function calGetWeekStart(date) { const d = new Date(date); d.setDate(d.getDate() - d.getDay()); return d; }
 function calSetView(mode) { calViewMode = mode; document.querySelectorAll('.cal-view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === mode)); renderCalendar(); }
-function calPrev() { if (calViewMode==='all') return; if (calViewMode==='month') calCurrentDate.setMonth(calCurrentDate.getMonth()-1); else if (calViewMode==='week') calCurrentDate.setDate(calCurrentDate.getDate()-7); else calCurrentDate.setDate(calCurrentDate.getDate()-1); renderCalendar(); }
-function calNext() { if (calViewMode==='all') return; if (calViewMode==='month') calCurrentDate.setMonth(calCurrentDate.getMonth()+1); else if (calViewMode==='week') calCurrentDate.setDate(calCurrentDate.getDate()+7); else calCurrentDate.setDate(calCurrentDate.getDate()+1); renderCalendar(); }
+function calPrev() { if (calViewMode==='all') return; if (calViewMode==='month') { calCurrentDate.setDate(1); calCurrentDate.setMonth(calCurrentDate.getMonth()-1); } else if (calViewMode==='week') calCurrentDate.setDate(calCurrentDate.getDate()-7); else calCurrentDate.setDate(calCurrentDate.getDate()-1); renderCalendar(); }
+function calNext() { if (calViewMode==='all') return; if (calViewMode==='month') { calCurrentDate.setDate(1); calCurrentDate.setMonth(calCurrentDate.getMonth()+1); } else if (calViewMode==='week') calCurrentDate.setDate(calCurrentDate.getDate()+7); else calCurrentDate.setDate(calCurrentDate.getDate()+1); renderCalendar(); }
 
 function calRenderMonth() {
   const year = calCurrentDate.getFullYear(), month = calCurrentDate.getMonth();
@@ -4358,7 +4415,7 @@ function calRenderMonth() {
 }
 
 function calEventsForDay(date) {
-  const dateStr = date.toISOString().split('T')[0];
+  const dateStr = toLocalDateStr(date);
   const events = state.financialEvents.filter(e => e.date === dateStr && e.status !== 'cancelled');
   return events.slice(0,3).map(e => { const cls = getEventTypeColor(e.type); const sign = e.type==='income'?'+':'\u2212'; return '<div class="cal-event '+cls+'" onclick="event.stopPropagation();openEventDetail(\''+escId(e.id)+'\')">'+sign+fmt(e.amount)+' '+escapeHtml(e.title.split(' ')[0])+'</div>'; }).join('') + (events.length>3?'<div class="cal-event neutral">+'+(events.length-3)+' more</div>':'');
 }
@@ -4368,7 +4425,7 @@ function calRenderWeek() {
   const headers = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
   let html = '<div class="cal-week-grid">';
   for (let i = 0; i < 7; i++) {
-    const d = new Date(weekStart); d.setDate(d.getDate()+i); const isToday = d.getTime()===today.getTime(); const dateStr = d.toISOString().split('T')[0];
+    const d = new Date(weekStart); d.setDate(d.getDate()+i); const isToday = d.getTime()===today.getTime(); const dateStr = toLocalDateStr(d);
     const events = state.financialEvents.filter(e => e.date === dateStr && e.status !== 'cancelled');
     html += '<div class="cal-week-day'+(isToday?' today':'')+'"><div style="font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">'+headers[i]+'</div><div class="cal-day-num" style="font-size:18px;margin-bottom:8px;">'+d.getDate()+'</div>'+events.map(e => { const cls=getEventTypeColor(e.type); const sign=e.type==='income'?'+':'\u2212'; const amtCls=e.type==='income'?'income':'expense'; return '<div class="event-item" onclick="openEventDetail(\''+escId(e.id)+'\')"><div class="event-dot '+cls+'"></div><div class="event-info"><div class="event-title">'+escapeHtml(e.title)+'</div><div class="event-meta">'+escapeHtml(e.category)+'</div></div><div class="event-amount '+amtCls+'">'+sign+fmt(e.amount)+'</div></div>'; }).join('')+'</div>';
   }
@@ -4376,7 +4433,7 @@ function calRenderWeek() {
 }
 
 function calRenderDay() {
-  const dateStr = calCurrentDate.toISOString().split('T')[0];
+  const dateStr = toLocalDateStr(calCurrentDate);
   const events = state.financialEvents.filter(e => e.date === dateStr && e.status !== 'cancelled');
   let html = '<div class="cal-day-view">';
   html += '<button class="cal-create-btn" onclick="openCreateEventModal(\''+dateStr+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create event on ' + fmtDate(dateStr) + '</button>';
@@ -4385,7 +4442,7 @@ function calRenderDay() {
   html += '</div>'; return html;
 }
 
-function calGoToDay(dateStr) { calCurrentDate = new Date(dateStr); calSetView('day'); }
+function calGoToDay(dateStr) { calCurrentDate = parseLocalDateStr(dateStr); calSetView('day'); }
 
 // ============ EVENT DETAIL MODAL ============
 
@@ -5160,7 +5217,7 @@ function clearOldNotificationIds() {
   // Clean up shownNotifIds that reference dates in the past (older than 30 days)
   if (!state.shownNotifIds) return;
   const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30);
-  const cutoffStr = cutoff.toISOString().split('T')[0];
+  const cutoffStr = toLocalDateStr(cutoff);
   state.shownNotifIds = state.shownNotifIds.filter(id => {
     const datePart = id.split('_').pop();
     return datePart >= cutoffStr;
@@ -5509,7 +5566,7 @@ function parseOpayRecords(text) {
       const amtLine = rec.body[amtIdx];
       const nums = amtLine.match(/([\d][\d,]*(?:\.\d{1,2})?)/g) || [];
       const money = nums.map(n => n.replace(/,/g, '')).filter(n => n.indexOf('.') >= 0);
-      if (money.length >= 1) amount = parseFloat(money[0]);
+      if (money.length >= 1) amount = round2(parseFloat(money[0]));
       // balance = last money figure (ignored but confirms it is the amount line)
       // sign: '-' immediately before the amount -> debit(expense); '+' or 'Cr' -> credit(income)
       const amtStart = amtLine.search(/([\d,]+\.\d{1,2})/);
@@ -5687,7 +5744,7 @@ function parseOFX(text) {
     if (!date || !amtRaw) continue;
     let dateStr = date.replace(/^(\d{4})(\d{2})(\d{2}).*/, '$1-$2-$3');
     if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) dateStr = '';
-    const amount = parseFloat(amtRaw);
+    const amount = round2(parseFloat(amtRaw));
     if (isNaN(amount)) continue;
     rows.push({ date: dateStr, description: memo, amount: Math.abs(amount), type: amount < 0 ? 'expense' : 'income' });
   }
@@ -5934,7 +5991,7 @@ function parseImportAmount(rec) {
     const s = String(v || '').replace(/[₦$,]/g, '').trim();
     if (s === '' || s === '-' || s === '--' || /^[-.]+$/.test(s)) return null;
     const n = parseFloat(s);
-    return isNaN(n) ? null : n;
+    return isNaN(n) ? null : round2(n);
   };
   const amtN = parseNum(rec.amount);
   if (amtN !== null) {
@@ -6206,7 +6263,7 @@ function closeIncomeEventModal() { document.getElementById('incomeEventModalOver
 
 function saveIncomeEvent() {
   const name = document.getElementById('incomeEventName').value;
-  const amount = parseFloat(document.getElementById('incomeEventAmount').value);
+  const amount = round2(parseFloat(document.getElementById('incomeEventAmount').value));
   if (!name || !amount) { showToast('Enter name and amount'); return; }
   const frequency = document.getElementById('incomeEventFreq').value;
   const nextDate = document.getElementById('incomeEventDate').value || addDays(new Date(), 30);
@@ -6438,9 +6495,9 @@ function buildGcalEvent(event) {
   const sign = event.type==='income'?'+':'\u2212';
   let dateStr;
   try {
-    dateStr = new Date(event.date).toISOString().split('T')[0];
+    dateStr = toLocalDateStr(parseLocalDateStr(event.date));
   } catch(e) {
-    dateStr = new Date().toISOString().split('T')[0];
+    dateStr = toLocalDateStr(new Date());
   }
   const reminderDays = event.reminderDays !== null ? event.reminderDays : state.settings.defaultReminder;
   return {
@@ -6646,7 +6703,7 @@ let onbAccounts = [];
 
 function addOnbAccount() {
   const name = document.getElementById('onbAccountName').value.trim();
-  const balance = parseFloat(document.getElementById('onbAccountBalance').value) || 0;
+  const balance = round2(parseFloat(document.getElementById('onbAccountBalance').value) || 0);
   if (!name) { showToast('Enter an account name'); return; }
   onbAccounts.push({ id: uid(), name, balance });
   document.getElementById('onbAccountName').value = '';
@@ -6696,7 +6753,7 @@ function onboardingNext() {
     if (budgetInputs.length > 0) {
       if (!state.budgets) state.budgets = {};
       budgetInputs.forEach(input => {
-        const val = parseFloat(input.value);
+        const val = round2(parseFloat(input.value));
         if (val > 0) state.budgets[input.dataset.budcat] = val;
       });
     }
@@ -6773,7 +6830,7 @@ let createEventDate = null;
 let createEventType = 'expense';
 
 function openCreateEventModal(dateStr) {
-  createEventDate = dateStr || new Date().toISOString().split('T')[0];
+  createEventDate = dateStr || toLocalDateStr(new Date());
   createEventType = 'expense';
   document.getElementById('createEventTitle').textContent = 'Create event — ' + fmtDate(createEventDate);
   document.querySelectorAll('#createEventTypeSelector .type-btn').forEach(b => b.classList.toggle('active', b.dataset.etype === 'expense'));
@@ -6819,7 +6876,7 @@ document.addEventListener('change', (e) => {
 
 function saveCreateEvent() {
   const name = document.getElementById('createEventName').value.trim();
-  const amount = parseFloat(document.getElementById('createEventAmount').value);
+  const amount = round2(parseFloat(document.getElementById('createEventAmount').value));
   const date = document.getElementById('createEventDate').value;
   const category = document.getElementById('createEventCategory').value;
   const notes = document.getElementById('createEventNotes').value;
