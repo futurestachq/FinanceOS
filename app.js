@@ -27,11 +27,21 @@ window.addEventListener('unhandledrejection', function(e) {
 });
 try {
 
-// HTML sanitization helper
+// HTML sanitization helper (single definition — keep the single-quote-escaping variant)
 function escapeHtml(str) {
   if (typeof str !== 'string') return String(str);
   return str.replace(/&/g, '&#38;').replace(/</g, '&#60;').replace(/>/g, '&#62;')
             .replace(/"/g, '&#34;').replace(/'/g, '&#39;');
+}
+window.escapeHtml = escapeHtml;
+
+// ID sanitizer for values interpolated into id="..." attributes or
+// onclick="fn('...')" single-quoted JS-string contexts. HTML-escaping does NOT
+// protect those (entities decode before JS parsing), so strip everything
+// outside a safe charset instead. All app IDs come from uid() ([0-9a-z]),
+// this also neutralizes crafted IDs arriving via JSON import.
+function escId(v) {
+  return String(v == null ? '' : v).replace(/[^A-Za-z0-9_-]/g, '');
 }
 
 // ============ DATA LAYER ============
@@ -1170,7 +1180,7 @@ function getSubscriptionLogoHtml(sub) {
   const icon = categoryIcons[sub.category] || categoryIcons['Subscriptions'];
   const fallback = 'this.onerror=null;var p=document.createElement(\'div\');p.className=\'sub-icon\';p.setAttribute(\'style\',\'background:var(--light-green);color:var(--accent);\');p.innerHTML=this.getAttribute(\'data-fallback-icon\');this.replaceWith(p);';
   const fallbackAttr = 'data-fallback-icon="' + icon.replace(/"/g, '&quot;') + '"';
-  if (sub.logo && sub.logo.startsWith('data:')) {
+  if (sub.logo && sub.logo.startsWith('data:image/')) {
     return '<img src="' + sub.logo + '" ' + fallbackAttr + ' onerror="' + fallback + '" style="width:36px;height:36px;border-radius:10px;object-fit:cover;" alt="">';
   }
   if (sub.logo && subscriptionLogos[sub.logo]) {
@@ -1229,14 +1239,14 @@ function renderAccounts() {
     const mk = currentMonthKey();
     const inc = getAccountMonthIncome(a.id, mk);
     const exp = getAccountMonthExpenses(a.id, mk) + getAccountMonthGiving(a.id, mk) + getAccountMonthTransfersOut(a.id, mk);
-    return `<div class="budget-card" style="cursor:pointer;" onclick="viewAccount('${a.id}')">
+    return `<div class="budget-card" style="cursor:pointer;" onclick="viewAccount('${escId(a.id)}')">
       <div class="budget-card-icon" style="background:var(--light-green);color:var(--accent);">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
       </div>
       <div class="budget-card-body">
         <div class="budget-card-top">
           <div>
-            <div class="budget-card-name">${a.name}</div>
+            <div class="budget-card-name">${escapeHtml(a.name)}</div>
             <div style="font-size:12px;color:var(--text-tertiary);margin-top:2px;">${txs.length} transactions · ${fmt(inc)} in · ${fmt(exp)} out</div>
           </div>
           <div style="text-align:right;">
@@ -1245,8 +1255,8 @@ function renderAccounts() {
         </div>
       </div>
       <div class="tx-actions" style="opacity:1;" onclick="event.stopPropagation();">
-        <button class="tx-action-btn" onclick="editAccount('${a.id}')">${iconEdit}</button>
-        <button class="tx-action-btn" onclick="deleteAccount('${a.id}')">${iconDelete}</button>
+        <button class="tx-action-btn" onclick="editAccount('${escId(a.id)}')">${iconEdit}</button>
+        <button class="tx-action-btn" onclick="deleteAccount('${escId(a.id)}')">${iconDelete}</button>
       </div>
     </div>`;
   }).join('');
@@ -1734,20 +1744,20 @@ function renderDashboardAccounts() {
     const txs = getAccountTransactions(a.id);
     const inc = getAccountMonthIncome(a.id, mk);
     const exp = getAccountMonthExpenses(a.id, mk) + getAccountMonthGiving(a.id, mk) + getAccountMonthTransfersOut(a.id, mk);
-    return `<div class="sub-item" style="cursor:pointer;" onclick="viewAccount('${a.id}')">
+    return `<div class="sub-item" style="cursor:pointer;" onclick="viewAccount('${escId(a.id)}')">
       <div class="sub-icon" style="background:var(--light-green);color:var(--accent);">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><path d="M6 12h.01M18 12h.01"/></svg>
       </div>
       <div class="sub-info">
-        <div class="sub-name">${a.name}</div>
+        <div class="sub-name">${escapeHtml(a.name)}</div>
         <div class="sub-meta">${txs.length} transactions · ${fmt(inc)} in · ${fmt(exp)} out</div>
       </div>
       <div style="text-align:right;">
         <div style="font-size:16px;font-weight:700;">${fmt(a.balance || 0)}</div>
       </div>
       <div class="tx-actions" style="opacity:1;" onclick="event.stopPropagation();">
-        <button class="tx-action-btn" onclick="editAccount('${a.id}')">${iconEdit}</button>
-        <button class="tx-action-btn" onclick="deleteAccount('${a.id}')">${iconDelete}</button>
+        <button class="tx-action-btn" onclick="editAccount('${escId(a.id)}')">${iconEdit}</button>
+        <button class="tx-action-btn" onclick="deleteAccount('${escId(a.id)}')">${iconDelete}</button>
       </div>
     </div>`;
   }).join('');
@@ -1824,8 +1834,8 @@ function renderDashboardRenewals() {
     return `<div class="sub-item">
       <div class="sub-icon">${categoryIcons[s.category] || categoryIcons['Subscriptions']}</div>
       <div class="sub-info">
-        <div class="sub-name">${s.name}</div>
-        <div class="sub-meta">${fmt(monthlyCost)}/mo · ${s.cycle}</div>
+        <div class="sub-name">${escapeHtml(s.name)}</div>
+        <div class="sub-meta">${fmt(monthlyCost)}/mo · ${escapeHtml(s.cycle)}</div>
       </div>
       <div style="text-align:right;">
         <div class="sub-cost">${fmt(s.cost)}</div>
@@ -1848,11 +1858,11 @@ function renderTxRow(t) {
   const sign = isInflow ? '+' : (isTransfer ? '' : '−');
   const cls = t.type;
   let acctName = getAccountName(t.accountId);
-  let metaLine = `${t.category} · ${fmtDate(t.date)} · ${t.payment}`;
+  let metaLine = `${escapeHtml(t.category)} · ${fmtDate(t.date)} · ${escapeHtml(t.payment)}`;
   if (isTransfer) {
     const fromName = getAccountName(t.fromAccountId || t.accountId);
     const toName = getAccountName(t.toAccountId);
-    metaLine = `${fromName} → ${toName} · ${fmtDate(t.date)}`;
+    metaLine = `${escapeHtml(fromName)} → ${escapeHtml(toName)} · ${fmtDate(t.date)}`;
     acctName = '';
   }
   const typeBadge = {
@@ -1864,13 +1874,13 @@ function renderTxRow(t) {
   return `<div class="tx-row">
     <div class="tx-icon" style="background:var(--light-green);">${icon}</div>
     <div class="tx-info">
-      <div class="tx-desc">${t.description} ${typeBadge[t.type] || ''}</div>
-      <div class="tx-meta">${metaLine}${acctName ? ' · ' + acctName : ''}</div>
+      <div class="tx-desc">${escapeHtml(t.description)} ${typeBadge[t.type] || ''}</div>
+      <div class="tx-meta">${metaLine}${acctName ? ' · ' + escapeHtml(acctName) : ''}</div>
     </div>
     <div class="tx-amount ${cls}">${sign}${fmt(t.amount).replace('₦','₦')}</div>
     <div class="tx-actions">
-      <button class="tx-action-btn" onclick="editTransaction('${t.id}')">${iconEdit}</button>
-      <button class="tx-action-btn" onclick="deleteTransaction('${t.id}')">${iconDelete}</button>
+      <button class="tx-action-btn" onclick="editTransaction('${escId(t.id)}')">${iconEdit}</button>
+      <button class="tx-action-btn" onclick="deleteTransaction('${escId(t.id)}')">${iconDelete}</button>
     </div>
   </div>`;
 }
@@ -2102,7 +2112,7 @@ function renderTransactions() {
     if (amountMin > 0) chips.push({ label: 'Min: ' + fmt(amountMin), clear: () => { document.getElementById('txAmountMin').value = ''; renderTransactions(); } });
     if (amountMax < Infinity) chips.push({ label: 'Max: ' + fmt(amountMax), clear: () => { document.getElementById('txAmountMax').value = ''; renderTransactions(); } });
     
-    let chipsHtml = chips.map((c, i) => `<button class="filter-chip" onclick="window._txChipClear_${i}()">${c.label}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`).join('');
+    let chipsHtml = chips.map((c, i) => `<button class="filter-chip" onclick="window._txChipClear_${i}()">${escapeHtml(c.label)}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`).join('');
     if (chips.length > 1) chipsHtml += `<button class="filter-chip-clear" onclick="clearAllTxFilters()">Clear all</button>`;
     chips.forEach((c, i) => { window['_txChipClear_' + i] = c.clear; });
     chipsEl.innerHTML = chipsHtml;
@@ -2386,16 +2396,16 @@ function renderSubscriptions() {
     return `<div class="sub-item" style="${pausedStyle}">
       <div style="flex-shrink:0;">${logoHtml}</div>
       <div class="sub-info">
-        <div class="sub-name">${s.name}</div>
-        <div class="sub-meta">${s.cycle} · renews ${fmtDate(s.renewal)} ${s.notes ? '· ' + s.notes : ''}</div>
+        <div class="sub-name">${escapeHtml(s.name)}</div>
+        <div class="sub-meta">${escapeHtml(s.cycle)} · renews ${fmtDate(s.renewal)} ${s.notes ? '· ' + escapeHtml(s.notes) : ''}</div>
       </div>
       <div style="text-align:right;">
         <div class="sub-cost">${fmt(s.cost)}</div>
         <div style="margin-top:4px;">${badge}</div>
       </div>
       <div class="tx-actions" style="opacity:1;">
-        <div class="toggle-sm ${s.status === 'active' ? 'on' : ''}" onclick="toggleSubscriptionStatus('${s.id}')" title="${s.status === 'paused' ? 'Activate' : 'Pause'}"></div>
-        <button class="tx-action-btn" onclick="deleteSubscription('${s.id}')">${iconDelete}</button>
+        <div class="toggle-sm ${s.status === 'active' ? 'on' : ''}" onclick="toggleSubscriptionStatus('${escId(s.id)}')" title="${s.status === 'paused' ? 'Activate' : 'Pause'}"></div>
+        <button class="tx-action-btn" onclick="deleteSubscription('${escId(s.id)}')">${iconDelete}</button>
       </div>
     </div>`;
   }).join('');
@@ -2679,7 +2689,7 @@ function renderGoals() {
     const priority = g.priority || 'medium';
     const badgeClass = priority === 'high' ? 'high' : (priority === 'medium' ? 'medium' : 'low');
     const badgeText = priority.charAt(0).toUpperCase() + priority.slice(1) + ' priority';
-    const listId = 'contrib-list-' + g.id;
+    const listId = 'contrib-list-' + escId(g.id);
     const history = (g.contributions || []).sort((a,b) => new Date(b.date) - new Date(a.date));
 
     let historyHtml = '';
@@ -2687,12 +2697,12 @@ function renderGoals() {
       historyHtml = '<div id="' + listId + '" style="display:none;margin-top:12px;">' +
         history.map(c => {
           const sourceLabel = c.sourceType === 'account' ? (c.sourceName || getAccountName(c.sourceId)) : (c.sourceName || 'Custom');
-          return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-secondary);font-size:13px;color:var(--text);"><span>' + fmtDate(c.date) + ' · ' + sourceLabel + '</span><span style="font-weight:600;color:var(--text);">' + fmt(c.amount) + '</span></div>';
+          return '<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border-secondary);font-size:13px;color:var(--text);"><span>' + fmtDate(c.date) + ' · ' + escapeHtml(sourceLabel) + '</span><span style="font-weight:600;color:var(--text);">' + fmt(c.amount) + '</span></div>';
         }).join('') +
         '</div>';
     }
 
-    const goalDetailId = 'gd-' + g.id;
+    const goalDetailId = 'gd-' + escId(g.id);
     const goalIcon = getGoalIcon(g);
     return `<div class="goal-card">
       <div class="goal-card-top">
@@ -2701,13 +2711,13 @@ function renderGoals() {
         </div>
         <div class="goal-info">
           <div class="goal-name-row">
-            <div class="goal-name">${g.name}</div>
-            <div class="goal-badge ${badgeClass}">${badgeText}</div>
+            <div class="goal-name">${escapeHtml(g.name)}</div>
+            <div class="goal-badge ${escapeHtml(badgeClass)}">${escapeHtml(badgeText)}</div>
             <button class="goal-item-menu" onclick="toggleGoalDetails('${goalDetailId}')">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
             </button>
           </div>
-          <div class="goal-desc">${g.notes || 'Financial goal'}</div>
+          <div class="goal-desc">${escapeHtml(g.notes) || 'Financial goal'}</div>
           <div class="goal-target-line">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
             ${g.date ? 'Target: ' + fmtDate(g.date) + (daysLeft !== null ? ' (' + daysLeft + ' days left)' : '') : 'No target date'}
@@ -2729,11 +2739,11 @@ function renderGoals() {
           <div class="goal-bottom-row">
             <div class="goal-monthly">Monthly target <strong>${monthlyTarget > 0 ? fmt(monthlyTarget) : '—'} /mo</strong></div>
             <div class="goal-actions">
-              <button class="goal-btn" onclick="openContribModal('${g.id}')">
+              <button class="goal-btn" onclick="openContribModal('${escId(g.id)}')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Contribute
               </button>
-              <button class="goal-btn delete" onclick="deleteGoal('${g.id}')">
+              <button class="goal-btn delete" onclick="deleteGoal('${escId(g.id)}')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                 Delete
               </button>
@@ -2749,18 +2759,18 @@ function renderGoals() {
             <div class="goal-detail-row"><span>Monthly target</span><span>${monthlyTarget > 0 ? fmt(monthlyTarget) : '—'}</span></div>
             <div class="goal-detail-row"><span>Priority</span><span class="goal-badge ${badgeClass}" style="font-size:11px;padding:2px 8px;">${badgeText}</span></div>
             <div class="goal-detail-actions">
-              <button onclick="openContribModal('${g.id}')">
+              <button onclick="openContribModal('${escId(g.id)}')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                 Contribute
               </button>
-              <button class="danger" onclick="deleteGoal('${g.id}')">
+              <button class="danger" onclick="deleteGoal('${escId(g.id)}')">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2"/></svg>
                 Delete
               </button>
             </div>
             ${history.length > 0 ? `<div style="margin-top:8px;"><div style="font-size:12px;font-weight:600;color:var(--text);margin-bottom:4px;">Contribution history</div>` + history.map(c => {
               const sourceLabel = c.sourceType === 'account' ? (c.sourceName || getAccountName(c.sourceId)) : (c.sourceName || 'Custom');
-              return '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:var(--text-secondary);"><span>' + fmtDate(c.date) + ' · ' + sourceLabel + '</span><span style="font-weight:600;color:var(--text);">' + fmt(c.amount) + '</span></div>';
+              return '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;color:var(--text-secondary);"><span>' + fmtDate(c.date) + ' · ' + escapeHtml(sourceLabel) + '</span><span style="font-weight:600;color:var(--text);">' + fmt(c.amount) + '</span></div>';
             }).join('') + '</div>' : ''}
           </div>
         </div>
@@ -2957,17 +2967,17 @@ function renderReports() {
           <div class="stat-row"><span class="stat-label">Total giving</span><span class="stat-value">${fmt(giving)}</span></div>
           <div class="stat-row"><span class="stat-label">Subscriptions</span><span class="stat-value">${fmt(subMonthly)}</span></div>
           <div class="stat-row"><span class="stat-label">Net savings</span><span class="stat-value">${fmt(savings)}</span></div>
-          <div class="stat-row"><span class="stat-label">Largest category</span><span class="stat-value">${sortedCats[0] ? sortedCats[0][0] : '—'}</span></div>
-          <div class="stat-row"><span class="stat-label">Budget breaches</span><span class="stat-value">${breaches.length > 0 ? breaches.map(b => b.cat).join(', ') : 'None'}</span></div>
+          <div class="stat-row"><span class="stat-label">Largest category</span><span class="stat-value">${sortedCats[0] ? escapeHtml(sortedCats[0][0]) : '—'}</span></div>
+          <div class="stat-row"><span class="stat-label">Budget breaches</span><span class="stat-value">${breaches.length > 0 ? breaches.map(b => escapeHtml(b.cat)).join(', ') : 'None'}</span></div>
         </div>
         <div class="card">
           <div class="card-header"><div class="card-title">Top categories</div></div>
-          ${sortedCats.slice(0, 8).map(([cat, amt]) => `<div class="stat-row"><span class="stat-label">${cat}</span><span class="stat-value">${fmt(amt)}</span></div>`).join('')}
+          ${sortedCats.slice(0, 8).map(([cat, amt]) => `<div class="stat-row"><span class="stat-label">${escapeHtml(cat)}</span><span class="stat-value">${fmt(amt)}</span></div>`).join('')}
         </div>
       </div>
       ${breaches.length > 0 ? `<div class="card" style="margin-top:20px;">
         <div class="card-header"><div class="card-title">Budget breaches</div></div>
-        ${breaches.map(b => `<div class="stat-row"><span class="stat-label">${b.cat} — ${fmt(b.spent)} / ${fmt(b.limit)}</span><span class="stat-value metric-negative">+${b.over}%</span></div>`).join('')}
+        ${breaches.map(b => `<div class="stat-row"><span class="stat-label">${escapeHtml(b.cat)} — ${fmt(b.spent)} / ${fmt(b.limit)}</span><span class="stat-value metric-negative">+${b.over}%</span></div>`).join('')}
       </div>` : ''}
     `;
   } else if (period === 'quarterly') {
@@ -3622,7 +3632,7 @@ function openContribModal(goalId) {
   document.getElementById('contribAmount').value = '';
   const sourceSelect = document.getElementById('contribSource');
   let opts = '<option value="">Select source...</option>';
-  state.accounts.forEach(a => { opts += `<option value="account:${a.id}">${a.name}</option>`; });
+  state.accounts.forEach(a => { opts += `<option value="account:${escId(a.id)}">${escapeHtml(a.name)}</option>`; });
   opts += '<option value="custom">Other (custom)</option>';
   sourceSelect.innerHTML = opts;
   document.getElementById('contribCustomSourceWrap').style.display = 'none';
@@ -3805,7 +3815,7 @@ let currentUndoFn = null;
 function showUndoToast(msg, undoFn) {
   const toast = document.getElementById('toast');
   currentUndoFn = undoFn;
-  toast.innerHTML = msg + ' <button id="undoBtn" style="margin-left:10px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;padding:2px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;">Undo</button>';
+  toast.innerHTML = escapeHtml(msg) + ' <button id="undoBtn" style="margin-left:10px;background:rgba(255,255,255,0.2);border:1px solid rgba(255,255,255,0.3);color:white;padding:2px 12px;border-radius:6px;cursor:pointer;font-weight:600;font-size:13px;">Undo</button>';
   toast.className = 'toast show';
   toast.style.cursor = 'default';
   toast.onclick = null;
@@ -3834,7 +3844,7 @@ function confirmDelete(title, message, onConfirm) {
   overlay.className = 'modal-overlay active';
   overlay.id = overlayId;
   overlay.style.zIndex = '300';
-  overlay.innerHTML = '<div class="modal" style="max-width:400px;"><div class="modal-header"><div class="modal-title" style="color:var(--danger);">' + title + '</div><button class="modal-close" onclick="document.getElementById(\''+overlayId+'\').remove()">&times;</button></div><div class="modal-body"><p style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;">' + message + '</p><p style="font-size:13px;color:var(--text-tertiary);">This action cannot be undone.</p></div><div class="modal-footer"><button class="btn" onclick="document.getElementById(\''+overlayId+'\').remove()">Cancel</button><button class="btn btn-danger" id="confirmDeleteBtn-'+overlayId+'">Delete</button></div></div>';
+  overlay.innerHTML = '<div class="modal" style="max-width:400px;"><div class="modal-header"><div class="modal-title" style="color:var(--danger);">' + escapeHtml(title) + '</div><button class="modal-close" onclick="document.getElementById(\''+overlayId+'\').remove()">&times;</button></div><div class="modal-body"><p style="font-size:14px;color:var(--text-secondary);line-height:1.6;margin-bottom:8px;">' + escapeHtml(message) + '</p><p style="font-size:13px;color:var(--text-tertiary);">This action cannot be undone.</p></div><div class="modal-footer"><button class="btn" onclick="document.getElementById(\''+overlayId+'\').remove()">Cancel</button><button class="btn btn-danger" id="confirmDeleteBtn-'+overlayId+'">Delete</button></div></div>';
   document.body.appendChild(overlay);
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
   document.getElementById('confirmDeleteBtn-'+overlayId).onclick = () => { overlay.remove(); onConfirm(); };
@@ -4065,7 +4075,7 @@ function renderDashboardUpcoming() {
     const sign = e.type === 'income' ? '+' : '\u2212';
     const amtColor = e.type === 'income' ? 'income' : 'expense';
     const statusBadge = e.status === 'due-today' ? '<span class="event-status due-today" style="margin-left:4px;">Due today</span>' : '';
-    return '<div class="upcoming-item" onclick="openEventDetail(\''+e.id+'\')"><div class="upcoming-date"><div class="upcoming-date-day">'+day+'</div><div class="upcoming-date-month">'+month+'</div></div><div class="event-dot '+colorClass+'"></div><div class="event-info"><div class="event-title">'+e.title+statusBadge+'</div><div class="event-meta">'+e.category+' \u00b7 '+fmtDate(e.date)+'</div></div><div class="event-amount '+amtColor+'">'+sign+fmt(e.amount)+'</div></div>';
+    return '<div class="upcoming-item" onclick="openEventDetail(\''+escId(e.id)+'\')"><div class="upcoming-date"><div class="upcoming-date-day">'+day+'</div><div class="upcoming-date-month">'+month+'</div></div><div class="event-dot '+colorClass+'"></div><div class="event-info"><div class="event-title">'+escapeHtml(e.title)+statusBadge+'</div><div class="event-meta">'+escapeHtml(e.category)+' \u00b7 '+fmtDate(e.date)+'</div></div><div class="event-amount '+amtColor+'">'+sign+fmt(e.amount)+'</div></div>';
   }).join('');
 }
 
@@ -4086,8 +4096,8 @@ function renderDashboardNotifications() {
   const dueToday = events.filter(e => e.status === 'due-today');
   const dueTomorrow = events.filter(e => { const ed = new Date(e.date); ed.setHours(0,0,0,0); return Math.ceil((ed - today) / 86400000) === 1; });
   const notifs = [];
-  if (dueToday.length > 0) notifs.push('<strong>'+dueToday.length+'</strong> financial event'+(dueToday.length > 1 ? 's' : '')+' due today \u2014 '+dueToday.map(e => e.title).join(', ')+'.');
-  if (dueTomorrow.length > 0) { const exp = dueTomorrow.filter(e => e.type !== 'income'); if (exp.length > 0) notifs.push('Your '+exp[0].title+' of '+fmt(exp[0].amount)+' is due tomorrow.'); }
+  if (dueToday.length > 0) notifs.push('<strong>'+dueToday.length+'</strong> financial event'+(dueToday.length > 1 ? 's' : '')+' due today \u2014 '+dueToday.map(e => escapeHtml(e.title)).join(', ')+'.');
+  if (dueTomorrow.length > 0) { const exp = dueTomorrow.filter(e => e.type !== 'income'); if (exp.length > 0) notifs.push('Your '+escapeHtml(exp[0].title)+' of '+fmt(exp[0].amount)+' is due tomorrow.'); }
   notifs.push('You have <strong>'+fmt(totalOut)+'</strong> in scheduled payments and <strong>'+fmt(totalIn)+'</strong> in expected income in the next '+win+' days.');
   container.innerHTML = notifs.map((text, i) => '<div class="notif-banner" id="notif-'+i+'"><div class="notif-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg></div><div class="notif-text">'+text+'</div><button class="notif-dismiss" onclick="dismissNotif(\'notif-'+i+'\')">&times;</button></div>').join('');
 }
@@ -4244,7 +4254,7 @@ function calRenderAllEvents() {
         const sign = e.type === 'income' ? '+' : '\u2212';
         const amtCls = e.type === 'income' ? 'income' : 'expense';
         const statusBadge = e.status ? '<span class="event-status ' + e.status + '">' + e.status.replace('-', ' ') + '</span>' : '';
-        return '<div class="event-item" onclick="openEventDetail(\'' + e.id + '\')"><div class="event-dot ' + cls + '"></div><div class="event-info"><div class="event-title">' + e.title + '</div><div class="event-meta">' + e.category + ' \u00b7 ' + fmtDate(e.date) + ' \u00b7 ' + (e.recurrence || 'One-time') + '</div></div><div style="text-align:right;"><div class="event-amount ' + amtCls + '">' + sign + fmt(e.amount) + '</div><div style="margin-top:4px;">' + statusBadge + '</div></div></div>';
+        return '<div class="event-item" onclick="openEventDetail(\'' + escId(e.id) + '\')"><div class="event-dot ' + cls + '"></div><div class="event-info"><div class="event-title">' + escapeHtml(e.title) + '</div><div class="event-meta">' + escapeHtml(e.category) + ' \u00b7 ' + fmtDate(e.date) + ' \u00b7 ' + (e.recurrence || 'One-time') + '</div></div><div style="text-align:right;"><div class="event-amount ' + amtCls + '">' + sign + fmt(e.amount) + '</div><div style="margin-top:4px;">' + statusBadge + '</div></div></div>';
       }).join('');
     });
   }
@@ -4271,8 +4281,8 @@ function renderCalSidebar() {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
           </div>
           <div class="cal-event-info">
-            <div class="cal-event-name">${e.title}</div>
-            <div class="cal-event-date">${fmtDate(e.date)} · ${e.recurrence || 'One-time'}</div>
+            <div class="cal-event-name">${escapeHtml(e.title)}</div>
+            <div class="cal-event-date">${fmtDate(e.date)} · ${escapeHtml(e.recurrence) || 'One-time'}</div>
           </div>
           <div class="cal-event-amount ${amtClass}">${sign}${fmt(e.amount)}</div>
         </div>`;
@@ -4329,7 +4339,7 @@ function calRenderMonth() {
 function calEventsForDay(date) {
   const dateStr = date.toISOString().split('T')[0];
   const events = state.financialEvents.filter(e => e.date === dateStr && e.status !== 'cancelled');
-  return events.slice(0,3).map(e => { const cls = getEventTypeColor(e.type); const sign = e.type==='income'?'+':'\u2212'; return '<div class="cal-event '+cls+'" onclick="event.stopPropagation();openEventDetail(\''+e.id+'\')">'+sign+fmt(e.amount)+' '+e.title.split(' ')[0]+'</div>'; }).join('') + (events.length>3?'<div class="cal-event neutral">+'+(events.length-3)+' more</div>':'');
+  return events.slice(0,3).map(e => { const cls = getEventTypeColor(e.type); const sign = e.type==='income'?'+':'\u2212'; return '<div class="cal-event '+cls+'" onclick="event.stopPropagation();openEventDetail(\''+escId(e.id)+'\')">'+sign+fmt(e.amount)+' '+escapeHtml(e.title.split(' ')[0])+'</div>'; }).join('') + (events.length>3?'<div class="cal-event neutral">+'+(events.length-3)+' more</div>':'');
 }
 
 function calRenderWeek() {
@@ -4339,7 +4349,7 @@ function calRenderWeek() {
   for (let i = 0; i < 7; i++) {
     const d = new Date(weekStart); d.setDate(d.getDate()+i); const isToday = d.getTime()===today.getTime(); const dateStr = d.toISOString().split('T')[0];
     const events = state.financialEvents.filter(e => e.date === dateStr && e.status !== 'cancelled');
-    html += '<div class="cal-week-day'+(isToday?' today':'')+'"><div style="font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">'+headers[i]+'</div><div class="cal-day-num" style="font-size:18px;margin-bottom:8px;">'+d.getDate()+'</div>'+events.map(e => { const cls=getEventTypeColor(e.type); const sign=e.type==='income'?'+':'\u2212'; const amtCls=e.type==='income'?'income':'expense'; return '<div class="event-item" onclick="openEventDetail(\''+e.id+'\')"><div class="event-dot '+cls+'"></div><div class="event-info"><div class="event-title">'+e.title+'</div><div class="event-meta">'+e.category+'</div></div><div class="event-amount '+amtCls+'">'+sign+fmt(e.amount)+'</div></div>'; }).join('')+'</div>';
+    html += '<div class="cal-week-day'+(isToday?' today':'')+'"><div style="font-size:11px;color:var(--text-secondary);font-weight:600;text-transform:uppercase;margin-bottom:4px;">'+headers[i]+'</div><div class="cal-day-num" style="font-size:18px;margin-bottom:8px;">'+d.getDate()+'</div>'+events.map(e => { const cls=getEventTypeColor(e.type); const sign=e.type==='income'?'+':'\u2212'; const amtCls=e.type==='income'?'income':'expense'; return '<div class="event-item" onclick="openEventDetail(\''+escId(e.id)+'\')"><div class="event-dot '+cls+'"></div><div class="event-info"><div class="event-title">'+escapeHtml(e.title)+'</div><div class="event-meta">'+escapeHtml(e.category)+'</div></div><div class="event-amount '+amtCls+'">'+sign+fmt(e.amount)+'</div></div>'; }).join('')+'</div>';
   }
   html += '</div>'; return html;
 }
@@ -4350,7 +4360,7 @@ function calRenderDay() {
   let html = '<div class="cal-day-view">';
   html += '<button class="cal-create-btn" onclick="openCreateEventModal(\''+dateStr+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Create event on ' + fmtDate(dateStr) + '</button>';
   if (events.length === 0) html += '<div class="empty-state">No financial events on this day</div>';
-  else html += events.map(e => { const cls=getEventTypeColor(e.type); const sign=e.type==='income'?'+':'\u2212'; const amtCls=e.type==='income'?'income':'expense'; return '<div class="event-item" onclick="openEventDetail(\''+e.id+'\')"><div class="event-dot '+cls+'"></div><div class="event-info"><div class="event-title">'+e.title+'</div><div class="event-meta">'+e.category+' \u00b7 '+fmtDate(e.date)+' \u00b7 '+e.recurrence+'</div></div><div style="text-align:right;"><div class="event-amount '+amtCls+'">'+sign+fmt(e.amount)+'</div><div style="margin-top:4px;"><span class="event-status '+e.status+'">'+e.status.replace('-',' ')+'</span></div></div></div>'; }).join('');
+  else html += events.map(e => { const cls=getEventTypeColor(e.type); const sign=e.type==='income'?'+':'\u2212'; const amtCls=e.type==='income'?'income':'expense'; return '<div class="event-item" onclick="openEventDetail(\''+escId(e.id)+'\')"><div class="event-dot '+cls+'"></div><div class="event-info"><div class="event-title">'+escapeHtml(e.title)+'</div><div class="event-meta">'+escapeHtml(e.category)+' \u00b7 '+fmtDate(e.date)+' \u00b7 '+escapeHtml(e.recurrence)+'</div></div><div style="text-align:right;"><div class="event-amount '+amtCls+'">'+sign+fmt(e.amount)+'</div><div style="margin-top:4px;"><span class="event-status '+escapeHtml(e.status)+'">'+escapeHtml(e.status.replace('-',' '))+'</span></div></div></div>'; }).join('');
   html += '</div>'; return html;
 }
 
@@ -4364,14 +4374,14 @@ function openEventDetail(eventId) {
   document.getElementById('eventDetailTitle').textContent = event.title;
   const sign = event.type==='income'?'+':'\u2212';
   const amtColor = event.type==='income'?'var(--success)':'var(--danger)';
-  document.getElementById('eventDetailBody').innerHTML = '<div style="text-align:center;margin-bottom:20px;"><div style="font-size:28px;font-weight:700;color:'+amtColor+';">'+sign+fmt(event.amount)+'</div><div style="font-size:14px;color:var(--text-secondary);margin-top:4px;">'+event.category+' \u00b7 '+fmtDate(event.date)+'</div><div style="margin-top:8px;"><span class="event-status '+event.status+'">'+event.status.replace('-',' ')+'</span></div></div><div class="stat-row"><span class="stat-label">Type</span><span class="stat-value">'+event.type.charAt(0).toUpperCase()+event.type.slice(1)+'</span></div><div class="stat-row"><span class="stat-label">Recurrence</span><span class="stat-value">'+event.recurrence+'</span></div><div class="stat-row"><span class="stat-label">Google Calendar</span><span class="stat-value">'+(event.gcalEventId?'Synced':'Not synced')+'</span></div>'+(event.linkedTxId?'<div class="stat-row"><span class="stat-label">Linked transaction</span><span class="stat-value" style="color:var(--success);">Recorded</span></div>':'')+'<div class="stat-row"><span class="stat-label">Reminder</span><span class="stat-value">'+(event.reminderDays ? event.reminderDays : state.settings.defaultReminder)+' day(s) before</span></div>'+(event.notes?'<div class="stat-row"><span class="stat-label">Notes</span><span class="stat-value">'+event.notes+'</span></div>':'');
+  document.getElementById('eventDetailBody').innerHTML = '<div style="text-align:center;margin-bottom:20px;"><div style="font-size:28px;font-weight:700;color:'+amtColor+';">'+sign+fmt(event.amount)+'</div><div style="font-size:14px;color:var(--text-secondary);margin-top:4px;">'+escapeHtml(event.category)+' \u00b7 '+fmtDate(event.date)+'</div><div style="margin-top:8px;"><span class="event-status '+escapeHtml(event.status)+'">'+escapeHtml(event.status.replace('-',' '))+'</span></div></div><div class="stat-row"><span class="stat-label">Type</span><span class="stat-value">'+escapeHtml(event.type.charAt(0).toUpperCase()+event.type.slice(1))+'</span></div><div class="stat-row"><span class="stat-label">Recurrence</span><span class="stat-value">'+escapeHtml(event.recurrence)+'</span></div><div class="stat-row"><span class="stat-label">Google Calendar</span><span class="stat-value">'+(event.gcalEventId?'Synced':'Not synced')+'</span></div>'+(event.linkedTxId?'<div class="stat-row"><span class="stat-label">Linked transaction</span><span class="stat-value" style="color:var(--success);">Recorded</span></div>':'')+'<div class="stat-row"><span class="stat-label">Reminder</span><span class="stat-value">'+(event.reminderDays ? event.reminderDays : state.settings.defaultReminder)+' day(s) before</span></div>'+(event.notes?'<div class="stat-row"><span class="stat-label">Notes</span><span class="stat-value">'+escapeHtml(event.notes)+'</span></div>':'');
   let footerHtml = '';
   if (event.status !== 'completed' && event.status !== 'cancelled') {
-    footerHtml += '<button class="btn btn-sm btn-primary" onclick="recordEventTransaction(\''+event.id+'\')">Record transaction</button>';
-    footerHtml += '<button class="btn btn-sm" onclick="markEventCompleted(\''+event.id+'\')" style="margin-left:8px;">Mark as paid</button>';
+    footerHtml += '<button class="btn btn-sm btn-primary" onclick="recordEventTransaction(\''+escId(event.id)+'\')">Record transaction</button>';
+    footerHtml += '<button class="btn btn-sm" onclick="markEventCompleted(\''+escId(event.id)+'\')" style="margin-left:8px;">Mark as paid</button>';
   }
-  if (event.status !== 'completed' && event.status !== 'cancelled') footerHtml += '<button class="btn btn-sm btn-danger" onclick="cancelEvent(\''+event.id+'\')" style="margin-left:8px;">'+(event.recurrence && event.recurrence !== 'one-time' ? 'Delete...' : 'Delete')+'</button>';
-  if (state.settings.googleCalendar.connected && !event.gcalEventId && event.syncToGcal) footerHtml += '<button class="btn btn-sm" onclick="syncEventToGcal(\''+event.id+'\')" style="margin-left:8px;">Sync to Google</button>';
+  if (event.status !== 'completed' && event.status !== 'cancelled') footerHtml += '<button class="btn btn-sm btn-danger" onclick="cancelEvent(\''+escId(event.id)+'\')" style="margin-left:8px;">'+(event.recurrence && event.recurrence !== 'one-time' ? 'Delete...' : 'Delete')+'</button>';
+  if (state.settings.googleCalendar.connected && !event.gcalEventId && event.syncToGcal) footerHtml += '<button class="btn btn-sm" onclick="syncEventToGcal(\''+escId(event.id)+'\')" style="margin-left:8px;">Sync to Google</button>';
   document.getElementById('eventDetailFooter').innerHTML = footerHtml;
   document.getElementById('eventDetailModalOverlay').classList.add('active');
 }
@@ -6015,11 +6025,8 @@ function confirmImportTxns() {
 }
 window.confirmImportTxns = confirmImportTxns;
 
-function escapeHtml(s) {
-  return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-}
-window.escapeHtml = escapeHtml;
-
+// NOTE: escapeHtml/escId live once near the top of this file (single source
+// of truth). Do not re-declare them here.
 
 function confirmImport(data) {
   const overlay = document.createElement('div');
@@ -6095,6 +6102,36 @@ function confirmClearData() {
 window.confirmClearData = confirmClearData;
 
 function clearAllData() {
+  // C1 SAFETY: snapshot everything to a trash copy BEFORE wiping, locally and
+  // in Firestore (when signed in). The old code wrote a blank state straight
+  // through saveData(), which propagated the wipe to the cloud copy with no
+  // way back. Trash keys are pruned to the 3 most recent.
+  try {
+    const doomed = JSON.parse(JSON.stringify(state));
+    const hasData = (doomed.transactions && doomed.transactions.length) ||
+      (doomed.accounts && doomed.accounts.length) ||
+      (doomed.subscriptions && doomed.subscriptions.length) ||
+      (doomed.goals && doomed.goals.length) ||
+      (doomed.financialEvents && doomed.financialEvents.length) ||
+      (doomed.incomeEvents && doomed.incomeEvents.length);
+    if (hasData) {
+      const ts = Date.now();
+      const trashKey = 'finance_os_trash_' + ts;
+      try { localStorage.setItem(trashKey, JSON.stringify({ trashedAt: ts, state: doomed })); } catch (e) { console.error('Trash snapshot failed', e); }
+      try {
+        const keys = [];
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('finance_os_trash_') === 0) keys.push(k); }
+        keys.sort().slice(0, Math.max(0, keys.length - 3)).forEach(k => localStorage.removeItem(k));
+      } catch (e) { /* pruning is best-effort */ }
+      if (currentUser && !isGuest && typeof db !== 'undefined') {
+        db.collection('users').doc(currentUser.uid).collection('trash').doc(String(ts)).set({
+          trashedAt: ts,
+          trashedAtServer: (firebase.firestore && firebase.firestore.FieldValue) ? firebase.firestore.FieldValue.serverTimestamp() : null,
+          state: doomed
+        }).catch(e => console.error('Trash cloud snapshot failed', e));
+      }
+    }
+  } catch (e) { console.error('Pre-wipe snapshot failed, continuing with wipe', e); }
   state = {
     accounts: [], transactions: [], subscriptions: [], budgets: {}, goals: [], balance: 0,
     incomeEvents: [], financialEvents: [], hasOnboarded: true,
@@ -6109,7 +6146,7 @@ function clearAllData() {
   };
   saveData();
   document.querySelectorAll('.modal-overlay').forEach(o => o.remove());
-  showToast('All data cleared');
+  showToast('All data cleared · recovery copy kept in trash');
   navigate('dashboard');
 }
 window.clearAllData = clearAllData;
@@ -6117,7 +6154,7 @@ window.clearAllData = clearAllData;
 function renderIncomeEventList() {
   const c = document.getElementById('incomeEventList');
   if (!state.incomeEvents || state.incomeEvents.length === 0) { c.innerHTML = '<div class="empty-state">No recurring income events yet</div>'; return; }
-  c.innerHTML = state.incomeEvents.map(inc => '<div class="settings-row"><div><div class="settings-label">'+inc.name+'</div><div class="settings-desc">'+fmt(inc.amount)+' \u00b7 '+inc.frequency+' \u00b7 next: '+fmtDate(inc.nextDate)+' \u00b7 '+getAccountName(inc.accountId)+'</div></div><div style="display:flex;align-items:center;gap:8px;"><span class="badge badge-success">'+(inc.active?'Active':'Inactive')+'</span><button class="tx-action-btn" onclick="deleteIncomeEvent(\''+inc.id+'\')">'+iconDelete+'</button></div></div>').join('');
+  c.innerHTML = state.incomeEvents.map(inc => '<div class="settings-row"><div><div class="settings-label">'+escapeHtml(inc.name)+'</div><div class="settings-desc">'+fmt(inc.amount)+' \u00b7 '+escapeHtml(inc.frequency)+' \u00b7 next: '+fmtDate(inc.nextDate)+' \u00b7 '+escapeHtml(getAccountName(inc.accountId))+'</div></div><div style="display:flex;align-items:center;gap:8px;"><span class="badge badge-success">'+(inc.active?'Active':'Inactive')+'</span><button class="tx-action-btn" onclick="deleteIncomeEvent(\''+escId(inc.id)+'\')">'+iconDelete+'</button></div></div>').join('');
 }
 
 function openIncomeEventModal() {
