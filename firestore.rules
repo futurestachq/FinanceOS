@@ -1,0 +1,60 @@
+rules_version = '2';
+
+// FinanceOS Firestore security rules.
+// The client only ever touches:
+//   users/{uid}              — get + full-overwrite set of the finance state
+//   users/{uid}/trash/{ts}   — set of pre-wipe recovery snapshots
+// Everything is owner-scoped: a signed-in user can only read/write their own
+// document tree. There is intentionally no rule permitting anything else, so
+// all other paths (including listing the users collection) are denied.
+//
+// Deploy with:  firebase deploy --only firestore:rules --project financeos-12034
+// Then re-test in the Firebase console (Firestore > Rules > Rules playground):
+//   - signed-in uid A reading users/A .............. ALLOW
+//   - signed-in uid A reading users/B .............. DENY
+//   - signed-out read of users/A ................... DENY
+//   - uid A writing users/A with valid shape ....... ALLOW
+//   - uid A writing users/A with transactions: "x"  DENY (wrong type)
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create, update: if isOwner(userId)
+        // Shape validation: each check passes when the key is absent
+        // (forward-compatible with new state fields) and enforces the type
+        // when present. Nullable app fields accept null explicitly.
+        && (!('transactions' in request.resource.data) || request.resource.data.transactions is list)
+        && (!('accounts' in request.resource.data) || request.resource.data.accounts is list)
+        && (!('subscriptions' in request.resource.data) || request.resource.data.subscriptions is list)
+        && (!('goals' in request.resource.data) || request.resource.data.goals is list)
+        && (!('incomeEvents' in request.resource.data) || request.resource.data.incomeEvents is list)
+        && (!('financialEvents' in request.resource.data) || request.resource.data.financialEvents is list)
+        && (!('budgets' in request.resource.data) || request.resource.data.budgets is map)
+        && (!('budgetIcons' in request.resource.data) || request.resource.data.budgetIcons is map)
+        && (!('profile' in request.resource.data) || request.resource.data.profile is map)
+        && (!('settings' in request.resource.data) || request.resource.data.settings is map)
+        && (!('balance' in request.resource.data) || request.resource.data.balance is number)
+        && (!('hasOnboarded' in request.resource.data) || request.resource.data.hasOnboarded is bool)
+        && (!('dashEmptyDismissed' in request.resource.data) || request.resource.data.dashEmptyDismissed is bool)
+        && (!('viewMonth' in request.resource.data) || request.resource.data.viewMonth == null || request.resource.data.viewMonth is string)
+        && (!('dashboardLayout' in request.resource.data) || request.resource.data.dashboardLayout == null || request.resource.data.dashboardLayout is map)
+        && (!('updatedAt' in request.resource.data) || request.resource.data.updatedAt is timestamp);
+      // Owner may delete their own document (account-data removal). Nothing
+      // in the client does this today; kept for a future delete-account flow.
+      allow delete: if isOwner(userId);
+
+      match /trash/{trashId} {
+        allow get, create, update: if isOwner(userId)
+          && (!('trashedAt' in request.resource.data) || request.resource.data.trashedAt is int)
+          && (!('trashedAtServer' in request.resource.data) || request.resource.data.trashedAtServer == null || request.resource.data.trashedAtServer is timestamp)
+          && (!('state' in request.resource.data) || request.resource.data.state is map);
+        allow delete: if isOwner(userId);
+      }
+    }
+  }
+}
