@@ -69,6 +69,17 @@ firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 const db = firebase.firestore();
+// H6: Firestore offline persistence — writes queue in IndexedDB while offline
+// and sync automatically on reconnect (previously offline edits lived only in
+// localStorage and cloud sync silently skipped). Multi-tab or unsupported
+// browsers fall back to memory-only with a console note, never a crash.
+try {
+  db.enablePersistence({ synchronizeTabs: true }).catch(e => {
+    if (e && e.code === 'failed-precondition') console.info('Firestore persistence: another tab owns it, using memory cache');
+    else if (e && e.code === 'unimplemented') console.info('Firestore persistence unsupported in this browser, using memory cache');
+    else console.error('Firestore persistence error', e);
+  });
+} catch (e) { console.error('Firestore persistence setup failed', e); }
 let currentUser = null;
 let authRestoreTimer = null; // one-shot timer for the cold-start session-hydration reload
 const GUEST_MODE_ENABLED = false; // flip to true to re-enable guest mode
@@ -6927,6 +6938,33 @@ if (typeof document !== 'undefined') {
       checkBudgetBreachNotifs();
     }
   });
+}
+
+// H6: offline awareness + sync-on-reconnect. Shows a persistent badge while
+// offline (edits keep working from localStorage + Firestore's queued writes)
+// and flushes latest state to the cloud when connectivity returns.
+function setOfflineBadge(offline) {
+  try {
+    let badge = document.getElementById('offlineBadge');
+    if (offline && !badge) {
+      badge = document.createElement('div');
+      badge.id = 'offlineBadge';
+      badge.setAttribute('style', 'position:fixed;bottom:12px;left:50%;transform:translateX(-50%);background:#3a3a3a;color:#fff;font-size:12px;font-weight:600;padding:8px 16px;border-radius:999px;z-index:9999;box-shadow:0 4px 16px rgba(0,0,0,0.25);');
+      badge.textContent = 'Offline — changes saved on this device, will sync';
+      document.body.appendChild(badge);
+    } else if (!offline && badge) {
+      badge.remove();
+    }
+  } catch (e) { /* badge is cosmetic — never break the app */ }
+}
+if (typeof window !== 'undefined') {
+  window.addEventListener('offline', () => { setOfflineBadge(true); showToast('You are offline — changes saved on this device'); });
+  window.addEventListener('online', () => {
+    setOfflineBadge(false);
+    showToast('Back online — syncing');
+    try { if (typeof state !== 'undefined' && state && state.hasOnboarded && currentUser && !isGuest) saveData(); } catch (e) { console.error('Reconnect flush failed', e); }
+  });
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) setOfflineBadge(true);
 }
 
 // Landing page scroll-reveal + count-up animations (isolated from app logic)
