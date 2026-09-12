@@ -37,6 +37,15 @@ function escapeHtml(str) {
 // ============ DATA LAYER ============
 const STORAGE_KEY = 'finance_os_data_v1';
 
+// Backup marker for the last authenticated session. Firebase restore from
+// IndexedDB is asynchronous on cold start; on some devices a transient null
+// is reported before the SDK has fully hydrated. We use this marker to give
+// the SDK a moment to restore and to distinguish "genuinely signed out" from
+// "session not hydrated yet".
+const AUTH_UID_KEY = 'finance_os_auth_uid';
+const AUTH_RESTORE_GRACE_MS = 1500;
+const AUTH_RELOAD_ONCE_KEY = 'finance_os_auth_reload_once';
+
 // Firebase Config
 const firebaseConfig = {
   apiKey: "AIzaSyC6SVgxYzf8B4fBZgyI7xyw1Vf1GvITz5U",
@@ -51,6 +60,7 @@ const auth = firebase.auth();
 auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
 const db = firebase.firestore();
 let currentUser = null;
+let authRestoreTimer = null; // one-shot timer for the cold-start session-hydration reload
 const GUEST_MODE_ENABLED = false; // flip to true to re-enable guest mode
 let isGuest = true;
 
@@ -489,6 +499,16 @@ function hideAuthModal() {
   document.getElementById('authOverlay').classList.remove('active');
 }
 
+function showAuthRestoringSheet() {
+  const sheet = document.getElementById('authRestoringSheet');
+  if (sheet) sheet.classList.add('active');
+}
+
+function hideAuthRestoringSheet() {
+  const sheet = document.getElementById('authRestoringSheet');
+  if (sheet) sheet.classList.remove('active');
+}
+
 function showInstallModal() {
   document.getElementById('installModalOverlay').classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -552,8 +572,12 @@ function updateUserProfileUI() {
 }
 
 auth.onAuthStateChanged(user => {
-  currentUser = user;
+  if (authRestoreTimer) { clearTimeout(authRestoreTimer); authRestoreTimer = null; }
   if (user) {
+    // Confirmed signed-in user. Remember the session locally so we can recover
+    // from a transient cold-start hydration miss (see null branch below).
+    localStorage.setItem(AUTH_UID_KEY, user.uid);
+    currentUser = user;
     isGuest = false;
     document.querySelector('.app').style.display = 'flex';
     document.getElementById('landingPage').style.display = 'none';
@@ -584,6 +608,22 @@ auth.onAuthStateChanged(user => {
       }
     });
   } else {
+    // The SDK reports "signed out". This can be a real sign-out, OR the
+    // Firebase cold-start IndexedDB hydration returning an empty record on a
+    // PWA cold start (session actually still alive in the browser storage).
+    // If we had a locally-confirmed session, give the SDK one fresh chance to
+    // re-read it via a single reload before showing the marketing page.
+    const hadLocalSession = localStorage.getItem(AUTH_UID_KEY);
+    const alreadyRetried = sessionStorage.getItem(AUTH_RELOAD_ONCE_KEY);
+    if (hadLocalSession && !alreadyRetried && !isGuest) {
+      sessionStorage.setItem(AUTH_RELOAD_ONCE_KEY, '1');
+      showAuthRestoringSheet();
+      authRestoreTimer = setTimeout(() => {
+        location.reload();
+      }, 800);
+      return gilay;
+    }
+    localStorage.removeItem(AUTH_UID_KEY);
     showAuthModal();
   }
 });
