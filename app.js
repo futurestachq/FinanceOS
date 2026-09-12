@@ -615,13 +615,18 @@ auth.onAuthStateChanged(user => {
     // re-read it via a single reload before showing the marketing page.
     const hadLocalSession = localStorage.getItem(AUTH_UID_KEY);
     const alreadyRetried = sessionStorage.getItem(AUTH_RELOAD_ONCE_KEY);
-    if (hadLocalSession && !alreadyRetried && !isGuest) {
+    // Note: do NOT gate on isGuest — it defaults to true on every fresh page
+    // load, so on a mobile PWA cold start it would always be false here and
+    // kill the very recovery this branch exists to provide. A real (non-guest)
+    // session is already proven by hadLocalSession: guest mode never writes
+    // AUTH_UID_KEY. Guests therefore fall through to the login modal below.
+    if (hadLocalSession && !alreadyRetried) {
       sessionStorage.setItem(AUTH_RELOAD_ONCE_KEY, '1');
       showAuthRestoringSheet();
       authRestoreTimer = setTimeout(() => {
         location.reload();
       }, 800);
-      return gilay;
+      return;
     }
     localStorage.removeItem(AUTH_UID_KEY);
     showAuthModal();
