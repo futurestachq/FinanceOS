@@ -453,12 +453,22 @@ function showSignUpMode() {
 window.showSignUpMode = showSignUpMode;
 
 function signOutUser() {
+  // H1: flush latest state to the cloud while still authenticated, then remove
+  // all session + finance keys so a signed-out device holds no user data.
+  // Trash snapshots and the theme are device-level and intentionally kept.
+  // On next sign-in loadData() re-pulls the cloud copy (verified path).
+  try { saveData(); } catch (e) { console.error('Pre-signout save failed', e); }
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(AUTH_UID_KEY);
+    sessionStorage.removeItem(AUTH_RELOAD_ONCE_KEY);
+  } catch (e) { /* storage may be unavailable — sign-out must still proceed */ }
   auth.signOut().then(() => {
     currentUser = null;
     isGuest = true;
     showToast('Signed out');
     location.reload();
-  });
+  }).catch(e => { console.error('Sign-out failed', e); showToast('Sign-out failed: ' + (e.message || e)); });
 }
 
 function continueAsGuest() {
@@ -4881,9 +4891,22 @@ function togglePinLock() {
 }
 
 function resetPin() {
-  confirmDelete('Forgot PIN?', 'This will sign you out and delete all local data. You can sign back in to restore your cloud data.', () => {
-    signOutUser();
-    localStorage.clear();
+  confirmDelete('Forgot PIN?', 'This will sign you out and delete all local data. You can sign back in to restore your cloud data.', async () => {
+    // H4: wipe safely. Snapshot to trash first (same guarantee as clearAllData),
+    // remove only FinanceOS session/data keys (theme + trash survive — the old
+    // blind wipe-everything call destroyed those as collateral), await the
+    // sign-out, then reload exactly once (the old code double-reloaded:
+    // signOutUser()'s .then-reload racing the synchronous reload below it).
+    snapshotToTrash();
+    try {
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(AUTH_UID_KEY);
+      localStorage.removeItem('finance_os_last_backup');
+      sessionStorage.removeItem(AUTH_RELOAD_ONCE_KEY);
+    } catch (e) { /* storage may be unavailable — reset must still proceed */ }
+    try { await auth.signOut(); } catch (e) { console.error('Sign-out during PIN reset failed', e); }
+    currentUser = null;
+    isGuest = true;
     location.reload();
   });
 }
@@ -6075,6 +6098,36 @@ function applyImport(data) {
 }
 window.applyImport = applyImport;
 
+// Snapshot current state to trash (local + Firestore) before any destructive
+// wipe. Shared by clearAllData and resetPin. Never throws; skips empty state.
+function snapshotToTrash() {
+  try {
+    const doomed = JSON.parse(JSON.stringify(state));
+    const hasData = (doomed.transactions && doomed.transactions.length) ||
+      (doomed.accounts && doomed.accounts.length) ||
+      (doomed.subscriptions && doomed.subscriptions.length) ||
+      (doomed.goals && doomed.goals.length) ||
+      (doomed.financialEvents && doomed.financialEvents.length) ||
+      (doomed.incomeEvents && doomed.incomeEvents.length);
+    if (!hasData) return;
+    const ts = Date.now();
+    const trashKey = 'finance_os_trash_' + ts;
+    try { localStorage.setItem(trashKey, JSON.stringify({ trashedAt: ts, state: doomed })); } catch (e) { console.error('Trash snapshot failed', e); }
+    try {
+      const keys = [];
+      for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('finance_os_trash_') === 0) keys.push(k); }
+      keys.sort().slice(0, Math.max(0, keys.length - 3)).forEach(k => localStorage.removeItem(k));
+    } catch (e) { /* pruning is best-effort */ }
+    if (currentUser && !isGuest && typeof db !== 'undefined') {
+      db.collection('users').doc(currentUser.uid).collection('trash').doc(String(ts)).set({
+        trashedAt: ts,
+        trashedAtServer: (firebase.firestore && firebase.firestore.FieldValue) ? firebase.firestore.FieldValue.serverTimestamp() : null,
+        state: doomed
+      }).catch(e => console.error('Trash cloud snapshot failed', e));
+    }
+  } catch (e) { console.error('Pre-wipe snapshot failed', e); }
+}
+
 function confirmClearData() {
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay active';
@@ -6106,32 +6159,7 @@ function clearAllData() {
   // in Firestore (when signed in). The old code wrote a blank state straight
   // through saveData(), which propagated the wipe to the cloud copy with no
   // way back. Trash keys are pruned to the 3 most recent.
-  try {
-    const doomed = JSON.parse(JSON.stringify(state));
-    const hasData = (doomed.transactions && doomed.transactions.length) ||
-      (doomed.accounts && doomed.accounts.length) ||
-      (doomed.subscriptions && doomed.subscriptions.length) ||
-      (doomed.goals && doomed.goals.length) ||
-      (doomed.financialEvents && doomed.financialEvents.length) ||
-      (doomed.incomeEvents && doomed.incomeEvents.length);
-    if (hasData) {
-      const ts = Date.now();
-      const trashKey = 'finance_os_trash_' + ts;
-      try { localStorage.setItem(trashKey, JSON.stringify({ trashedAt: ts, state: doomed })); } catch (e) { console.error('Trash snapshot failed', e); }
-      try {
-        const keys = [];
-        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.indexOf('finance_os_trash_') === 0) keys.push(k); }
-        keys.sort().slice(0, Math.max(0, keys.length - 3)).forEach(k => localStorage.removeItem(k));
-      } catch (e) { /* pruning is best-effort */ }
-      if (currentUser && !isGuest && typeof db !== 'undefined') {
-        db.collection('users').doc(currentUser.uid).collection('trash').doc(String(ts)).set({
-          trashedAt: ts,
-          trashedAtServer: (firebase.firestore && firebase.firestore.FieldValue) ? firebase.firestore.FieldValue.serverTimestamp() : null,
-          state: doomed
-        }).catch(e => console.error('Trash cloud snapshot failed', e));
-      }
-    }
-  } catch (e) { console.error('Pre-wipe snapshot failed, continuing with wipe', e); }
+  snapshotToTrash();
   state = {
     accounts: [], transactions: [], subscriptions: [], budgets: {}, goals: [], balance: 0,
     incomeEvents: [], financialEvents: [], hasOnboarded: true,
