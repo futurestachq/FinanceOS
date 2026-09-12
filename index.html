@@ -41,7 +41,7 @@
     @media(max-width:980px){.fqlp-nav-links{display:none!important}.fqlp-hamburger{display:block}}
     @media(min-width:981px){.fqlp-mobile-menu{display:none!important}}
     .fqlp-hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--green-light);color:var(--green-accent);border:1px solid var(--green-border);font-size:11px;font-weight:700;letter-spacing:1.2px;padding:7px 14px;border-radius:24px;margin-bottom:20px;text-transform:uppercase}
-    .fqlp-hero-metrics{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:14px}
+    .fqlp-hero-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-bottom:12px}
     .fqlp-metric-tile{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--bg)}
     .fqlp-metric-label{font-size:10px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.6px;font-weight:600}
     .fqlp-metric-value{font-size:16px;font-weight:800;color:var(--text);margin-top:2px}
@@ -55,6 +55,8 @@
     .fqlp-bar-label{font-size:9px;color:var(--text-tertiary);margin-top:4px;font-weight:500}
     .fqlp-legend{display:flex;gap:16px;margin-top:8px;font-size:11px;color:var(--text-secondary);font-weight:600}
     .fqlp-legend i{width:8px;height:8px;border-radius:2px;display:inline-block;margin-right:4px;vertical-align:middle}
+    .fqlp-mockup-grid{display:grid;grid-template-columns:1.35fr 1fr;gap:10px;align-items:start}
+    .fqlp-mockup-rail{display:grid;gap:8px;align-content:start}
     .fqlp-budget-item{border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--card)}
     .fqlp-budget-head{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--text);margin-bottom:6px}
     .fqlp-budget-head span:last-child{color:var(--text-secondary)}
@@ -242,6 +244,7 @@
               <div class="fqlp-metric-tile"><div class="fqlp-metric-label" style="color:var(--red-accent)">Expenses</div><div class="fqlp-metric-value" style="color:var(--red-accent)">&#8358;286,400</div></div>
               <div class="fqlp-metric-tile"><div class="fqlp-metric-label" style="color:var(--amber-accent)">Savings</div><div class="fqlp-metric-value" style="color:var(--amber-accent)">&#8358;163,600</div></div>
             </div>
+            <div class="fqlp-mockup-grid">
             <div class="fqlp-chart-card">
               <div class="fqlp-card-head"><span>Income vs Expenses</span><span class="fqlp-card-pill">This month</span></div>
               <div class="fqlp-bars">
@@ -254,7 +257,8 @@
               </div>
               <div class="fqlp-legend"><span><i style="background:var(--green-accent)"></i>Income</span><span><i style="background:var(--red-accent)"></i>Expenses</span></div>
             </div>
-            <div style="display:grid;gap:8px;margin-bottom:12px">
+              <div class="fqlp-mockup-rail">
+                <div style="display:grid;gap:8px;margin-bottom:12px">
               <div class="fqlp-budget-item"><div class="fqlp-budget-head"><span>Food</span><span>&#8358;45K / &#8358;70K</span></div><div class="fqlp-progress"><div class="fqlp-progress-fill" style="width:64%;background:var(--green-accent)"></div></div></div>
               <div class="fqlp-budget-item"><div class="fqlp-budget-head"><span>Transport</span><span>&#8358;28K / &#8358;40K</span></div><div class="fqlp-progress"><div class="fqlp-progress-fill" style="width:70%;background:var(--amber-accent)"></div></div></div>
               <div class="fqlp-budget-item"><div class="fqlp-budget-head"><span>Entertainment</span><span>&#8358;12K / &#8358;25K</span></div><div class="fqlp-progress"><div class="fqlp-progress-fill" style="width:48%;background:var(--green-accent)"></div></div></div>
@@ -269,6 +273,7 @@
               <div class="fqlp-event-item"><span>Rent</span><span class="fqlp-event-date">Sep 15</span><span class="fqlp-event-amt">&#8358;150K</span></div>
               <div class="fqlp-event-item"><span>Netflix</span><span class="fqlp-event-date">Sep 18</span><span class="fqlp-event-amt">&#8358;4.5K</span></div>
               <div class="fqlp-event-item"><span>Savings</span><span class="fqlp-event-date">Sep 20</span><span class="fqlp-event-amt">&#8358;50K</span></div>
+            </div>
             </div>
           </div>
         </div>
@@ -3039,3 +3044,4 @@
 
 </body>
 </html>
+</div>
