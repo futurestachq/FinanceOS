@@ -53,8 +53,14 @@ const STORAGE_KEY = 'finance_os_data_v1';
 // the SDK a moment to restore and to distinguish "genuinely signed out" from
 // "session not hydrated yet".
 const AUTH_UID_KEY = 'finance_os_auth_uid';
-const AUTH_RESTORE_GRACE_MS = 1500;
-const AUTH_RELOAD_ONCE_KEY = 'finance_os_auth_reload_once';
+// How long to wait for slow cold-start session hydration (cold disk, waking
+// radio/network after sleep or process kill) before concluding a null auth
+// report is a real sign-out. Generous on purpose: showing "restoring" a few
+// seconds longer beats logging the user out falsely.
+const AUTH_RESTORE_GRACE_MS = 6000;
+// One-shot grace flag per page load (in-memory on purpose: a persisted flag
+// would poison later reloads the way the old sessionStorage retry flag did).
+let authRecoveryWaited = false;
 
 // Firebase Config
 const firebaseConfig = {
@@ -81,7 +87,7 @@ try {
   });
 } catch (e) { console.error('Firestore persistence setup failed', e); }
 let currentUser = null;
-let authRestoreTimer = null; // one-shot timer for the cold-start session-hydration reload
+let authRestoreTimer = null; // one-shot grace timer while awaiting cold-start session hydration
 const GUEST_MODE_ENABLED = false; // flip to true to re-enable guest mode
 let isGuest = true;
 
@@ -492,7 +498,7 @@ function signOutUser() {
   try {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(AUTH_UID_KEY);
-    sessionStorage.removeItem(AUTH_RELOAD_ONCE_KEY);
+    authRecoveryWaited = true;
   } catch (e) { /* storage may be unavailable — sign-out must still proceed */ }
   auth.signOut().then(() => {
     currentUser = null;
@@ -552,12 +558,19 @@ function hideAuthModal() {
 
 function showAuthRestoringSheet() {
   const sheet = document.getElementById('authRestoringSheet');
-  if (sheet) sheet.classList.add('active');
+  if (!sheet) return;
+  // Set inline display: the element ships with style="display:none", which no
+  // class toggle can override (the old code added a class with no CSS rule,
+  // so the "restoring" state was invisible and users saw the landing page).
+  sheet.style.display = 'flex';
+  sheet.classList.add('active');
 }
 
 function hideAuthRestoringSheet() {
   const sheet = document.getElementById('authRestoringSheet');
-  if (sheet) sheet.classList.remove('active');
+  if (!sheet) return;
+  sheet.style.display = 'none';
+  sheet.classList.remove('active');
 }
 
 function showInstallModal() {
@@ -628,6 +641,10 @@ auth.onAuthStateChanged(user => {
     // Confirmed signed-in user. Remember the session locally so we can recover
     // from a transient cold-start hydration miss (see null branch below).
     localStorage.setItem(AUTH_UID_KEY, user.uid);
+    hideAuthRestoringSheet();
+    // Drop any leftover landing-section hash (e.g. #how-it-works) so the URL
+    // is clean once inside the app.
+    try { if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search); } catch (e) {}
     currentUser = user;
     isGuest = false;
     document.querySelector('.app').style.display = 'flex';
@@ -659,27 +676,36 @@ auth.onAuthStateChanged(user => {
       }
     });
   } else {
-    // The SDK reports "signed out". This can be a real sign-out, OR the
-    // Firebase cold-start IndexedDB hydration returning an empty record on a
-    // PWA cold start (session actually still alive in the browser storage).
-    // If we had a locally-confirmed session, give the SDK one fresh chance to
-    // re-read it via a single reload before showing the marketing page.
+    // The SDK reports "signed out". This can be a real sign-out, OR slow
+    // cold-start IndexedDB hydration after sleep / process kill / tab discard
+    // (session fully alive in browser storage, just not re-read yet).
+    // The old recovery reloaded the page after 800ms — which ABORTED the
+    // in-flight hydration and restarted it from zero — then DELETED the
+    // session marker on the second miss, making the logout permanent. That is
+    // the 20-minute bug: warm refreshes hydrate in <800ms and survive, cold
+    // ones don't. The fix: never reload, never delete the marker here, and
+    // give the SDK a real grace period with a visible restoring state.
+    // (Genuine sign-outs already clear the marker via signOutUser/resetPin,
+    // so a lingering marker always means "was signed in, SDK unconfirmed".)
     const hadLocalSession = localStorage.getItem(AUTH_UID_KEY);
-    const alreadyRetried = sessionStorage.getItem(AUTH_RELOAD_ONCE_KEY);
     // Note: do NOT gate on isGuest — it defaults to true on every fresh page
-    // load, so on a mobile PWA cold start it would always be false here and
-    // kill the very recovery this branch exists to provide. A real (non-guest)
-    // session is already proven by hadLocalSession: guest mode never writes
-    // AUTH_UID_KEY. Guests therefore fall through to the login modal below.
-    if (hadLocalSession && !alreadyRetried) {
-      sessionStorage.setItem(AUTH_RELOAD_ONCE_KEY, '1');
+    // load. A real (non-guest) session is already proven by hadLocalSession:
+    // guest mode never writes AUTH_UID_KEY. Guests fall straight through.
+    if (hadLocalSession && !authRecoveryWaited) {
+      authRecoveryWaited = true;
       showAuthRestoringSheet();
       authRestoreTimer = setTimeout(() => {
-        location.reload();
-      }, 800);
+        authRestoreTimer = null;
+        // Grace expired and the SDK still reports signed-out: show the login
+        // screen, but KEEP the marker so the next visit retries instead of
+        // giving up forever. If hydration lands late, the user branch above
+        // still flips into the app (it hides the sheet first).
+        hideAuthRestoringSheet();
+        if (!auth.currentUser) showAuthModal();
+      }, AUTH_RESTORE_GRACE_MS);
       return;
     }
-    localStorage.removeItem(AUTH_UID_KEY);
+    hideAuthRestoringSheet();
     showAuthModal();
   }
 });
@@ -4970,7 +4996,7 @@ function resetPin() {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(AUTH_UID_KEY);
       localStorage.removeItem('finance_os_last_backup');
-      sessionStorage.removeItem(AUTH_RELOAD_ONCE_KEY);
+      authRecoveryWaited = true;
     } catch (e) { /* storage may be unavailable — reset must still proceed */ }
     try { await auth.signOut(); } catch (e) { console.error('Sign-out during PIN reset failed', e); }
     currentUser = null;
