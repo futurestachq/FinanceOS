@@ -907,6 +907,17 @@
   </div>
 </div><!-- /authOverlay -->
 
+<!-- Session-restoring sheet: shown only while we give Firebase's IndexedDB
+     session hydration a moment to restore on PWA cold start. Non-interactive;
+     it auto-dismisses/reloads itself. -->
+<div class="auth-restoring-overlay" id="authRestoringSheet" style="display:none;">
+  <div class="auth-restoring-card">
+    <div class="spinner"></div>
+    <h3>Restoring your session&hellip;</h3>
+    <p>Just a moment &mdash; we're restoring your secure session.</p>
+  </div>
+</div>
+
 <!-- Onboarding -->
 <div class="onboarding-overlay" id="onboardingOverlay">
   <div class="onboarding-container">
