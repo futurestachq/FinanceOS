@@ -61,12 +61,6 @@ const AUTH_RESTORE_GRACE_MS = 10000;
 // One-shot grace flag per page load (in-memory on purpose: a persisted flag
 // would poison later reloads the way the old sessionStorage retry flag did).
 let authRecoveryWaited = false;
-// Track cold-start recovery failures so permanently-lost sessions (e.g.
-// browser purged IndexedDB) don't delay the user with a "Restoring..."
-// spinner on every single visit. After MAX_AUTH_RECOVERY_FAILS we give up
-// and show login immediately, clearing the stale marker.
-const AUTH_RECOVERY_FAIL_KEY = 'finance_os_auth_recovery_fails';
-const MAX_AUTH_RECOVERY_FAILS = 2;
 
 // Firebase Config
 const firebaseConfig = {
@@ -504,7 +498,6 @@ function signOutUser() {
   try {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(AUTH_UID_KEY);
-    localStorage.removeItem(AUTH_RECOVERY_FAIL_KEY);
     authRecoveryWaited = true;
   } catch (e) { /* storage may be unavailable — sign-out must still proceed */ }
   auth.signOut().then(() => {
@@ -648,8 +641,6 @@ auth.onAuthStateChanged(user => {
     // Confirmed signed-in user. Remember the session locally so we can recover
     // from a transient cold-start hydration miss (see null branch below).
     localStorage.setItem(AUTH_UID_KEY, user.uid);
-    // Reset recovery failure count on successful auth — session is healthy.
-    try { localStorage.removeItem(AUTH_RECOVERY_FAIL_KEY); } catch (e) {}
     hideAuthRestoringSheet();
     // Drop any leftover landing-section hash (e.g. #how-it-works) so the URL
     // is clean once inside the app.
@@ -702,42 +693,22 @@ auth.onAuthStateChanged(user => {
     // guest mode never writes AUTH_UID_KEY. Guests fall straight through.
     if (hadLocalSession && !authRecoveryWaited) {
       authRecoveryWaited = true;
-      // Check how many consecutive cold-start recoveries have already failed.
-      // Permanently lost sessions (browser purged IndexedDB) should not spin
-      // "Restoring..." on every visit — after MAX_AUTH_RECOVERY_FAILS we give
-      // up and show login immediately, clearing the stale marker.
-      let failCount = 0;
-      try {
-        const raw = localStorage.getItem(AUTH_RECOVERY_FAIL_KEY);
-        failCount = raw ? parseInt(raw, 10) : 0;
-        if (isNaN(failCount)) failCount = 0;
-      } catch (e) {}
-      if (failCount >= MAX_AUTH_RECOVERY_FAILS) {
-        // Already tried enough times — session is gone. Clear marker so the
-        // next visit shows login immediately without the restoring delay.
-        try {
-          localStorage.removeItem(AUTH_UID_KEY);
-          localStorage.removeItem(AUTH_RECOVERY_FAIL_KEY);
-        } catch (e) {}
-        hideAuthRestoringSheet();
-        showAuthModal();
-        return;
-      }
       showAuthRestoringSheet();
       authRestoreTimer = setTimeout(() => {
         authRestoreTimer = null;
+        // Grace expired and the SDK still reports signed-out: this is a real
+        // sign-out, so clear the marker. Keeping it made the restoring sheet
+        // fire on EVERY later visit: the marker kept claiming "was signed in"
+        // long after the session was gone (it only ever got cleared by an
+        // explicit sign-out / PIN reset, never by a failed restore). Clearing
+        // it here means the sheet can appear at most once per real session.
+        // If hydration lands late, the user branch above still flips into the
+        // app and re-writes the marker.
         hideAuthRestoringSheet();
-        if (auth.currentUser) {
-          // Hydration landed late — the user branch above will flip into app.
-          return;
+        if (!auth.currentUser) {
+          localStorage.removeItem(AUTH_UID_KEY);
+          showAuthModal();
         }
-        // Grace expired and still signed out. Increment failure count so we
-        // don't keep spinning on every future cold start, but keep the marker
-        // for one more retry (in case the next visit is a warm start).
-        try {
-          localStorage.setItem(AUTH_RECOVERY_FAIL_KEY, String(failCount + 1));
-        } catch (e) {}
-        showAuthModal();
       }, AUTH_RESTORE_GRACE_MS);
       return;
     }
@@ -5031,7 +5002,6 @@ function resetPin() {
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(AUTH_UID_KEY);
-      localStorage.removeItem(AUTH_RECOVERY_FAIL_KEY);
       localStorage.removeItem('finance_os_last_backup');
       authRecoveryWaited = true;
     } catch (e) { /* storage may be unavailable — reset must still proceed */ }
