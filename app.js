@@ -696,12 +696,19 @@ auth.onAuthStateChanged(user => {
       showAuthRestoringSheet();
       authRestoreTimer = setTimeout(() => {
         authRestoreTimer = null;
-        // Grace expired and the SDK still reports signed-out: show the login
-        // screen, but KEEP the marker so the next visit retries instead of
-        // giving up forever. If hydration lands late, the user branch above
-        // still flips into the app (it hides the sheet first).
+        // Grace expired and the SDK still reports signed-out: this is a real
+        // sign-out, so clear the marker. Keeping it made the restoring sheet
+        // fire on EVERY later visit: the marker kept claiming "was signed in"
+        // long after the session was gone (it only ever got cleared by an
+        // explicit sign-out / PIN reset, never by a failed restore). Clearing
+        // it here means the sheet can appear at most once per real session.
+        // If hydration lands late, the user branch above still flips into the
+        // app and re-writes the marker.
         hideAuthRestoringSheet();
-        if (!auth.currentUser) showAuthModal();
+        if (!auth.currentUser) {
+          localStorage.removeItem(AUTH_UID_KEY);
+          showAuthModal();
+        }
       }, AUTH_RESTORE_GRACE_MS);
       return;
     }
