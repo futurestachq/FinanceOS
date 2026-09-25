@@ -2660,6 +2660,14 @@
   .dash-welcome-name { font-size: 17px; }
 }
 
+/* --- Dashboard widget customization: desktop only --------------- */
+/* Drag-to-reorder is a pointer-precision interaction that doesn't map to
+   touch, so the entry point is hidden on phones/tablets. The customize
+   mode itself is additionally guarded in app.js. */
+@media (max-width: 768px) {
+  #dashCustomizeBtn, .dash-sort-hint { display: none !important; }
+}
+
 /* --- Topbar month navigation ---------------------------------- */
 .topbar-month {
   display: flex;

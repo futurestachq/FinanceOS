@@ -1601,6 +1601,15 @@ function toggleDashCustomize() {
   const hint = document.getElementById('dashSortHint');
   const hintText = document.getElementById('dashSortHintText');
 
+  // Drag-to-reorder is desktop-only (the button is hidden under 768px via CSS).
+  // Guard here too so a viewport change or a stale click can't leave the page
+  // stuck in customize mode on a touch device.
+  if (window.matchMedia('(max-width: 768px)').matches) {
+    page.classList.remove('dash-customize-active');
+    if (hint) hint.style.display = 'none';
+    return;
+  }
+
   const isActive = page.classList.contains('dash-customize-active');
   if (isActive) {
     page.classList.remove('dash-customize-active');

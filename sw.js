@@ -1,4 +1,4 @@
-const CACHE_NAME = 'financeos-v44';
+const CACHE_NAME = 'financeos-v45';
 // H8: install-time precache stays same-origin only (guaranteed available).
 // The 4 pinned CDN scripts are runtime-cached on first use instead, so a CDN
 // hiccup can never fail the install.
