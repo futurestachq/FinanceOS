@@ -1,4 +1,4 @@
-const CACHE_NAME = 'financeos-v45';
+const CACHE_NAME = 'financeos-v46';
 // H8: install-time precache stays same-origin only (guaranteed available).
 // The 4 pinned CDN scripts are runtime-cached on first use instead, so a CDN
 // hiccup can never fail the install.
@@ -15,9 +15,9 @@ const APP_SHELL = [
 // Served stale-while-revalidate so the app boots offline after first load.
 const CDN_ALLOWLIST = [
   'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js',
-  'https://www.gstatic.com/firebasejs/12.18.0/firebase-app-compat.js',
-  'https://www.gstatic.com/firebasejs/12.18.0/firebase-auth-compat.js',
-  'https://www.gstatic.com/firebasejs/12.18.0/firebase-firestore-compat.js'
+  'https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js',
+  'https://www.gstatic.com/firebasejs/12.19.0/firebase-auth-compat.js',
+  'https://www.gstatic.com/firebasejs/12.19.0/firebase-firestore-compat.js'
 ];
 
 self.addEventListener('install', (event) => {
