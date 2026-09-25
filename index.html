@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="theme-color" content="#397968">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://accounts.google.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.google.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://*.firebaseapp.com https://*.web.app https://financeos-12034.firebaseapp.com https://cdnjs.cloudflare.com wss://*.firebaseio.com; img-src 'self' data: blob: https://*.googleusercontent.com https://lh3.googleusercontent.com https://firebasestorage.googleapis.com https://upload.wikimedia.org https://cdn.simpleicons.org; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.google.com; worker-src 'self'; child-src https://accounts.google.com https://*.firebaseapp.com https://*.google.com; object-src 'none'; base-uri 'self'; frame-ancestors 'self';">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://accounts.google.com https://www.gstatic.com https://apis.google.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.googleapis.com https://*.google.com https://firestore.googleapis.com https://identitytoolkit.googleapis.com https://securetoken.googleapis.com https://www.googleapis.com https://*.firebaseapp.com https://*.web.app https://financeos-12034.firebaseapp.com https://cdnjs.cloudflare.com wss://*.firebaseio.com wss://firestore.googleapis.com; img-src 'self' data: blob: https://*.googleusercontent.com https://lh3.googleusercontent.com https://firebasestorage.googleapis.com https://upload.wikimedia.org https://cdn.simpleicons.org; frame-src https://accounts.google.com https://*.firebaseapp.com https://*.google.com; worker-src 'self'; child-src https://accounts.google.com https://*.firebaseapp.com https://*.google.com; object-src 'none'; base-uri 'self';">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="FinanceOS">
@@ -906,17 +906,6 @@
     <div style="font-size:11px;color:var(--text-tertiary);margin-top:8px;text-align:center;">Play around with the app. Data stays on this device.</div>
   </div>
 </div><!-- /authOverlay -->
-
-<!-- Session-restoring sheet: shown only while we give Firebase's IndexedDB
-     session hydration a moment to restore on PWA cold start. Non-interactive;
-     it auto-dismisses/reloads itself. -->
-<div class="auth-restoring-overlay" id="authRestoringSheet" style="display:none;">
-  <div class="auth-restoring-card">
-    <div class="spinner"></div>
-    <h3>Restoring your session&hellip;</h3>
-    <p>Just a moment &mdash; we're restoring your secure session.</p>
-  </div>
-</div>
 
 <!-- Onboarding -->
 <div class="onboarding-overlay" id="onboardingOverlay">

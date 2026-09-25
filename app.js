@@ -55,8 +55,8 @@ const STORAGE_KEY = 'finance_os_data_v1';
 const AUTH_UID_KEY = 'finance_os_auth_uid';
 // How long to wait for slow cold-start session hydration (cold disk, waking
 // radio/network after sleep or process kill) before concluding a null auth
-// report is a real sign-out. Generous on purpose: showing "restoring" a few
-// seconds longer beats logging the user out falsely.
+// report is a real sign-out. Generous on purpose: waiting a few seconds
+// longer before showing login beats logging the user out falsely.
 const AUTH_RESTORE_GRACE_MS = 6000;
 // One-shot grace flag per page load (in-memory on purpose: a persisted flag
 // would poison later reloads the way the old sessionStorage retry flag did).
@@ -556,23 +556,6 @@ function hideAuthModal() {
   document.getElementById('authOverlay').classList.remove('active');
 }
 
-function showAuthRestoringSheet() {
-  const sheet = document.getElementById('authRestoringSheet');
-  if (!sheet) return;
-  // Set inline display: the element ships with style="display:none", which no
-  // class toggle can override (the old code added a class with no CSS rule,
-  // so the "restoring" state was invisible and users saw the landing page).
-  sheet.style.display = 'flex';
-  sheet.classList.add('active');
-}
-
-function hideAuthRestoringSheet() {
-  const sheet = document.getElementById('authRestoringSheet');
-  if (!sheet) return;
-  sheet.style.display = 'none';
-  sheet.classList.remove('active');
-}
-
 function showInstallModal() {
   document.getElementById('installModalOverlay').classList.add('active');
   document.body.style.overflow = 'hidden';
@@ -641,7 +624,6 @@ auth.onAuthStateChanged(user => {
     // Confirmed signed-in user. Remember the session locally so we can recover
     // from a transient cold-start hydration miss (see null branch below).
     localStorage.setItem(AUTH_UID_KEY, user.uid);
-    hideAuthRestoringSheet();
     // Drop any leftover landing-section hash (e.g. #how-it-works) so the URL
     // is clean once inside the app.
     try { if (window.location.hash) history.replaceState(null, '', window.location.pathname + window.location.search); } catch (e) {}
@@ -684,7 +666,7 @@ auth.onAuthStateChanged(user => {
     // session marker on the second miss, making the logout permanent. That is
     // the 20-minute bug: warm refreshes hydrate in <800ms and survive, cold
     // ones don't. The fix: never reload, never delete the marker here, and
-    // give the SDK a real grace period with a visible restoring state.
+    // give the SDK a real grace period to hydrate the session.
     // (Genuine sign-outs already clear the marker via signOutUser/resetPin,
     // so a lingering marker always means "was signed in, SDK unconfirmed".)
     const hadLocalSession = localStorage.getItem(AUTH_UID_KEY);
@@ -693,19 +675,16 @@ auth.onAuthStateChanged(user => {
     // guest mode never writes AUTH_UID_KEY. Guests fall straight through.
     if (hadLocalSession && !authRecoveryWaited) {
       authRecoveryWaited = true;
-      showAuthRestoringSheet();
       authRestoreTimer = setTimeout(() => {
         authRestoreTimer = null;
         // Grace expired and the SDK still reports signed-out: show the login
         // screen, but KEEP the marker so the next visit retries instead of
         // giving up forever. If hydration lands late, the user branch above
-        // still flips into the app (it hides the sheet first).
-        hideAuthRestoringSheet();
+        // still flips into the app.
         if (!auth.currentUser) showAuthModal();
       }, AUTH_RESTORE_GRACE_MS);
       return;
     }
-    hideAuthRestoringSheet();
     showAuthModal();
   }
 });
